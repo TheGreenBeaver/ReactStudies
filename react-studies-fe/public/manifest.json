@@ -1,0 +1,9 @@
+{
+  "short_name": "React Studies",
+  "name": "React Studying and Testing",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

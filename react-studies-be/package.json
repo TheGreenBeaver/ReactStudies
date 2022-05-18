@@ -1,0 +1,22 @@
+{
+  "name": "react-studies-be",
+  "packageManager": "yarn@3.2.0",
+  "scripts": {
+    "runserver": "node index.js",
+    "runserver:dev": "nodemon index.js",
+    "cypress:dev": "cd test-engine && cypress run --config-file cypress.local.json"
+  },
+  "dependencies": {
+    "cypress": "^9.6.1",
+    "express": "^4.18.1",
+    "pg": "^8.7.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.19.1",
+    "sequelize-cli": "^6.4.1"
+  },
+  "devDependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "nodemon": "^2.0.16"
+  }
+}
