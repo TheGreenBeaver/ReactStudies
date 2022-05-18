@@ -20,7 +20,7 @@ function populateWithPercentage(data) {
   data.percentage = `${percentage}%`;
 }
 
-it('Should do', () => {
+it('Should display data received from server', () => {
   const appHost = Cypress.env('app_host');
   const apiRoutes = Cypress.env('api_routes');
 
