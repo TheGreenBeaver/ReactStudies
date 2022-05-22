@@ -1,4 +1,4 @@
-const express = require('express');
+const initRouter = require('./_init-router');
 const { DataError, ErrorWithSource } = require('../util/custom-errors');
 const path = require('path');
 const fs = require('fs');
@@ -9,14 +9,13 @@ const applyMulter = require('../middleware/multer');
 const { SOLUTION_BASIC, TASK_BASIC } = require('../util/query-options');
 const httpStatus = require('http-status');
 const { serializeSolution, serializeSolutionStatusUpd } = require('../serializers/solution');
-const runTest = require('../test-engine/run-test');
+const runTest = require('../repo-templates/run-test');
 const unzip = require('../util/unzip');
 const { getMimeType, asyncMap } = require('../util/misc');
 const { wsServer } = require('../ws');
 const log = require('../util/logger');
-const applyAuthorization = require('../middleware/authorization');
 
-const router = express.Router();
+const router = initRouter(__filename);
 
 function multerDestination(req, file, cb) {
   const timestamp = applyMulter.multerUtils.useSingleTs(req);
@@ -65,8 +64,6 @@ function confirmFile(pathToExtractedFile, cb) {
     return cb();
   });
 }
-
-applyAuthorization(router);
 
 const FILES_FIELD_NAME = 'files';
 applyMulter(router, FILES_FIELD_NAME, multerDestination, {

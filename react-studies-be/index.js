@@ -1,3 +1,1 @@
-const runServer = require('./init-server');
-
-runServer();
+require('./init-server')()

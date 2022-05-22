@@ -1,9 +1,20 @@
 const httpStatus = require('http-status');
 const { CustomError } = require('../util/custom-errors');
-const { EmptyResultError, UniqueConstraintError, ValidationError } = require('sequelize');
+const { EmptyResultError, UniqueConstraintError, ValidationError: SqlValidationError } = require('sequelize');
+const { ValidationError: YupValidationError } = require('yup');
 const allModels = require('../models');
 const { isDev } = require('../util/env');
+const { set } = require('lodash');
+const { NON_FIELD_ERR, GITHUB_ERR } = require('../settings');
 
+
+function handleGitHubError(err, req, res, next) {
+  if (err.response?.url?.startsWith('https://api.github.com')) {
+    return res.status(err.response.status).send({ [GITHUB_ERR]: true, ...err.response.data });
+  }
+
+  next(err);
+}
 
 function getFailedUnique(sqlData) {
   return sqlData.constraint
@@ -24,6 +35,20 @@ function handleUniqueConstraintError(err, req, res, next) {
   next(err);
 }
 
+function handleYupValidationError(err, req, res, next) {
+  if (err instanceof YupValidationError) {
+    const payload = {};
+    err.inner.forEach(innerErr => {
+      set(payload, innerErr.path || NON_FIELD_ERR, innerErr.errors);
+    });
+    return res
+      .status(httpStatus.BAD_REQUEST)
+      .json(payload);
+  }
+
+  next(err);
+}
+
 function getValidationErrJson(validationResult) {
   return validationResult.errors.reduce((acc, err) => {
     if (!acc[err.path]) {
@@ -34,8 +59,8 @@ function getValidationErrJson(validationResult) {
   }, {});
 }
 
-function handleValidationError(err, req, res, next) {
-  if (err instanceof ValidationError) {
+function handleSqlValidationError(err, req, res, next) {
+  if (err instanceof SqlValidationError) {
     return res.status(httpStatus.BAD_REQUEST).json(getValidationErrJson(err));
   }
 
@@ -69,8 +94,10 @@ function logFullError(err, req, res, next) {
 
 function apply(app) {
   const stack = [
+    handleGitHubError,
     handleUniqueConstraintError,
-    handleValidationError,
+    handleYupValidationError,
+    handleSqlValidationError,
     handleCustomError,
     handleNotFoundError,
     handleUnknownError

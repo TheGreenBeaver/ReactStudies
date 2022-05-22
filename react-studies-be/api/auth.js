@@ -1,15 +1,13 @@
-const express = require('express');
-const applyAuthorization = require('../middleware/authorization');
+const initRouter = require('./_init-router');
 const { authenticate, extractToken } = require('../util/user-identity');
 const { AuthToken } = require('../models');
 const httpStatus = require('http-status');
+const paths = require('./_paths');
 
 
-const router = express.Router();
+const router = initRouter(__filename, ['/log_out']);
 
-applyAuthorization(router, ['/log_out']);
-
-router.post('/sign_in', (req, res, next) => {
+router.post(paths.signIn, (req, res, next) => {
   try {
     return authenticate(req.body, res);
   } catch (e) {
@@ -17,7 +15,7 @@ router.post('/sign_in', (req, res, next) => {
   }
 });
 
-router.post('/log_out', async (req, res, next) => {
+router.post(paths.logOut, async (req, res, next) => {
   try {
     // More compact than storing the whole AuthToken object in the request; a DB request is performed anyway
     await AuthToken.destroy({ where: { key: extractToken(req) } });

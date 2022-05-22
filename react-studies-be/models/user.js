@@ -5,6 +5,9 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
+      this.hasMany(models.AuthToken, { as: 'authTokens' });
+      this.hasMany(models.Solution, { as: 'solutions' });
+      this.hasMany(models.Task, { as: 'tasks' });
     }
   }
   User.init({
@@ -27,11 +30,15 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false
     },
     password: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(64),
       allowNull: false
     },
+    gutHubToken: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
     newPassword: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(64),
       allowNull: true
     },
     isVerified: {
@@ -42,6 +49,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
+    tableName: 'rs_user',
+    timestamps: false
   });
   return User;
 };

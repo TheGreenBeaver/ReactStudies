@@ -4,7 +4,7 @@
   "scripts": {
     "runserver": "node index.js",
     "runserver:dev": "nodemon index.js",
-    "cypress:dev": "cd test-engine && cypress run --config-file cypress.local.json"
+    "cypress:dev": "cd repo-templates && cypress run --config-file cypress.local.json"
   },
   "dependencies": {
     "cypress": "^9.6.1",
@@ -14,12 +14,14 @@
     "http-status": "^1.5.2",
     "jest": "^28.1.0",
     "lodash": "^4.17.21",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.4",
     "octokit": "^1.7.1",
-    "passport-github2": "^0.1.12",
     "pg": "^8.7.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.19.1",
     "sequelize-cli": "^6.4.1",
+    "ws": "^8.6.0",
     "yup": "^0.32.11"
   },
   "devDependencies": {

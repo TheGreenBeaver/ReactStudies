@@ -5,7 +5,7 @@ const DUMMY = { attributes: ['id'] };
 
 const userBasicAttrs = ['id', 'email', 'firstName', 'lastName'];
 const userIdentityAttrs = [...userBasicAttrs, 'isTeacher'];
-const userPrivateAttrs = [...userIdentityAttrs, 'isVerified'];
+const userPrivateAttrs = [...userIdentityAttrs, 'isVerified', 'gitHubToken'];
 const userAuthenticationAttrs = ['id', 'password'];
 
 const USER_BASIC = {
@@ -23,6 +23,8 @@ const TOKEN_AUTHORIZATION = {
     attributes: userPrivateAttrs
   }]
 };
+
+// === === ===
 
 const taskMinAttrs = ['id', 'title'];
 const taskBasicAttrs = [...taskMinAttrs, 'sampleImage'];

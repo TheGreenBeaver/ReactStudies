@@ -3,13 +3,11 @@ const cors = require('cors');
 const { isDev } = require('../util/env');
 const express = require('express');
 const helmet = require('helmet');
-const { FE_HOSTS, MEDIA_PATH, DISPLAY_SOLUTIONS_PATH } = require('../settings');
+const { FE_HOSTS } = require('../settings');
 
 function apply(app) {
   const loggerFormat = isDev ? 'dev' : 'common';
-  const logger = morgan(loggerFormat, {
-    skip: req => [MEDIA_PATH, DISPLAY_SOLUTIONS_PATH].includes(req.baseUrl)
-  });
+  const logger = morgan(loggerFormat);
 
   const jsonBodyParser = express.json();
   const formBodyParser = express.urlencoded({

@@ -1,7 +1,8 @@
 'use strict';
+const { underscores } = require('../util/sql');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Tasks', {
+    await queryInterface.createTable('task', underscores({
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -9,7 +10,16 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       title: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING(30),
+        allowNull: false
+      },
+      description: {
+        type: Sequelize.STRING(1500),
+        allowNull: true
+      },
+      repoUrl: {
+        type: Sequelize.TEXT,
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
@@ -19,9 +29,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-    });
+    }));
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Tasks');
+    await queryInterface.dropTable('task');
   }
 };

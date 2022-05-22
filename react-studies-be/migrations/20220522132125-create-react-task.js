@@ -2,28 +2,21 @@
 const { underscores } = require('../util/sql');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('solution', underscores({
+    await queryInterface.createTable('react_task', underscores({
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      repoUrl: {
-        type: Sequelize.TEXT,
-        allowNull: false
-      },
-      createdAt: {
+      includeFuzzing: {
+        type: Sequelize.BOOLEAN,
         allowNull: false,
-        type: Sequelize.DATE
+        defaultValue: true
       },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      }
     }));
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('solution');
+    await queryInterface.dropTable('react_task');
   }
 };

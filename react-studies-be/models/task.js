@@ -4,24 +4,39 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Task extends Model {
-    static KINDS = {
-      visual: 'visual',
-      dataDisplay: 'dataDisplay',
+    static TASK_KINDS = {
+      layout: 'layout',
+      react: 'react',
     };
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
     static associate(models) {
-      // define association here
+      this.belongsTo(models.User, {
+        foreignKey: { allowNull: false, name: 'teacher_id' },
+        as: 'teacher'
+      });
+      this.hasMany(models.Solution, { as: 'solutions' });
+      this.hasOne(models.ReactTask, { as: 'reactTask' });
+      this.hasOne(models.LayoutTask, { as: 'layoutTask' });
+      this.hasMany(models.TaskAttachment, { as: 'attachments' });
     }
   }
   Task.init({
-    title: DataTypes.STRING
+    title: {
+      type: DataTypes.STRING(30),
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.STRING(1500),
+      allowNull: true
+    },
+    repoUrl: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    }
   }, {
     sequelize,
     modelName: 'Task',
+    tableName: 'task'
   });
   return Task;
 };

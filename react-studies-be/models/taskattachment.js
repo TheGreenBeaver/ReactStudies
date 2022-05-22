@@ -3,27 +3,28 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Solution extends Model {
+  class TaskAttachment extends Model {
     static associate(models) {
-      this.belongsTo(models.User, {
-        foreignKey: { allowNull: false, name: 'student_id' },
-        as: 'student'
-      });
       this.belongsTo(models.Task, {
         foreignKey: { allowNull: false, name: 'task_id' },
         as: 'task'
       });
     }
   }
-  Solution.init({
-    repoUrl: {
+  TaskAttachment.init({
+    location: {
       type: DataTypes.TEXT,
+      allowNull: false
+    },
+    refName: {
+      type: DataTypes.STRING(30),
       allowNull: false
     }
   }, {
     sequelize,
-    modelName: 'Solution',
-    tableName: 'solution'
+    tableName: 'task_attachment',
+    timestamps: false,
+    modelName: 'TaskAttachment',
   });
-  return Solution;
+  return TaskAttachment;
 };

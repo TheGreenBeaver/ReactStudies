@@ -28,11 +28,15 @@ module.exports = {
         defaultValue: false
       },
       password: {
-        type: Sequelize.STRING(100),
+        type: Sequelize.STRING(64),
         allowNull: false
       },
+      gutHubToken: {
+        type: Sequelize.STRING(40),
+        allowNull: true
+      },
       newPassword: {
-        type: Sequelize.STRING(100),
+        type: Sequelize.STRING(64),
         allowNull: true
       },
       isVerified: {
@@ -43,6 +47,6 @@ module.exports = {
     }));
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Users');
+    await queryInterface.dropTable('rs_user');
   }
 };
