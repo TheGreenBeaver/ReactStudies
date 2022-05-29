@@ -1,7 +1,6 @@
 const multer = require('multer');
 const applyToRouter = require('./apply-to-router');
-const { generateRandomString } = require('../util/encrypt');
-const { now } = require('lodash');
+const now = require('lodash/now');
 
 
 const multerUtils = {
@@ -22,7 +21,7 @@ const multerUtils = {
 }
 
 function defaultFilename(req, file, cb) {
-  const uniquePrefix = generateRandomString(5);
+  const uniquePrefix = now();
   cb(null, `${uniquePrefix}-${file.originalname}`);
 }
 

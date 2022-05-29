@@ -4,7 +4,7 @@ const { EmptyResultError, UniqueConstraintError, ValidationError: SqlValidationE
 const { ValidationError: YupValidationError } = require('yup');
 const allModels = require('../models');
 const { isDev } = require('../util/env');
-const { set } = require('lodash');
+const set = require('lodash/set');
 const { NON_FIELD_ERR, GITHUB_ERR } = require('../settings');
 
 
@@ -26,7 +26,7 @@ function handleUniqueConstraintError(err, req, res, next) {
   if (err instanceof UniqueConstraintError) {
     const { parent } = err;
     const failedUnique = getFailedUnique(parent);
-    const failedModel = Object.values(allModels).find(model => model.tableName === parent.table).modelName;
+    const failedModel = Object.values(allModels).find(model => model.tableName === parent.table).name;
     return res
       .status(httpStatus.BAD_REQUEST)
       .json({ [failedUnique]: [`${failedModel} with such ${failedUnique} already exists`] });

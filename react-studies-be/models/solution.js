@@ -4,12 +4,12 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Solution extends Model {
-    static associate(models) {
-      this.belongsTo(models.User, {
+    static associate({ User, Task }) {
+      this.belongsTo(User, {
         foreignKey: { allowNull: false, name: 'student_id' },
         as: 'student'
       });
-      this.belongsTo(models.Task, {
+      this.belongsTo(Task, {
         foreignKey: { allowNull: false, name: 'task_id' },
         as: 'task'
       });

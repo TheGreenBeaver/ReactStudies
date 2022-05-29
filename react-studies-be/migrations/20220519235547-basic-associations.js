@@ -3,13 +3,13 @@
 const { getFkOperations } = require('../util/sql');
 
 
-const taskToTeacher = getFkOperations('task', 'rs_user', {
+const taskToTeacher = getFkOperations('task', 'fs_user', {
   key: 'teacher_id'
 });
-const solutionToStudent = getFkOperations('solution', 'rs_user', {
+const solutionToStudent = getFkOperations('solution', 'fs_user', {
   key: 'student_id'
 });
-const authTokenToUser = getFkOperations('auth_token', 'rs_user', {
+const authTokenToUser = getFkOperations('auth_token', 'fs_user', {
   key: 'user_id'
 });
 const solutionToTask = getFkOperations('solution', 'task');

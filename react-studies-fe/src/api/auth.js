@@ -1,16 +1,16 @@
-import ApiService from './index';
+import EndpointService from './EndpointService';
 
-class AuthService extends ApiService {
+class AuthService extends EndpointService {
   constructor() {
-    super('/auth', false);
+    super('/auth');
   }
 
-  async signIn({ email, password }) {
-    return this.instance.post('/sign_in', { email, password });
+  async signIn(credentials) {
+    return this.instance.post('/sign_in', credentials);
   }
 
   async logOut() {
-    return this.instance.post('/log_out', null, this.withAuth());
+    return this.instance.post('/log_out', null);
   }
 }
 

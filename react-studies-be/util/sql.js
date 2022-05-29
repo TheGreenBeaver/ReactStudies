@@ -1,4 +1,4 @@
-const { snakeCase } = require('lodash');
+const snakeCase = require('lodash/snakeCase');
 const { DEFAULT_PAGE_SIZE, NON_FIELD_ERR } = require('../settings');
 const httpStatus = require('http-status');
 

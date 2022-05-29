@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { getVar } = require('./env');
-const { now } = require('lodash');
+const now = require('lodash/now');
 const { EXPIRATION_TIME } = require('../settings');
 
 

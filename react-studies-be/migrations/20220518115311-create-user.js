@@ -2,7 +2,7 @@
 const { underscores } = require('../util/sql');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('rs_user', underscores({
+    await queryInterface.createTable('fs_user', underscores({
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -31,7 +31,7 @@ module.exports = {
         type: Sequelize.STRING(64),
         allowNull: false
       },
-      gutHubToken: {
+      gitHubToken: {
         type: Sequelize.STRING(40),
         allowNull: true
       },
@@ -47,6 +47,6 @@ module.exports = {
     }));
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('rs_user');
+    await queryInterface.dropTable('fs_user');
   }
 };

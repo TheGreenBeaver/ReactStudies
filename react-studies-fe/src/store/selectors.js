@@ -10,14 +10,10 @@ function useUserState() {
   };
 }
 
-function useUserData() {
-  return useSelector(state => state.account.userData);
-}
-
-function useErr() {
-  return useSelector(state => state.general.err);
+function useFatalError() {
+  return useSelector(state => state.misc.fatalError);
 }
 
 export {
-  useUserState, useErr, useUserData
+  useUserState, useFatalError
 };

@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false
       },
       description: {
-        type: Sequelize.STRING(1500),
+        type: Sequelize.TEXT,
         allowNull: true
       },
       repoUrl: {

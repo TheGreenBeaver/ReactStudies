@@ -1,13 +1,13 @@
 const paths = require('../_paths');
 const httpMethods = require('../_http-methods');
-const { strictObject, ensureEmpty } = require('../../util/validation');
+const Validators = require('../../util/validation');
 const { boolean, string, object } = require('yup');
 
 module.exports = [
   {
     path: paths.root,
     method: httpMethods.post,
-    validator: strictObject({
+    validator: Validators.strictObject({
       email: string().email(),
       firstName: string().max(30),
       lastName: string().max(30),
@@ -18,7 +18,7 @@ module.exports = [
   {
     path: paths.verify,
     method: httpMethods.post,
-    validator: strictObject({
+    validator: Validators.strictObject({
       uid: string().matches(/[\da-z]+/),
       token: string(),
     })
@@ -26,7 +26,7 @@ module.exports = [
   {
     path: paths.me,
     method: httpMethods.get,
-    validator: ensureEmpty
+    validator: Validators.ensureEmpty()
   },
   {
     path: paths.me,

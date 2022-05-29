@@ -4,23 +4,13 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class LayoutTask extends Model {
-    static associate(models) {
-      this.belongsTo(models.Task, {
+    static associate({ ElementRule, Task }) {
+      this.belongsTo(Task, {
         foreignKey: { allowNull: false, name: 'basic_task_id' },
         as: 'basicTask'
       });
-      this.hasMany(models.ElementRule, {
-        scope: { ruleName: models.ElementRule.RULE_NAMES.absPos },
-        as: 'absPosAllowedFor'
-      });
-      this.hasMany(models.ElementRule, {
-        scope: { ruleName: models.ElementRule.RULE_NAMES.rawSizing },
-        as: 'rawSizingAllowedFor'
-      });
-      this.hasMany(models.ElementRule, {
-        scope: { ruleName: models.ElementRule.RULE_NAMES.mustUse },
-        as: 'mustUse'
-      });
+
+      this.hasMany(ElementRule, { as: 'elementRules', foreignKey: 'task_id' });
     }
   }
   LayoutTask.init({
@@ -34,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     rawSizingMaxUsage: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     }
   }, {
     sequelize,

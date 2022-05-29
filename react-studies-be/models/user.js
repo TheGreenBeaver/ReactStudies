@@ -4,10 +4,10 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    static associate(models) {
-      this.hasMany(models.AuthToken, { as: 'authTokens' });
-      this.hasMany(models.Solution, { as: 'solutions' });
-      this.hasMany(models.Task, { as: 'tasks' });
+    static associate({ AuthToken, Solution, Task }) {
+      this.hasMany(AuthToken, { as: 'authTokens', foreignKey: 'user_id' });
+      this.hasMany(Solution, { as: 'solutions', foreignKey: 'task_id' });
+      this.hasMany(Task, { as: 'tasks', foreignKey: 'teacher_id' });
     }
   }
   User.init({
@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(64),
       allowNull: false
     },
-    gutHubToken: {
+    gitHubToken: {
       type: DataTypes.STRING(40),
       allowNull: true
     },
@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
-    tableName: 'rs_user',
+    tableName: 'fs_user',
     timestamps: false
   });
   return User;

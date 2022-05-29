@@ -16,6 +16,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false
     },
+    mime: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
     refName: {
       type: DataTypes.STRING(30),
       allowNull: false

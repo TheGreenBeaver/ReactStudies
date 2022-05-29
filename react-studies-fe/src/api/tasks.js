@@ -1,6 +1,7 @@
-import ApiService from './index';
+import EndpointService from './EndpointService';
 
-class TasksService extends ApiService {
+
+class TasksService extends EndpointService {
   constructor() {
     super('/tasks');
   }

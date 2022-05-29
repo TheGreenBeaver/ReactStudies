@@ -1,4 +1,4 @@
-const { snakeCase } = require('lodash');
+const snakeCase = require('lodash/snakeCase');
 const path = require('path');
 const { API_PATH } = require('../settings');
 const { listUsableFiles, baseNoExt } = require('../util/misc');

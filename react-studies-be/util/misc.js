@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { isDev, origin } = require('./env');
 const http = require('http');
+const { MEDIA_DIR, MEDIA_PATH } = require('../settings');
 
 
 function getFileIsUsable(file, basename) {
@@ -62,11 +63,25 @@ async function getPublicUrl() {
   });
 }
 
+function composeMediaPath(file, baseDir = MEDIA_DIR, basePath = MEDIA_PATH) {
+  if (!file) {
+    return null;
+  }
+
+  if (file.startsWith('http')) {
+    return file;
+  }
+
+  const purePath = path.relative(baseDir, file).replace(/\\/g, '/');
+  return `${origin}${basePath}/${purePath}`;
+}
+
 module.exports = {
   listUsableFiles,
   baseNoExt,
   isAsync,
   asyncMap,
   getFilesRecursively,
-  getPublicUrl
+  getPublicUrl,
+  composeMediaPath
 };

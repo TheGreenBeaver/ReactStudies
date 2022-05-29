@@ -3,23 +3,41 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@fontsource/roboto": "^4.5.7",
+    "@mui/icons-material": "^5.8.0",
+    "@mui/material": "^5.8.1",
+    "@reduxjs/toolkit": "^1.8.1",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
+    "@uiw/react-markdown-editor": "^4.0.3",
+    "axios": "^0.27.2",
+    "formik": "^2.2.9",
+    "formik-mui": "^4.0.0-alpha.3",
+    "http-status": "^1.5.2",
+    "lodash": "^4.17.21",
+    "notistack": "^2.0.5",
+    "prop-types": "^15.8.1",
+    "query-string": "^7.1.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-redux": "^8.0.1",
     "react-router-dom": "5",
     "react-scripts": "5.0.1",
-    "redux": "^4.2.0",
-    "smart-react-routing": "^1.0.5",
-    "web-vitals": "^2.1.0"
+    "remark-gfm": "^3.0.1",
+    "web-vitals": "^2.1.0",
+    "yup": "^0.32.11"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "util:initcomp": "node src/scripts/init-component.js",
+    "util:addpage": "node src/scripts/add-page.js",
+    "util:addgroup": "node src/scripts/add-page-group.js"
   },
   "eslintConfig": {
     "extends": [

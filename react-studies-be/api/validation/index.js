@@ -1,11 +1,11 @@
-import path from 'path';
-import { cloneDeep } from 'lodash';
+const path = require('path');
+const cloneDeep = require('lodash/cloneDeep');
 
 
 function apply(filename, router) {
   const validatorsPath = path.join(__dirname, path.basename(filename));
   const validators = require(validatorsPath);
-  validators.forEach(({ path, method, validator }) => {
+  validators.forEach(({ path, method, validator, transformer }) => {
     router[method](path, async (req, res, next) => {
       try {
         const { body, file, files, user } = req;
@@ -20,8 +20,9 @@ function apply(filename, router) {
             Object.assign(toValidate, files);
           }
         }
-        req.body = await validator.validate(toValidate, { abortEarly: false, strict: true }, { context: { user } });
-        next('route');
+        req.body = transformer ? transformer(toValidate) : toValidate;
+        await validator.validate(req.body, { abortEarly: false, strict: true, context: { user } });
+        next();
       } catch (e) {
         next(e);
       }

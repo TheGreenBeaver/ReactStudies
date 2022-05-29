@@ -1,12 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { startCase } = require('lodash');
 
 
 async function run() {
   const [,, name, stylesExt] = process.argv;
   const mainFileName = path.basename(name);
-  const compName = startCase(mainFileName).replace(/ /g, '');
 
   const srcDir = __dirname.split(path.sep).slice(0, -1).join(path.sep);
 
@@ -16,7 +14,7 @@ async function run() {
 
   const compIndexFile = path.join(compDirName, 'index.js');
   await fs.promises.writeFile(compIndexFile,
-    `import ${compName} from './${mainFileName}';\n\nexport default ${compName};`);
+    `export { default } from './${mainFileName}'`);
   console.log('Index file created...');
 
   const compMainFile = path.join(compDirName, `${mainFileName}.js`);

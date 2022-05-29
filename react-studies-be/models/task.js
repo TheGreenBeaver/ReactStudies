@@ -9,15 +9,15 @@ module.exports = (sequelize, DataTypes) => {
       react: 'react',
     };
 
-    static associate(models) {
-      this.belongsTo(models.User, {
+    static associate({ User, Solution, ReactTask, LayoutTask, TaskAttachment }) {
+      this.belongsTo(User, {
         foreignKey: { allowNull: false, name: 'teacher_id' },
         as: 'teacher'
       });
-      this.hasMany(models.Solution, { as: 'solutions' });
-      this.hasOne(models.ReactTask, { as: 'reactTask' });
-      this.hasOne(models.LayoutTask, { as: 'layoutTask' });
-      this.hasMany(models.TaskAttachment, { as: 'attachments' });
+      this.hasMany(Solution, { as: 'solutions', foreignKey: 'task_id' });
+      this.hasOne(ReactTask, { as: 'reactTask', foreignKey: 'basic_task_id' });
+      this.hasOne(LayoutTask, { as: 'layoutTask', foreignKey: 'basic_task_id' });
+      this.hasMany(TaskAttachment, { as: 'attachments', foreignKey: 'task_id' });
     }
   }
   Task.init({
@@ -26,12 +26,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     description: {
-      type: DataTypes.STRING(1500),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     repoUrl: {
       type: DataTypes.TEXT,
       allowNull: false
+    },
+    trackUpdates: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     }
   }, {
     sequelize,

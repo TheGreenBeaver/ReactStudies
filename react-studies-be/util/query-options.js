@@ -1,87 +1,73 @@
-const { User, Task, AdditionalTaskInfo, TaskAssertion } = require('../models');
+const { User, ElementRule, LayoutTask, ReactTask, TaskAttachment, Solution } = require('../models');
 
 
-const DUMMY = { attributes: ['id'] };
+const dummyAttrs = ['id'];
+const Dummy = { attributes: dummyAttrs };
 
-const userBasicAttrs = ['id', 'email', 'firstName', 'lastName'];
-const userIdentityAttrs = [...userBasicAttrs, 'isTeacher'];
-const userPrivateAttrs = [...userIdentityAttrs, 'isVerified', 'gitHubToken'];
 const userAuthenticationAttrs = ['id', 'password'];
+const userListAttrs = ['firstName', 'lastName', 'isTeacher'];
+const userPublicAttrs = ['id', 'email', ...userListAttrs];
+const userPrivateAttrs = [...userPublicAttrs, 'isVerified', 'gitHubToken'];
+const User_Default = { attributes: userPublicAttrs };
+const User_List = { attributes: userListAttrs };
+const User_Private = { attributes: userPrivateAttrs };
+const User_Authentication = { attributes: userAuthenticationAttrs };
 
-const USER_BASIC = {
-  attributes: userBasicAttrs
-};
-const USER_AUTHENTICATION = {
-  attributes: userAuthenticationAttrs
-};
-
-const TOKEN_AUTHORIZATION = {
+const AuthToken_Authorization = {
   attributes: ['key'],
-  include: [{
-    model: User,
-    as: 'user',
-    attributes: userPrivateAttrs
-  }]
+  include: [{ model: User, as: 'user', ...User_Private }],
 };
 
-// === === ===
+const LayoutTask_Default = {
+  attributes: ['sampleImage', 'absPosMaxUsage', 'rawSizingMaxUsage'],
+  include: [{ model: ElementRule, as: 'elementRules' }]
+};
+const LayoutTask_Hidden = { attributes: ['sampleImage'] };
 
-const taskMinAttrs = ['id', 'title'];
-const taskBasicAttrs = [...taskMinAttrs, 'sampleImage'];
-
-const TASK_MIN = {
-  attributes: taskMinAttrs
+const Solution_List = {
+  attributes: ['id', 'updatedAt'],
+  include: [{ model: User, as: 'student', ...User_List }]
 };
 
-const TASK_BASIC = {
-  attributes: taskBasicAttrs,
+const taskDefaultInclude = [
+  { model: User, as: 'teacher' },
+  { model: LayoutTask, as: 'layoutTask' },
+  { model: ReactTask, as: 'reactTask' },
+  { model: TaskAttachment, as: 'attachments' }
+];
+const taskDefaultAttrs = ['id', 'title', 'description', 'repoUrl', 'trackUpdates', 'createdAt', 'updatedAt'];
+const Task_Default = { attributes: taskDefaultAttrs, include: taskDefaultInclude };
+const Task_List = {
+  attributes: ['id', 'title'],
   include: [
-    {
-      model: User,
-      as: 'teacher',
-      ...USER_BASIC
-    },
-    {
-      model: AdditionalTaskInfo,
-      as: 'infoEntries',
-      attributes: ['id', 'kind', 'content']
-    }
+    { model: ReactTask, as: 'reactTask', attributes: dummyAttrs },
+    { model: LayoutTask, as: 'layoutTask', attributes: dummyAttrs },
+    { model: User, as: 'teacher', ...User_List }
   ]
 };
-const TASK_FOR_TEACHER = { ...TASK_BASIC };
-TASK_FOR_TEACHER.include.push({
-  model: TaskAssertion,
-  as: 'assertions',
-  attributes: ['id', 'kind', 'text']
-});
-
-const SOLUTION_BASIC = {
-  attributes: ['id', 'path', 'status'],
-  include: [
-    {
-      model: Task,
-      as: 'task',
-      ...TASK_BASIC
-    },
-    {
-      model: User,
-      as: 'student',
-      ...USER_BASIC
-    }
-  ]
+const Task_ForTeacher = {
+  attributes: taskDefaultAttrs, include: [
+    ...taskDefaultInclude,
+    { model: Solution, as: 'solutions', ...Solution_List }
+  ],
 };
 
 module.exports = {
-  DUMMY,
+  Dummy,
 
-  USER_BASIC,
-  USER_AUTHENTICATION,
+  User_Default,
+  User_List,
+  User_Private,
+  User_Authentication,
 
-  TOKEN_AUTHORIZATION,
+  AuthToken_Authorization,
 
-  SOLUTION_BASIC,
+  LayoutTask_Default,
+  LayoutTask_Hidden,
 
-  TASK_MIN,
-  TASK_BASIC,
-  TASK_FOR_TEACHER
+  Solution_List,
+
+  Task_Default,
+  Task_List,
+  Task_ForTeacher
 };

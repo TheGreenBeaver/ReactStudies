@@ -10,8 +10,8 @@ module.exports = (sequelize, DataTypes) => {
       mustUse: 'must_use'
     };
 
-    static associate(models) {
-      this.belongsTo(models.LayoutTask, {
+    static associate({ LayoutTask }) {
+      this.belongsTo(LayoutTask, {
         foreignKey: { allowNull: false, name: 'task_id' },
         as: 'task'
       });
@@ -24,11 +24,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     content: {
-      type: DataTypes.TEXT,
+      type: DataTypes.ARRAY(DataTypes.TEXT),
       allowNull: true
     },
     tag: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(20),
       allowNull: true
     }
   }, {

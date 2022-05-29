@@ -1,47 +1,19 @@
-const TOKEN = 'token';
-
-function getCookie(name) {
-  return document.cookie
-    .split('; ')
-    .find(cookie => cookie.startsWith(`${name}=`))
-    ?.split('=')[1];
-}
-
-function setCookie(name, value, maxAge = 60 * 60 * 24 * 365) {
-  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; secure; samesite=strict`;
-}
-
-function deleteCookie(name) {
-  setCookie(name, `Token ${getCredentials()}`, -1);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+const TOKEN_KEY = 'fsAuthToken';
 
 function getCredentials() {
-  return getCookie(TOKEN);
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function saveCredentials(token) {
-  setCookie(TOKEN, `Token ${token}`);
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 function clearCredentials() {
-  deleteCookie(TOKEN);
+  localStorage.removeItem(TOKEN_KEY);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function getIsAuthorized() {
   return !!getCredentials();
 }
 
-function getAuthHeaders(headers = {}) {
-  return { ...headers, Authorization: getCredentials() };
-}
-
-export {
-  saveCredentials,
-  clearCredentials,
-  getCredentials,
-  getAuthHeaders,
-  getIsAuthorized
-};
+export { getCredentials, saveCredentials, clearCredentials, getIsAuthorized };

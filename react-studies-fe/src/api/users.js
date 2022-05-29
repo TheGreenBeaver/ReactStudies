@@ -1,14 +1,14 @@
-import ApiService from './index';
+import EndpointService from './EndpointService';
 
-class UsersService extends ApiService {
+
+class UsersService extends EndpointService {
   constructor() {
-    super('/users', false);
+    super('/users');
   }
 
   async me() {
-    return this.instance.get('/me', this.withAuth());
+    return this.instance.get('/me');
   }
-
 
   async verify(uid, token) {
     return this.instance.post('/verify', { uid, token });

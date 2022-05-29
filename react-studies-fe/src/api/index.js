@@ -1,45 +1,32 @@
-import axios from 'axios';
-import { getVar, isDev } from '../util/env';
-import { getAuthHeaders } from '../util/auth';
+import usersService from './users';
+import authService from './auth';
+import tasksService from './tasks';
 
 
-class ApiService {
-  constructor(endpoint, ensureAuth = true) {
-    const host = isDev() ? getVar('REACT_APP_HOST') : window.location.origin;
-    const apiRoot = '/api';
-    const options = { baseURL: `${host}${apiRoot}${endpoint}` };
-    if (ensureAuth) {
-      options.headers = getAuthHeaders();
-    }
-    this.instance = axios.create(options);
+class Api {
+  constructor() {
+    this.users = usersService;
+    this.auth = authService;
+    this.tasks = tasksService;
   }
 
-  withAuth(options = {}) {
-    return {
-      ...options,
-      headers: getAuthHeaders(options.headers)
-    };
+  allServices(action) {
+    Object.values(this).forEach(action);
   }
 
-  async get(id, options) {
-    return this.instance.get(`/${id}`, options);
+  authorizeAll(token) {
+    this.allServices(service => service.authorize(token));
   }
 
-  async list(options) {
-    return this.instance.get('/', options);
+  unAuthorizeAll() {
+    this.allServices(service => service.unAuthorize());
   }
 
-  async create(data, options) {
-    return this.instance.post('/', data, options);
-  }
-
-  async update(id, data, options) {
-    return this.instance.patch(`/${id}`, data, options);
-  }
-
-  async delete(id, options) {
-    return this.instance.delete(`/${id}`, options);
+  addErrorhandlerForAll(handler) {
+    this.allServices(service => service.addErrorHandler(handler));
   }
 }
 
-export default ApiService;
+const api = new Api();
+export default api;
+export { Api };

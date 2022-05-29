@@ -4,8 +4,8 @@ const applyToRouter = require('./apply-to-router');
 async function authorizationProvider(req, res, next) {
   const token = extractToken(req);
   try {
-    const { user } = await authorize(token);
-    req.user = user;
+    const authToken = await authorize(token);
+    req.user = authToken.user;
     next();
   } catch (e) {
     next(e);

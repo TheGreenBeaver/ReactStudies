@@ -5,8 +5,8 @@ const {
 const { generateRandomString } = require('../util/encrypt');
 module.exports = (sequelize, DataTypes) => {
   class AuthToken extends Model {
-    static associate(models) {
-      this.belongsTo(models.User, {
+    static associate({ User }) {
+      this.belongsTo(User, {
         foreignKey: { allowNull: false, name: 'user_id' },
         as: 'user'
       });
