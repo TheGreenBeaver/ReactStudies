@@ -1,52 +1,59 @@
-const initRouter = require('./_init-router');
-const { NON_FIELD_ERR, GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
+const SmartRouter = require('./_smart-router');
+const { GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
 const httpStatus = require('http-status');
 const { Task, TaskAttachment, ElementRule } = require('../models');
-const paths = require('./_paths');
-const applyMulter = require('../middleware/multer');
-const applyValidation = require('./validation');
+const multerMw = require('../middleware/multer');
 const { Octokit } = require('octokit');
-const httpMethods = require('./_http-methods');
 const fs = require('fs');
 const path = require('path');
+const { Task_ForTeacher } = require('../util/query-options');
 
 
-const router = initRouter();
+class TasksRouter extends SmartRouter {
+  constructor() {
+    const createDestination = (req, file, cb) => {
+      const { fieldname } = file;
+      const timestamp = multerMw.multerUtils.useSingleTs(req);
+      const dir = path.join(MEDIA_DIR, 'tasks', `task-${timestamp}`, fieldname);
+      fs.mkdir(dir, { recursive: true }, () => {
+        cb(null, dir);
+      });
+    }
+    const createFields = [{ name: 'attachments' }, { name: 'sampleImage', maxCount: 1 }]
 
-function multerDestination(req, file, cb) {
-  const { fieldname } = file;
-  const timestamp = applyMulter.multerUtils.useSingleTs(req);
-  const dir = path.join(MEDIA_DIR, 'tasks', `task-${timestamp}`, fieldname);
-  fs.mkdir(dir, { recursive: true }, () => {
-    cb(null, dir);
-  });
-}
-
-const fields = [{ name: 'attachments' }, { name: 'sampleImage', maxCount: 1 }];
-applyMulter(router, fields, multerDestination, {
-  fieldType: 'fields', routes: [{ method: httpMethods.post, route: paths.root }]
-});
-applyValidation(__filename, router);
-
-router.post(paths.root, async (req, res, next) => {
-  if (!req.user.isTeacher) {
-    return res.status(httpStatus.FORBIDDEN).json({
-      [NON_FIELD_ERR]: ['Only teachers are allowed to create tasks']
+    super(Task, __filename, {
+      AccessRules: {
+        retrieve: { isAuthorized: true, isVerified: true },
+        list: { isAuthorized: true, isVerified: true },
+        create: { isAuthorized: true, isVerified: true, isTeacher: true },
+        update: { isAuthorized: true, isVerified: true, isTeacher: true },
+        remove: { isAuthorized: true, isVerified: true, isTeacher: true },
+      },
+      MulterLogic: {
+        create: [createFields, createDestination, { fieldType: multerMw.FIELD_TYPES.fields }]
+      }
     });
   }
 
-  try {
+  getQueryOptions(handlerName, req) {
+    if (handlerName === 'retrieve' && req.user.isTeacher) {
+      return Task_ForTeacher;
+    }
+    return super.getQueryOptions(handlerName, req);
+  }
+
+  async handleCreate(req, options, res, next) {
     const {
       kind,
       title,
       description,
-      attachments: attachmentFiles,
       attachmentNames,
       trackUpdates,
 
       gitHubToken,
       rememberToken
     } = req.body;
+    const { attachments: attachmentFiles } = req.files;
 
     if (rememberToken && gitHubToken) {
       req.user.gitHubToken = gitHubToken;
@@ -68,11 +75,12 @@ router.post(paths.root, async (req, res, next) => {
 
     switch (kind) {
       case Task.TASK_KINDS.layout:
-        const { mustUse, absPos, rawSizing, sampleImage } = req.body;
+        const { mustUse, absPos, rawSizing } = req.body;
+        const { sampleImage } = req.files;
         const mustUseRules = mustUse?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.mustUse })) || [];
         const absPosRules = absPos?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.absPos })) || [];
         const rawSizingRules = rawSizing?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.rawSizing })) || [];
-        const layoutTask = await basicTask.createLayoutTask({
+        await basicTask.createLayoutTask({
           sampleImage: sampleImage[0].path,
           absPosMaxUsage: absPos?.maxUsage,
           rawSizingMaxUsage: rawSizing?.maxUsage,
@@ -80,13 +88,12 @@ router.post(paths.root, async (req, res, next) => {
         }, {
           include: [{ model: ElementRule, as: 'elementRules' }],
         });
-        return res.status(httpStatus.CREATED).json(layoutTask);
+        return { status: httpStatus.CREATED, data: basicTask };
       case Task.TASK_KINDS.react:
-        // TODO
+      // TODO
     }
-  } catch (e) {
-    next(e);
   }
-});
+}
 
-module.exports = router;
+const tasksRouter = new TasksRouter();
+module.exports = tasksRouter.router;

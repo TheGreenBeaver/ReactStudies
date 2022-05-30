@@ -1,5 +1,5 @@
 import React from 'react';
-import { object, node, func, bool, string } from 'prop-types';
+import { object, node, func, bool, string, oneOfType } from 'prop-types';
 import { Form, Formik } from 'formik';
 import GeneralError from './interactions/GeneralError';
 import { SWITCHER } from '../../hooks/useEditableView';
@@ -20,16 +20,13 @@ function SmartForm({
   submitText,
   noSubmitLogic,
   onValidationFailed,
+  fast
 }) {
   const content = doNotPopulate
     ? children
     : <Form>
       {children}
-      <SubmitButton
-        fullWidth
-        variant='contained'
-        sx={{ mt: 3, mb: 2 }}
-      >
+      <SubmitButton type='submit' fullWidth sx={{ mt: 3, mb: 2 }}>
         {submitText}
       </SubmitButton>
       <GeneralError />
@@ -57,6 +54,7 @@ function SmartForm({
       initialStatus={switching ? { [SWITCHER]: initialIsEditing } : undefined}
       validate={validate}
       onSubmit={handleSubmit}
+      validateOnChange={!fast}
     >
       {content}
     </Formik>
@@ -65,7 +63,7 @@ function SmartForm({
 
 SmartForm.propTypes = {
   initialValues: object.isRequired,
-  children: node.isRequired,
+  children: oneOfType([node, func]).isRequired,
   onSubmit: func.isRequired,
   switching: bool,
   initialIsEditing: bool,
@@ -79,7 +77,8 @@ SmartForm.propTypes = {
   onValidationFailed: func,
   doNotPopulate: bool,
   noSubmitLogic: bool,
-  submitText: string
+  submitText: string,
+  fast: bool
 };
 
 SmartForm.defaultProps = {

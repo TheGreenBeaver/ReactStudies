@@ -1,5 +1,4 @@
 const multer = require('multer');
-const applyToRouter = require('./apply-to-router');
 const now = require('lodash/now');
 
 
@@ -29,17 +28,20 @@ function defaultFileFilter(req, file, cb) {
   cb(null, true);
 }
 
-function apply(router, fieldName, destination, {
-  fieldType = 'single', routes,
+const FIELD_TYPES = {
+  single: 'single', fields: 'fields', array: 'array',
+};
+
+function apply(fieldName, destination, {
+  fieldType = FIELD_TYPES.single,
   filename = defaultFilename,
   fileFilter = defaultFileFilter
 } = {}) {
   const storage = multer.diskStorage({ destination, filename });
-  const fileParser = multer({ storage, fileFilter })[fieldType](fieldName);
-
-  applyToRouter(fileParser, router, routes);
+  return multer({ storage, fileFilter })[fieldType](fieldName);
 }
 
 apply.multerUtils = multerUtils;
+apply.FIELD_TYPES = FIELD_TYPES;
 
 module.exports = apply;

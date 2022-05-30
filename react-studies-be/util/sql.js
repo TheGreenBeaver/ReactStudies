@@ -1,6 +1,7 @@
 const snakeCase = require('lodash/snakeCase');
-const { DEFAULT_PAGE_SIZE, NON_FIELD_ERR } = require('../settings');
+const { DEFAULT_PAGE_SIZE } = require('../settings');
 const httpStatus = require('http-status');
+const { StatusError } = require('./custom-errors');
 
 
 /**
@@ -65,7 +66,6 @@ async function paginate(
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
   options = {},
-  serializer = v => v,
   searchFor
 ) {
   const allResults = searchFor
@@ -73,17 +73,15 @@ async function paginate(
     : await scope.findAll(options);
   const count = allResults.length;
   if ((page - 1) * pageSize >= count && count > 0) {
-    return {
-      status: httpStatus.BAD_REQUEST,
-      payload: { [NON_FIELD_ERR]: [`No such page: ${page}`] }
-    };
+    throw new StatusError(httpStatus.NOT_FOUND);
   }
-  const results = allResults.slice((page - 1) * pageSize, page * pageSize).map(serializer);
+  const results = allResults.slice((page - 1) * pageSize, page * pageSize);
   return {
-    payload: {
+    data: {
       results, count,
-      next: page * pageSize < count ? page + 1 : null, prev: (page - 1) || null
-    }
+      next: page * pageSize < count ? page + 1 : null, prev: (page - 1) || null,
+    },
+    __paginated: true
   };
 }
 

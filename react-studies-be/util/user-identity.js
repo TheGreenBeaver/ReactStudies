@@ -3,7 +3,7 @@ const { StatusError } = require('./custom-errors');
 const httpStatus = require('http-status');
 const { compareHashed } = require('./encrypt');
 const { NON_FIELD_ERR } = require('../settings');
-const { AuthToken_Authorization, User_Authentication } = require('./query-options');
+const { AuthToken_Authorization } = require('./query-options');
 
 
 function extractToken(req) {
@@ -18,15 +18,15 @@ async function authorize(token) {
   });
 }
 
-async function authenticate({ email, password }, res) {
-  const user = await User.findOne({ where: { email }, ...User_Authentication, rejectOnEmpty: false });
+async function authenticate({ email, password }, options) {
+  const user = await User.findOne({ where: { email }, ...options, rejectOnEmpty: false });
 
   if (!user || !compareHashed(password, user.password)) {
-    return res.status(httpStatus.BAD_REQUEST).json({ [NON_FIELD_ERR]: ['Invalid credentials'] });
+    return { data: { [NON_FIELD_ERR]: ['Invalid credentials'] }, status: httpStatus.BAD_REQUEST };
   }
 
   const authToken = await user.createAuthToken();
-  return res.json({ token: authToken.key });
+  return { data: { token: authToken.key } };
 }
 
 module.exports = {

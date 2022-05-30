@@ -15,7 +15,7 @@ function getDefaultPath({ isAuthorized, isVerified }) {
     return links.auth.notVerified.path;
   }
 
-  return links.tasks.taskList.path;
+  return links.tasks.taskList.compose({ page: 1 });
 }
 
 export default links;

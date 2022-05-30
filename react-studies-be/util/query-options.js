@@ -30,8 +30,8 @@ const Solution_List = {
 };
 
 const taskDefaultInclude = [
-  { model: User, as: 'teacher' },
-  { model: LayoutTask, as: 'layoutTask' },
+  { model: User, as: 'teacher', ...User_Default },
+  { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
   { model: ReactTask, as: 'reactTask' },
   { model: TaskAttachment, as: 'attachments' }
 ];

@@ -11,12 +11,14 @@ import GeneralSettings from './sections/GeneralSettings';
 import MainTypeSettings from './sections/MainTypeSettings';
 import SectionWrapper from './SectionWrapper';
 import AdvancedTypeSettings from './sections/AdvancedTypeSettings';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { getUpd } from '../../../util/misc';
 import fieldAccepts from './fieldAccepts';
 import { finishSubmit, getFormData } from '../../../util/form';
-import { useSelector } from 'react-redux';
-import GitHubTokenModal from '../../../components/GitHubTokenModal';
+import GitHubTokenField from '../../../uiKit/SmartForm/fields/GitHubTokenField';
+import { Form } from 'formik';
+import GeneralError from '../../../uiKit/SmartForm/interactions/GeneralError';
+import Box from '@mui/material/Box';
 
 
 const SECTION_NAMES = {
@@ -71,15 +73,8 @@ function CreateTask() {
     [SECTION_NAMES.main]: true,
     [SECTION_NAMES.advanced]: false
   });
-  const { gitHubToken } = useSelector(state => state.account.userData);
-  const [tokenModalOpen, setTokenModalOpen] = useState(false);
 
   function onSubmit(values, formikHelpers) {
-    if (!(gitHubToken || values[TOKEN_FIELDS.gitHubToken])) {
-      return setTokenModalOpen(true);
-    }
-    setTokenModalOpen(false);
-
     const kind = values[fieldNames.kind];
     const fields = [
       ...fieldsForKinds[kind],
@@ -98,6 +93,8 @@ function CreateTask() {
       <SmartForm
         onSubmit={onSubmit}
         noSubmitLogic
+        fast
+        doNotPopulate
         initialValues={{
           [TOKEN_FIELDS.gitHubToken]: '',
           [TOKEN_FIELDS.rememberToken]: true,
@@ -114,7 +111,6 @@ function CreateTask() {
           [fieldNames.absPos]: null,
           [fieldNames.rawSizing]: null
         }}
-        submitText='Create'
         validationSchema={{
           [fieldNames.title]: Validators.standardText(30),
           [fieldNames.attachments]: Validators.file(
@@ -148,27 +144,27 @@ function CreateTask() {
           setSectionsExpanded(curr => ({ ...curr, ...toExpand }));
         }}
       >
-        <GitHubTokenModal
-          entity='task'
-          onClose={() => setTokenModalOpen(false)}
-          open={tokenModalOpen}
-          action='create'
-        />
-        {
-          sections.map(({ Component, title, name}) =>
-            <SectionWrapper
-              key={Component.name}
-              expanded={sectionsExpanded[name]}
-              setExpanded={upd => setSectionsExpanded(curr => ({
-                ...curr,
-                [name]: getUpd(upd, curr[name])
-              }))}
-              title={title}
-            >
-              <Component />
-            </SectionWrapper>
-          )
-        }
+        <Form>
+          {
+            sections.map(({ Component, title, name }) =>
+              <SectionWrapper
+                key={Component.name}
+                expanded={sectionsExpanded[name]}
+                setExpanded={upd => setSectionsExpanded(curr => ({
+                  ...curr,
+                  [name]: getUpd(upd, curr[name]),
+                }))}
+                title={title}
+              >
+                <Component />
+              </SectionWrapper>,
+            )
+          }
+          <Box display='flex' justifyContent='end' width='100%' mt={3}>
+            <GitHubTokenField entity='task' action='create' sx={{ width: '50%' }} />
+          </Box>
+          <GeneralError />
+        </Form>
       </SmartForm>
     </>
   )

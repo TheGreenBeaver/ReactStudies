@@ -17,7 +17,15 @@ import useScrollToNewInput from '../../../../hooks/useScrollToNewInput';
 
 
 function FileField({ label, height, ratio, width, name, multiple, accept }) {
-  const { values, setFieldValue, errors, touched, isEditing, isSubmitting, setFieldTouched } = useEditableView();
+  const {
+    values,
+    setFieldValue,
+    errors,
+    touched,
+    isEditing,
+    isSubmitting,
+    setFieldTouched
+  } = useEditableView();
 
   const disabled = !isEditing || isSubmitting;
 
@@ -47,17 +55,17 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
   const hasValue = multiple ? !!fileFieldValue.length : !!fileFieldValue;
 
   function setFileFieldValue(upd) {
-    setFieldTouched(fileFieldName, true, false);
     const newFileFieldValue = getUpd(upd, fileFieldValue);
-    setFieldValue(fileFieldName, newFileFieldValue);
+    setFieldValue(fileFieldName, newFileFieldValue, true);
+    setFieldTouched(fileFieldName, true, false);
     return newFileFieldValue;
   }
 
   function setRefFieldValue(upd) {
     if (refFieldName) {
-      setFieldTouched(refFieldName, true, false);
       const newRefFieldValue = getUpd(upd, refFieldValue);
       setFieldValue(refFieldName, newRefFieldValue, false);
+      setFieldTouched(refFieldName, true, false);
       return newRefFieldValue;
     }
   }

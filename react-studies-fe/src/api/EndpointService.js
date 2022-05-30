@@ -13,8 +13,12 @@ class EndpointService {
       options.headers = { Authorization: `Token ${getCredentials()}` };
     }
     this.instance = axios.create(options);
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-    methods.forEach(method => {
+    const proto = Object.getPrototypeOf(this);
+    const ownMethods = Object.getOwnPropertyNames(proto);
+    const inheritedMethods = Object.getOwnPropertyNames(Object.getPrototypeOf(proto));
+    [...ownMethods, ...inheritedMethods]
+      .filter(method => !['constructor', 'authorize', 'unAuthorize', 'addErrorHandler'].includes(method))
+      .forEach(method => {
       this[method] = this[method].bind(this);
     });
   }
@@ -31,7 +35,7 @@ class EndpointService {
     delete this.instance.defaults.headers.common.Authorization;
   }
 
-  async get(id, options) {
+  async retrieve(id, options) {
     return this.instance.get(`/${id}`, options);
   }
 
@@ -47,7 +51,7 @@ class EndpointService {
     return this.instance.patch(`/${id}`, data, options);
   }
 
-  async delete(id, options) {
+  async remove(id, options) {
     return this.instance.delete(`/${id}`, options);
   }
 }

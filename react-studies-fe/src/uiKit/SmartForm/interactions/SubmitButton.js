@@ -10,8 +10,8 @@ function SubmitButton({ children, sx, ...props }) {
 
   return (
     <Button
-      type='submit'
       disabled={isSubmitting}
+      variant='contained'
       sx={{ display: 'flex', columnGap: 1, ...sx }}
       {...props}
     >

@@ -171,11 +171,15 @@ class Validators {
   }
 
   static onlyKind(kind, schema) {
-    return schema.when('kind', {
-      is: kind,
+    return schema.when('$body', {
+      is: body => body.kind === kind,
       then: schema => schema,
       otherwise: () => this.ensureEmpty()
     });
+  }
+
+  static withPagination(spec = {}) {
+    return { ...spec, page: this.niceNumber().optional(), pageSize: this.niceNumber().optional() };
   }
 }
 
