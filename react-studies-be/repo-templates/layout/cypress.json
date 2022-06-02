@@ -1,0 +1,7 @@
+{
+  "screenshotOnRunFailure": false,
+  "video": false,
+  "env": {
+    "failOnSnapshotDiff": false
+  }
+}

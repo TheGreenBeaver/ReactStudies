@@ -11,19 +11,21 @@ const { StatusError } = require('./custom-errors');
  * @param {string} [referencedField = 'id'] - field of the `referencedTable` to connect through
  * @param {string=} key - the name of the column to be added to `table`
  * @param {string=} constraintName - the name of the constraint to be created
+ * @param {boolean} [allowNull = false]
  * @return {{up: ((function(*, *): Promise<void>)), down: ((function(*, *): Promise<void>))}}
  */
 function getFkOperations(table, referencedTable, {
   referencedField = 'id',
   key = `${referencedTable}_${referencedField}`,
-  constraintName = `${table}_${referencedTable}_${referencedField}_fkey`
+  constraintName = `${table}_${referencedTable}_${referencedField}_fkey`,
+  allowNull = false
 } = {}) {
 
   return {
     up: async (queryInterface, Sequelize) => {
       await queryInterface.addColumn(table, key, {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull
       });
       await queryInterface.addConstraint(table, {
         fields: [key],

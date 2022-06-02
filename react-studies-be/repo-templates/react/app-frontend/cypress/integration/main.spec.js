@@ -20,8 +20,7 @@ function populateWithPercentage(data) {
   data.percentage = `${percentage}%`;
 }
 
-it('Should display data received from server', () => {
-  const appHost = Cypress.env('app_host');
+it('task', () => {
   const apiRoutes = Cypress.env('api_routes');
 
   const aliases = apiRoutes.map(apiRoute => {
@@ -30,7 +29,7 @@ it('Should display data received from server', () => {
     return `@${alias}`;
   });
 
-  cy.visit(appHost);
+  cy.visit('http://localhost:3000');
 
   cy.wait(aliases).then(inter => {
     cy.get('body').then((b) => {

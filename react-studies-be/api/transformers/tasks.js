@@ -1,5 +1,5 @@
 const mapValues = require('lodash/mapValues');
-const { paginationTransformer } = require('../../util/transformers');
+const { paginationTransformer, boolTransformer } = require('../../util/transformers');
 
 
 module.exports = {
@@ -8,25 +8,21 @@ module.exports = {
       if (['absPos', 'rawSizing'].includes(fieldName)) {
         return JSON.parse(fieldValue);
       }
-      if (['mustUse'].includes(fieldName)) {
+      if (['mustUse', 'pages'].includes(fieldName)) {
         const adjusted = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
         return adjusted.map(el => JSON.parse(el));
       }
-      if (['rememberToken', 'trackUpdates'].includes(fieldName)) {
-        switch (fieldValue) {
-          case 'true':
-            return true;
-          case 'false':
-            return false;
-          default:
-            return fieldValue;
-        }
+      if (['rememberToken', 'trackUpdates', 'includeFuzzing'].includes(fieldName)) {
+        return boolTransformer(fieldValue);
       }
       return fieldValue;
     });
   },
   list: req => {
     paginationTransformer(req);
+    if ('teacherId' in req.query) {
+      req.query.teacherId = parseInt(req.query.teacherId);
+    }
   }
 };
 

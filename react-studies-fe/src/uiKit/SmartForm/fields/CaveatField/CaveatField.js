@@ -1,5 +1,5 @@
-import { arrayOf, number, oneOf, string } from 'prop-types';
-import { CAVEAT_FIELDS, ELEMENT_FIELDS } from '../../../../util/constants';
+import { number, string } from 'prop-types';
+import { CAVEAT_FIELDS } from '../../../../util/constants';
 import useEditableView from '../../../../hooks/useEditableView';
 import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -8,7 +8,7 @@ import { getUpd } from '../../../../util/misc';
 import Typography from '@mui/material/Typography';
 import MaxUsage from './MaxUsage';
 import ElementsListField from '../ElementsListField';
-import { Prefixes } from '../../../../util/types';
+import { ElementFields, Prefixes } from '../../../../util/types';
 import Collapse from '@mui/material/Collapse';
 import useCollapse from '../../../../hooks/useCollapse';
 
@@ -88,7 +88,7 @@ function CaveatField({
 CaveatField.propTypes = {
   name: string.isRequired,
   label: string,
-  requiredElementFields: arrayOf(oneOf([...Object.values(ELEMENT_FIELDS)])),
+  requiredElementFields: ElementFields,
   prefixes: Prefixes.isRequired,
   recommended: number,
 };

@@ -1,3 +1,7 @@
+import ReactIcon from '../assets/icons/React';
+import Html from '@mui/icons-material/Html';
+
+
 const NON_FIELD_ERR = '_nonFieldErr';
 const GITHUB_ERR = '_gitHubErr';
 
@@ -20,6 +24,10 @@ const TASK_KIND_DEFINITIONS = {
   [TASK_KINDS.react]: 'React app',
   [TASK_KINDS.layout]: 'HTML layout'
 };
+const TASK_KIND_ICONS = {
+  [TASK_KINDS.react]: ReactIcon,
+  [TASK_KINDS.layout]: Html
+};
 
 const ELEMENT_FIELDS = {
   tag: 'tag',
@@ -38,6 +46,8 @@ const TOKEN_FIELDS = {
   rememberToken: 'rememberToken',
 };
 
+const DEFAULT_PAGINATED_DATA = { results: [], next: null, prev: null, count: 0 };
+const DEFAULT_PAGE_SIZE = 30;
 const STANDARD_RATIO = { w: 16, h: 9 };
 const COLOUR_MODES = {
   dark: 'dark',
@@ -47,7 +57,7 @@ const COLOUR_MODES = {
 export {
   NON_FIELD_ERR, GITHUB_ERR,
   SIZE_UNITS, FILE_TRIBES,
-  TASK_KINDS, TASK_KIND_DEFINITIONS,
+  TASK_KINDS, TASK_KIND_DEFINITIONS, TASK_KIND_ICONS,
   ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY, CAVEAT_FIELDS, TOKEN_FIELDS,
-  STANDARD_RATIO, COLOUR_MODES
+  STANDARD_RATIO, COLOUR_MODES, DEFAULT_PAGE_SIZE, DEFAULT_PAGINATED_DATA
 };

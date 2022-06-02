@@ -1,8 +1,10 @@
 const startCase = require('lodash/startCase');
 const isEqual = require('lodash/isEqual');
-const { setLocale, array, string, object, mixed, number, ArraySchema } = require('yup');
+const { setLocale, array, string, object, mixed, number, ArraySchema, addMethod, BaseSchema } = require('yup');
 const mapValues = require('lodash/mapValues');
 const isEmpty = require('lodash/isEmpty');
+const uniq = require('lodash/uniq');
+const fs = require('fs');
 
 
 setLocale({
@@ -16,6 +18,20 @@ setLocale({
   array: {
     min: ({ path, min }) => `At least ${min} ${startCase(path)}${min === 1 ? '' : 's'} must be provided`
   }
+});
+
+addMethod(BaseSchema, 'uniqList', function uniqList(entryTitle, comparator = isEqual) {
+  return array().of(this.test(
+    'uniqEntries',
+    `${entryTitle}s must be unique`,
+    (value, { options, parent }) => {
+      if (!value) {
+        return true;
+      }
+      const ownIdx = options.index;
+      return !parent.some((entry, idx) => comparator(entry, value) && idx !== ownIdx);
+    })
+  );
 });
 
 class Validators {
@@ -55,20 +71,6 @@ class Validators {
 
   static entityId() {
     return this.niceNumber().min(1);
-  }
-
-  static uniqList(entrySchema, entryTitle, comparator = isEqual) {
-    return array().of(entrySchema.test(
-      'uniqEntries',
-      `${entryTitle}s must be unique`,
-      (value, { options, parent }) => {
-        if (!value) {
-          return true;
-        }
-        const ownIdx = options.index;
-        return !parent.some((entry, idx) => comparator(entry, value) && idx !== ownIdx);
-      })
-    );
   }
 
   static standardText(max) {
@@ -117,9 +119,7 @@ class Validators {
   static elementList(requiredElementFields = []) {
     const singleElementSpec = {
       tag: string().max(20),
-      content: this.uniqList(
-        string().required('Text blocks must not be empty'), 'Text block'
-      )
+      content: string().required('Text blocks must not be empty').uniqList('Text block')
     };
     Object.keys(singleElementSpec).forEach(field => {
       singleElementSpec[field] = requiredElementFields.includes(field)
@@ -170,18 +170,111 @@ class Validators {
       });
   }
 
-  static onlyKind(kind, schema) {
-    return schema.when('$body', {
-      is: body => body.kind === kind,
-      then: schema => schema,
-      otherwise: () => this.ensureEmpty()
-    });
+  static #allowedTokensForTypes = {
+    string: ['max', 'min', 'nullable', 'email'],
+    number: ['max', 'min', 'nullable', 'int'],
+    date: ['utc', 'nullable'],
+    bool: ['nullable'],
+    array: ['max', 'min', 'of', 'nullable'],
+    enum: ['values', 'nullable']
+  };
+  static #validationsForTokens = {
+    max: Number.isInteger,
+    min: Number.isInteger,
+    int: v => typeof v === 'boolean',
+    utc: v => typeof v === 'boolean',
+    of: v => typeof v === 'object',
+    nullable: v => typeof v === 'boolean',
+    email: v => typeof v === 'boolean',
+    values: v =>
+      Array.isArray(v) &&
+      v.every(opt => typeof opt === 'string') &&
+      uniq(v).length === v.length
+  };
+
+  static #unpackTemplateConfig(config) {
+    if (typeof config !== 'object') {
+      return 'Config must be an object';
+    }
+    const { type, ...rest } = config;
+    if (typeof type === 'object') {
+      return this.unpackTemplateDump(type);
+    }
+    if (!(type in this.#allowedTokensForTypes)) {
+      return `"${type}" is not a valid type definition`;
+    }
+    const allowedTokens = this.#allowedTokensForTypes[type];
+    for (const [tokenName, tokenDef] of Object.entries(rest)) {
+      if (!allowedTokens.includes(tokenName)) {
+        return `"${tokenName}" is not a valid token for type "${type}"`;
+      }
+      if (!this.#validationsForTokens[tokenName](tokenDef)) {
+        return `"${tokenDef}" is not a valid definition for token "${tokenName}"`;
+      }
+      if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
+        return `Token "${tokenName}" for type "${type}" must have non-negative value (got ${tokenDef})`;
+      }
+      if (tokenName === 'of') {
+        return this.#unpackTemplateConfig(tokenDef);
+      }
+    }
+
+    return null;
   }
 
-  static withPagination(spec = {}) {
-    return { ...spec, page: this.niceNumber().optional(), pageSize: this.niceNumber().optional() };
+  static unpackTemplateDump(dump) {
+    for (const config of Object.values(dump)) {
+      const configUnpackResult = this.#unpackTemplateConfig(config);
+      if (configUnpackResult) {
+        return configUnpackResult;
+      }
+    }
+
+    return null;
   }
 }
 
+addMethod(BaseSchema, 'onlyKind', function onlyKind(kind) {
+  return this.when('$body', {
+    is: body => body.kind === kind,
+    then: schema => schema,
+    otherwise: () => Validators.ensureEmpty()
+  });
+});
+
+addMethod(object, 'withPagination', function withPagination() {
+  return this.shape({
+    page: Validators.niceNumber().optional(),
+    pageSize: Validators.niceNumber().optional()
+  }).noUnknown();
+});
+
+addMethod(BaseSchema, 'dump', function dump() {
+  return this.test('isDump', 'Validation error', async (rawValue, testContext) => {
+    if (!rawValue) {
+      return true;
+    }
+    const { options: { context: { body: { pages } }, index }, parent, createError } = testContext;
+    const value = typeof rawValue == 'string' ? rawValue : await fs.promises.readFile(rawValue.path);
+    const correspondingPage = index == null
+      ? parent
+      : pages.find(page => page.fileDumpIndex === index);
+    if (!correspondingPage) {
+      return createError({ message: 'Dump is not matched to a page' });
+    }
+    const { dumpIsTemplate } = correspondingPage;
+    try {
+      const asJson = JSON.parse(value);
+      if (dumpIsTemplate) {
+        const message = Validators.unpackTemplateDump(asJson);
+        if (message) {
+          return createError({ message });
+        }
+      }
+    } catch {
+      return createError({ message: 'Not a valid JSON' });
+    }
+  });
+});
 
 module.exports = Validators;

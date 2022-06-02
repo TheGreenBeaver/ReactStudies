@@ -1,2 +1,6 @@
-**/*.local.*
+**/*.dev.*
 media
+
+repo-templates/layout/tech/sample.*
+repo-templates/layout/src/*
+!repo-templates/layout/src/index.html

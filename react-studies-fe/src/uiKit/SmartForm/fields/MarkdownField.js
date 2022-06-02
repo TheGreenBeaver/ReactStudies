@@ -1,5 +1,5 @@
 import { arrayOf, string } from 'prop-types';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 // styling
 import 'codemirror/theme/material.css';
 import 'codemirror/addon/hint/show-hint.css';

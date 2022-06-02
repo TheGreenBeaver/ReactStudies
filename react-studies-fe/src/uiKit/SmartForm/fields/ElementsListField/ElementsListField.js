@@ -1,15 +1,15 @@
-import { arrayOf, oneOf, string } from 'prop-types';
+import { string } from 'prop-types';
 import useEditableView from '../../../../hooks/useEditableView';
 import { getUpd } from '../../../../util/misc';
 import Box from '@mui/material/Box';
 import InputLabel from '@mui/material/InputLabel';
 import Button from '@mui/material/Button';
-import { Add } from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
 import SingleElement from './SingleElement';
 import { ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY } from '../../../../util/constants';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
-import { Prefixes } from '../../../../util/types';
+import { ElementFields, Prefixes } from '../../../../util/types';
 import FormHelperText from '@mui/material/FormHelperText';
 
 
@@ -88,7 +88,7 @@ function ElementsListField({ name, label, requiredElementFields, prefixes }) {
 ElementsListField.propTypes = {
   name: string.isRequired,
   label: string,
-  requiredElementFields: arrayOf(oneOf([...Object.values(ELEMENT_FIELDS)])),
+  requiredElementFields: ElementFields,
   prefixes: Prefixes.isRequired,
 };
 

@@ -1,4 +1,5 @@
-import { SIZE_UNITS, FILE_TRIBES } from './constants';
+import { SIZE_UNITS, FILE_TRIBES, DEFAULT_PAGE_SIZE, TASK_KINDS } from './constants';
+import pick from 'lodash/pick';
 
 
 function getUpd(upd, curr) {
@@ -55,4 +56,46 @@ function combineRefs(...refs) {
   });
 }
 
-export { getUpd, blockEvent, humanizeFileSize, serializeFileSize, getTribeFromMime, combineRefs };
+function isPositiveInt(param) {
+  return Number.isInteger(param) && param > 0;
+}
+
+function getOptions(enumObj, nullLabel) {
+  const options = Object.entries(enumObj).map(([value, label]) => ({ value, label }));
+  if (nullLabel) {
+    options.unshift({ label: nullLabel, value: '' });
+  }
+  return options;
+}
+
+function cleanupPaginationParams(params) {
+  const cleanParams = pick(params, ['page', 'pageSize']);
+  if (!isPositiveInt(cleanParams.page)) {
+    cleanParams.page = 1;
+  }
+  if (!isPositiveInt(cleanParams.pageSize)) {
+    cleanParams.pageSize = DEFAULT_PAGE_SIZE;
+  }
+  return cleanParams;
+}
+
+function cleanupTaskKindParams(params) {
+  const cleanParams = pick(params, 'kind');
+  if (!(cleanParams.kind in TASK_KINDS)) {
+    delete cleanParams.kind;
+  }
+  return cleanParams;
+}
+
+export {
+  getUpd,
+  blockEvent,
+  humanizeFileSize,
+  serializeFileSize,
+  getTribeFromMime,
+  combineRefs,
+  cleanupPaginationParams,
+  cleanupTaskKindParams,
+  isPositiveInt,
+  getOptions
+};

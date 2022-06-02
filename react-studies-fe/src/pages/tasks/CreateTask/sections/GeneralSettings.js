@@ -8,11 +8,10 @@ import FileField from '../../../../uiKit/SmartForm/fields/FileField';
 import fieldAccepts from '../fieldAccepts';
 import { useFormikContext } from 'formik';
 import CheckboxField from '../../../../uiKit/SmartForm/fields/CheckboxField';
+import { getOptions } from '../../../../util/misc';
 
 
-const taskKindOptions = Object.entries(TASK_KIND_DEFINITIONS).map(([value, label]) => ({
-  value, label
-}));
+const taskKindOptions = getOptions(TASK_KIND_DEFINITIONS);
 
 function GeneralSettings() {
   const { values } = useFormikContext();

@@ -1,0 +1,19 @@
+{
+  "name": "layout-task",
+  "packageManager": "yarn@3.2.0",
+  "scripts": {
+    "serve": "node static-server.js",
+    "runtest": "cypress run",
+    "runtest:dev": "cypress run --config-file cypress.dev.json",
+    "test": "start-server-and-test serve http://localhost:5000 runtest",
+    "test:dev": "start-server-and-test serve http://localhost:5000 runtest:dev"
+  },
+  "dependencies": {
+    "cypress": "^9.6.1",
+    "cypress-image-snapshot": "^4.0.1",
+    "express": "^4.18.1",
+    "lodash": "^4.17.21",
+    "pngjs": "^6.0.0",
+    "start-server-and-test": "^1.14.0"
+  }
+}

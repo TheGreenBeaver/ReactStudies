@@ -1,5 +1,5 @@
 import { string } from 'prop-types';
-import { OptionListType } from '../../../util/types';
+import { OptionList } from '../../../util/types';
 import { Field } from 'formik';
 import MenuItem from '@mui/material/MenuItem';
 import { Select } from 'formik-mui';
@@ -22,7 +22,7 @@ function StandardSelectField({ options, ...otherProps }) {
 
 StandardSelectField.propTypes = {
   name: string.isRequired,
-  options: OptionListType.isRequired
+  options: OptionList.isRequired
 };
 
 export default StandardSelectField;

@@ -21,6 +21,7 @@ class SmartRouter {
    */
   Model
   filename = __filename;
+  DefaultAccessRules = {};
   AccessRules = {};
   MulterLogic = {};
   paginate = true;
@@ -28,12 +29,14 @@ class SmartRouter {
 
   constructor(Model, filename, {
     AccessRules = {},
+    DefaultAccessRules = {},
     MulterLogic = {},
     paginate = true
   } = {}) {
     this.Model = Model;
     this.filename = filename;
     this.AccessRules = AccessRules;
+    this.DefaultAccessRules = DefaultAccessRules;
     this.MulterLogic = MulterLogic;
     this.paginate = paginate;
 
@@ -66,7 +69,7 @@ class SmartRouter {
   }
 
   getAccessRules(handlerName) {
-    return this.AccessRules[handlerName] || {};
+    return this.AccessRules[handlerName] || this.DefaultAccessRules;
   }
 
   getPreprocessors(handlerName) {
@@ -202,7 +205,7 @@ class SmartRouter {
    */
   async handleList(req, options, res, next) {
     if (this.paginate) {
-      return paginate(this.Model, req.query.page, req.query.page_size, options);
+      return paginate(this.Model, req.query.page, req.query.pageSize, options);
     }
     const data = await this.Model.findAll(options);
     return { data };

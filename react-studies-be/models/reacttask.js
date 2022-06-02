@@ -4,11 +4,12 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ReactTask extends Model {
-    static associate({ Task }) {
+    static associate({ Task, ReactTaskPage }) {
       this.belongsTo(Task, {
         foreignKey: { allowNull: false, name: 'basic_task_id' },
         as: 'basicTask'
       });
+      this.hasMany(ReactTaskPage, { foreignKey: 'task_id', as: 'pages' });
     }
   }
   ReactTask.init({

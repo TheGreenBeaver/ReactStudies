@@ -1,5 +1,5 @@
 const SmartRouter = require('./_smart-router');
-const { User } = require('../models');
+const { User, sequelize } = require('../models');
 const { getB36, generateToken, parseB36, checkToken, TOKEN_STATUS, hash } = require('../util/encrypt');
 const sendMail = require('../mail');
 const { authenticate } = require('../util/user-identity');
@@ -7,6 +7,9 @@ const httpStatus = require('http-status');
 const { NON_FIELD_ERR } = require('../settings');
 const capitalize = require('lodash/capitalize');
 const { origin } = require('../util/env');
+const cloneDeep = require('lodash/cloneDeep');
+const { Op } = require('sequelize');
+const { User_List } = require('../util/query-options');
 
 
 class UsersRouter extends SmartRouter {
@@ -14,11 +17,46 @@ class UsersRouter extends SmartRouter {
     super(User, __filename, {
       AccessRules: {
         create: { isAuthorized: false },
+        update: { never: true },
+        remove: { never: true },
         verify: { isVerified: false },
         getMe: { isAuthorized: true },
         updateMe: { isAuthorized: true, isVerified: true },
       },
     });
+  }
+
+  getQueryOptions(handlerName, req) {
+    const options = cloneDeep(super.getQueryOptions(handlerName, req));
+    const { query } = req;
+
+    switch (handlerName) {
+      case 'retrieve': {
+        if (query.mini) {
+          return User_List;
+        }
+        break;
+      }
+      case 'list': {
+        const where = [];
+        if ('q' in query) {
+          where.push(sequelize.where(sequelize.fn(
+            'concat_ws',
+            ' ',
+            sequelize.col('first_name'),
+            sequelize.col('last_name')
+          ), { [Op.iLike]: `%${query.q}%` }));
+        }
+        if ('isTeacher' in query) {
+          where.push({ is_teacher: query.isTeacher });
+        }
+        if (where.length) {
+          options.where = where;
+        }
+      }
+    }
+
+    return options;
   }
 
   #CRYPTO_FIELDS = ['email', 'firstName', 'lastName'];
@@ -31,14 +69,6 @@ class UsersRouter extends SmartRouter {
     await sendMail(link, newUser.email);
 
     return authenticate({ email: newUser.email, password: req.body.password }, options);
-  }
-
-  handleUpdate(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
-  }
-
-  handleRemove(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
   }
 
   verify = this.apiDecorator(async req => {

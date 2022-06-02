@@ -1,8 +1,10 @@
-import { array, mixed, object, setLocale, string, ArraySchema } from 'yup';
+import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema } from 'yup';
 import startCase from 'lodash/startCase';
 import { humanizeFileSize, serializeFileSize } from './misc';
 import isEqual from 'lodash/isEqual';
 import { CAVEAT_FIELDS, ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY } from './constants';
+import fs from 'fs';
+import uniq from 'lodash/uniq';
 
 
 setLocale({
@@ -18,6 +20,20 @@ setLocale({
   }
 });
 
+addMethod(BaseSchema, 'uniqList', function uniqList(entryTitle, comparator = isEqual) {
+  return array().of(this.test(
+    'uniqEntries',
+    `${entryTitle}s must be unique`,
+    (value, { options, parent }) => {
+      if (!value) {
+        return true;
+      }
+      const ownIdx = options.index;
+      return !parent.some((entry, idx) => comparator(entry, value) && idx !== ownIdx);
+    })
+  );
+});
+
 class Validators {
   static #getAcceptPattern(acceptToken) {
     return new RegExp(acceptToken.replace(/\*/g, '[a-zA-Z-]+'));
@@ -29,20 +45,6 @@ class Validators {
 
   static #requiredSchema(schema) {
     return schema instanceof ArraySchema ? schema.min(1) : schema.required();
-  }
-
-  static uniqList(entrySchema, entryTitle, comparator = isEqual) {
-    return array().of(entrySchema.test(
-      'uniqEntries',
-      `${entryTitle}s must be unique`,
-      (value, { options, parent }) => {
-        if (!value) {
-          return true;
-        }
-        const ownIdx = options.index;
-        return !parent.some((entry, idx) => comparator(entry, value) && idx !== ownIdx);
-      })
-    );
   }
 
   static standardText(max) {
@@ -91,9 +93,7 @@ class Validators {
           return createError({ params: { tag: value } });
         }
       }),
-      [ELEMENT_FIELDS.content]: this.uniqList(
-        string().required('Text blocks must not be empty'), 'Text block'
-      )
+      [ELEMENT_FIELDS.content]: string().required('Text blocks must not be empty').uniqList('Text block')
     };
     requiredElementFields.forEach(field => {
       if (!Array.isArray(ELEMENT_FIELDS_EMPTY[field])) {
@@ -131,6 +131,89 @@ class Validators {
   static gitHubToken() {
     return string().matches(/ghp_\w{36}/, 'Not a valid Personal Access Token');
   }
+
+  static #allowedTokensForTypes = {
+    string: ['max', 'min', 'nullable', 'email'],
+    number: ['max', 'min', 'nullable', 'int'],
+    date: ['utc', 'nullable'],
+    bool: ['nullable'],
+    array: ['max', 'min', 'of', 'nullable'],
+    enum: ['values', 'nullable']
+  };
+  static #validationsForTokens = {
+    max: Number.isInteger,
+    min: Number.isInteger,
+    int: v => typeof v === 'boolean',
+    utc: v => typeof v === 'boolean',
+    of: v => typeof v === 'object',
+    nullable: v => typeof v === 'boolean',
+    email: v => typeof v === 'boolean',
+    values: v =>
+      Array.isArray(v) &&
+      v.every(opt => typeof opt === 'string') &&
+      uniq(v).length === v.length
+  };
+
+  static #unpackTemplateConfig(config) {
+    if (typeof config !== 'object') {
+      return 'Config must be an object';
+    }
+    const { type, ...rest } = config;
+    if (typeof type === 'object') {
+      return this.unpackTemplateDump(type);
+    }
+    if (!(type in this.#allowedTokensForTypes)) {
+      return `"${type}" is not a valid type definition`;
+    }
+    const allowedTokens = this.#allowedTokensForTypes[type];
+    for (const [tokenName, tokenDef] of Object.entries(rest)) {
+      if (!allowedTokens.includes(tokenName)) {
+        return `"${tokenName}" is not a valid token for type "${type}"`;
+      }
+      if (!this.#validationsForTokens[tokenName](tokenDef)) {
+        return `"${tokenDef}" is not a valid definition for token "${tokenName}"`;
+      }
+      if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
+        return `Token "${tokenName}" for type "${type}" must have non-negative value (got ${tokenDef})`;
+      }
+      if (tokenName === 'of') {
+        return this.#unpackTemplateConfig(tokenDef);
+      }
+    }
+
+    return null;
+  }
+
+  static unpackTemplateDump(dump) {
+    for (const config of Object.values(dump)) {
+      const configUnpackResult = this.#unpackTemplateConfig(config);
+      if (configUnpackResult) {
+        return configUnpackResult;
+      }
+    }
+
+    return null;
+  }
 }
+
+addMethod(BaseSchema, 'dump', function dump() {
+  return this.test('isDump', 'Validation error', (value, testContext) => {
+    if (!value) {
+      return true;
+    }
+    const { parent: { dumpIsTemplate }, createError } = testContext;
+    try {
+      const asJson = JSON.parse(value);
+      if (dumpIsTemplate) {
+        const message = Validators.unpackTemplateDump(asJson);
+        if (message) {
+          return createError({ message });
+        }
+      }
+    } catch {
+      return createError({ message: 'Not a valid JSON' });
+    }
+  });
+});
 
 export default Validators;

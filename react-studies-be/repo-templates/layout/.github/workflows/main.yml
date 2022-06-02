@@ -1,0 +1,33 @@
+name: frontend-studies-layout-task
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code to runner
+        uses: actions/checkout@v3
+
+      - name: Set up JS environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.13.1'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Archive test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: |
+            report.json
+            cypress/snapshots/main.spec.js/__diff_output__/task.diff.png
+          if-no-files-found: ignore

@@ -1,7 +1,7 @@
 import { useSnackbar } from 'notistack';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import { Close } from '@mui/icons-material';
+import Close from '@mui/icons-material/Close';
 
 
 function useAlert() {

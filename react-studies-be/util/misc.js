@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { isDev, origin } = require('./env');
-const http = require('http');
+const { origin } = require('./env');
 const { MEDIA_DIR, MEDIA_PATH } = require('../settings');
 
 
@@ -43,26 +42,6 @@ async function getFilesRecursively(dir) {
   return files.flat();
 }
 
-async function getPublicUrl() {
-  if (!isDev) {
-    return origin;
-  }
-
-  return new Promise((resolve, reject) => {
-    const req = http.request({ hostname: 'localhost', port: 4040, path: '/api/tunnels', method: 'GET' }, res => {
-      const chunks = [];
-
-      res.on('data', chunk => chunks.push(chunk));
-      res.on('end', () => {
-        const jsonData = JSON.parse(chunks.join(''));
-        resolve(jsonData.tunnels[0]?.public_url);
-      });
-    });
-    req.on('error', err => reject(err));
-    req.end();
-  });
-}
-
 function composeMediaPath(file, baseDir = MEDIA_DIR, basePath = MEDIA_PATH) {
   if (!file) {
     return null;
@@ -82,6 +61,5 @@ module.exports = {
   isAsync,
   asyncMap,
   getFilesRecursively,
-  getPublicUrl,
   composeMediaPath
 };

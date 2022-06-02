@@ -31,6 +31,13 @@ function getOrigin() {
 
 const origin = getOrigin();
 
+function getPublicUrl() {
+  return isDev ? getVar('PUBLIC_URL') : origin;
+}
+
+const publicUrl = getPublicUrl();
+
 module.exports = {
-  getVar, getEnv, origin, port, isDev
+  getVar, getEnv,
+  origin, port, isDev, publicUrl
 };

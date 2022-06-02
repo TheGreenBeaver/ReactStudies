@@ -11,23 +11,8 @@ class AuthRouter extends SmartRouter {
         signIn: { isAuthorized: false },
         logOut: { isAuthorized: true },
       },
+      DefaultAccessRules: { never: true }
     });
-  }
-
-  handleRetrieve(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
-  }
-  handleList(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
-  }
-  handleCreate(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
-  }
-  handleUpdate(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
-  }
-  handleRemove(req, options, res, next) {
-    return { status: httpStatus.METHOD_NOT_ALLOWED };
   }
 
   signIn = this.apiDecorator(authenticate, SmartRouter.HttpMethods.post, '/sign_in', 'signIn');

@@ -1,12 +1,16 @@
 const SmartRouter = require('./_smart-router');
 const { GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
 const httpStatus = require('http-status');
-const { Task, TaskAttachment, ElementRule } = require('../models');
+const { Task, TaskAttachment, ElementRule, ReactTaskPage } = require('../models');
 const multerMw = require('../middleware/multer');
 const { Octokit } = require('octokit');
 const fs = require('fs');
 const path = require('path');
-const { Task_ForTeacher } = require('../util/query-options');
+const cloneDeep = require('lodash/cloneDeep');
+const { Op } = require('sequelize');
+const isEmpty = require('lodash/isEmpty');
+const now = require('lodash/now');
+const pick = require('lodash/pick');
 
 
 class TasksRouter extends SmartRouter {
@@ -18,28 +22,62 @@ class TasksRouter extends SmartRouter {
       fs.mkdir(dir, { recursive: true }, () => {
         cb(null, dir);
       });
-    }
+    };
+    const createFilename = (req, file, cb) => {
+      const uniquePrefix = now();
+      cb(null, `${uniquePrefix}${path.extname(file.originalname)}`);
+    };
     const createFields = [{ name: 'attachments' }, { name: 'sampleImage', maxCount: 1 }]
 
     super(Task, __filename, {
       AccessRules: {
         retrieve: { isAuthorized: true, isVerified: true },
         list: { isAuthorized: true, isVerified: true },
-        create: { isAuthorized: true, isVerified: true, isTeacher: true },
-        update: { isAuthorized: true, isVerified: true, isTeacher: true },
-        remove: { isAuthorized: true, isVerified: true, isTeacher: true },
       },
+      DefaultAccessRules: { isAuthorized: true, isVerified: true, isTeacher: true },
       MulterLogic: {
-        create: [createFields, createDestination, { fieldType: multerMw.FIELD_TYPES.fields }]
+        create: [createFields, createDestination, { fieldType: multerMw.FIELD_TYPES.fields, filename: createFilename }]
       }
     });
   }
 
   getQueryOptions(handlerName, req) {
-    if (handlerName === 'retrieve' && req.user.isTeacher) {
-      return Task_ForTeacher;
+    const options = cloneDeep(super.getQueryOptions(handlerName, req));
+
+    switch (handlerName) {
+      case 'retrieve': {
+        if (!req.user.isTeacher) {
+          options.include = options.include.map(includedModel =>
+            includedModel.as === 'solutions'
+              ? { ...includedModel, where: { student_id: req.user.id } }
+              : includedModel
+          );
+        }
+        break;
+      }
+      case 'list': {
+        const { query } = req;
+        const where = {};
+        if ('teacherId' in query) {
+          where.teacher_id = query.teacherId;
+        }
+        if ('q' in query) {
+          where.title = { [Op.iLike]: `%${query.q}%` };
+        }
+        if ('kind' in query) {
+          options.include = options.include.map(includedModel =>
+            includedModel.as === `${query.kind}Task`
+              ? { ...includedModel, required: true }
+              : includedModel,
+          );
+        }
+        if (!isEmpty(where)) {
+          options.where = where;
+        }
+      }
     }
-    return super.getQueryOptions(handlerName, req);
+
+    return options;
   }
 
   async handleCreate(req, options, res, next) {
@@ -88,10 +126,19 @@ class TasksRouter extends SmartRouter {
         }, {
           include: [{ model: ElementRule, as: 'elementRules' }],
         });
-        return { status: httpStatus.CREATED, data: basicTask };
+        break;
       case Task.TASK_KINDS.react:
-      // TODO
+        const { includeFuzzing, pages: rawPages } = req.body;
+        const { fileDumps } = req.files;
+        const pages = rawPages.map(rawPage => {
+          const dump = rawPage.textDump || fileDumps?.[rawPage.fileDumpIdx];
+          const dumpIsFile = dump ? !rawPage.textDump : null;
+          return { ...pick(rawPage, ['endpoints', 'template', 'dumpIsTemplate', 'route']), dump, dumpIsFile };
+        });
+        await basicTask.createReactTask({ includeFuzzing, pages }, { include: [{ model: ReactTaskPage, as: 'pages' }] });
     }
+
+    return { status: httpStatus.CREATED, data: basicTask };
   }
 }
 

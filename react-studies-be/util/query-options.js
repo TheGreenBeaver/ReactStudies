@@ -5,8 +5,8 @@ const dummyAttrs = ['id'];
 const Dummy = { attributes: dummyAttrs };
 
 const userAuthenticationAttrs = ['id', 'password'];
-const userListAttrs = ['firstName', 'lastName', 'isTeacher'];
-const userPublicAttrs = ['id', 'email', ...userListAttrs];
+const userListAttrs = ['id', 'firstName', 'lastName', 'isTeacher'];
+const userPublicAttrs = ['email', ...userListAttrs];
 const userPrivateAttrs = [...userPublicAttrs, 'isVerified', 'gitHubToken'];
 const User_Default = { attributes: userPublicAttrs };
 const User_List = { attributes: userListAttrs };
@@ -19,37 +19,36 @@ const AuthToken_Authorization = {
 };
 
 const LayoutTask_Default = {
-  attributes: ['sampleImage', 'absPosMaxUsage', 'rawSizingMaxUsage'],
+  attributes: { exclude: ['id', 'basic_task_id'] },
   include: [{ model: ElementRule, as: 'elementRules' }]
 };
-const LayoutTask_Hidden = { attributes: ['sampleImage'] };
 
 const Solution_List = {
   attributes: ['id', 'updatedAt'],
   include: [{ model: User, as: 'student', ...User_List }]
 };
 
-const taskDefaultInclude = [
-  { model: User, as: 'teacher', ...User_Default },
-  { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
-  { model: ReactTask, as: 'reactTask' },
-  { model: TaskAttachment, as: 'attachments' }
-];
-const taskDefaultAttrs = ['id', 'title', 'description', 'repoUrl', 'trackUpdates', 'createdAt', 'updatedAt'];
-const Task_Default = { attributes: taskDefaultAttrs, include: taskDefaultInclude };
+const TaskAttachment_Default = {
+  attributes: { exclude: ['task_id'] }
+};
+
+const Task_Default = {
+  attributes: ['id', 'title', 'description', 'repoUrl', 'createdAt', 'updatedAt'],
+  include: [
+    { model: User, as: 'teacher', ...User_Default },
+    { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
+    { model: ReactTask, as: 'reactTask' },
+    { model: TaskAttachment, as: 'attachments', ...TaskAttachment_Default },
+    { model: Solution, as: 'solutions', ...Solution_List }
+  ]
+};
 const Task_List = {
-  attributes: ['id', 'title'],
+  attributes: ['id', 'title', 'updatedAt'],
   include: [
     { model: ReactTask, as: 'reactTask', attributes: dummyAttrs },
     { model: LayoutTask, as: 'layoutTask', attributes: dummyAttrs },
     { model: User, as: 'teacher', ...User_List }
   ]
-};
-const Task_ForTeacher = {
-  attributes: taskDefaultAttrs, include: [
-    ...taskDefaultInclude,
-    { model: Solution, as: 'solutions', ...Solution_List }
-  ],
 };
 
 module.exports = {
@@ -63,11 +62,11 @@ module.exports = {
   AuthToken_Authorization,
 
   LayoutTask_Default,
-  LayoutTask_Hidden,
 
   Solution_List,
 
+  TaskAttachment_Default,
+
   Task_Default,
   Task_List,
-  Task_ForTeacher
 };

@@ -1,5 +1,6 @@
 import tasksLinks from '../tasks/links';
 import authLinks from '../auth/links';
+import { DEFAULT_PAGE_SIZE } from '../../util/constants';
 
 const links = {
   tasks: tasksLinks,
@@ -15,7 +16,7 @@ function getDefaultPath({ isAuthorized, isVerified }) {
     return links.auth.notVerified.path;
   }
 
-  return links.tasks.taskList.compose({ page: 1 });
+  return links.tasks.taskList.compose({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
 }
 
 export default links;

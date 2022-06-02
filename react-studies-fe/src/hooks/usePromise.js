@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import useMountedState from './useMountedState';
 
 
@@ -13,8 +13,8 @@ function usePromise(fn, {
   onAny
 } = {}) {
   const [isProcessing, setIsProcessing] = useMountedState(initialIsProcessing);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(initialData)
+  const [error, setError] = useMountedState(null);
+  const [data, setData] = useMountedState(initialData)
 
   const handler = useCallback(async (...args) => {
     setIsProcessing(true);

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
-import throttle from 'lodash/throttle';
+import { useEffect, useRef, useState } from 'react';
+import useDeferredFunction from './useDeferredFunction';
 
 
 function useScrollbarCompensation() {
@@ -14,7 +14,7 @@ function useScrollbarCompensation() {
     const newIsOverflowing = el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
     setIsOverflowing(newIsOverflowing);
   }
-  const tracker = useMemo(() => throttle(trackOverflow, 300), []);
+  const tracker = useDeferredFunction(trackOverflow, 'throttle', 300);
 
   useEffect(() => {
     window.addEventListener('resize', tracker);

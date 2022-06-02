@@ -3,11 +3,18 @@ const { boolean, string, object } = require('yup');
 
 
 module.exports = {
+  retrieve: {
+    body: Validators.ensureEmpty(),
+    query: object({
+      mini: boolean().optional()
+    }).noUnknown()
+  },
   list: {
     body: Validators.ensureEmpty(),
-    query: object(Validators.withPagination({
-      q: string().max(65).optional()
-    })).noUnknown()
+    query: object({
+      q: string().optional(),
+      isTeacher: boolean().optional()
+    }).withPagination()
   },
   create: {
     body: Validators.strictObject({

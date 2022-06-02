@@ -1,14 +1,14 @@
-import { func, arrayOf, oneOf } from 'prop-types';
+import { func } from 'prop-types';
 import Typography from '@mui/material/Typography';
 import isEmpty from 'lodash/isEmpty';
 import { ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY } from '../../../../util/constants';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
-import { DeleteOutlined } from '@mui/icons-material';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import MultiText from './MultiText';
 import { getUpd } from '../../../../util/misc';
-import { ElementData, Prefixes } from '../../../../util/types';
+import { ElementData, ElementFields, Prefixes } from '../../../../util/types';
 
 
 const elementFieldsList = Object.values(ELEMENT_FIELDS);
@@ -84,7 +84,7 @@ SingleElement.propTypes = {
   prefixes: Prefixes.isRequired,
   onChange: func.isRequired,
   onBlur: func.isRequired,
-  requiredElementFields: arrayOf(oneOf([...Object.values(ELEMENT_FIELDS)]))
+  requiredElementFields: ElementFields
 };
 
 export default SingleElement;

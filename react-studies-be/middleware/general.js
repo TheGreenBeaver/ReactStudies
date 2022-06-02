@@ -3,7 +3,7 @@ const cors = require('cors');
 const { isDev } = require('../util/env');
 const express = require('express');
 const helmet = require('helmet');
-const { FE_HOSTS } = require('../settings');
+const { FE_HOSTS, MEDIA_PATH, MEDIA_DIR } = require('../settings');
 
 function apply(app) {
   const loggerFormat = isDev ? 'dev' : 'common';
@@ -27,6 +27,7 @@ function apply(app) {
 
   if (isDev) {
     stack.push(cors({ origin: FE_HOSTS }));
+    app.use(MEDIA_PATH, express.static(MEDIA_DIR))
   }
 
   app.use(...stack);

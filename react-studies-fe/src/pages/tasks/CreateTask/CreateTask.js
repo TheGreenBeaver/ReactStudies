@@ -9,7 +9,6 @@ import Typography from '@mui/material/Typography';
 import fieldNames from './fieldNames';
 import GeneralSettings from './sections/GeneralSettings';
 import MainTypeSettings from './sections/MainTypeSettings';
-import SectionWrapper from './SectionWrapper';
 import AdvancedTypeSettings from './sections/AdvancedTypeSettings';
 import React, { useState } from 'react';
 import { getUpd } from '../../../util/misc';
@@ -19,6 +18,7 @@ import GitHubTokenField from '../../../uiKit/SmartForm/fields/GitHubTokenField';
 import { Form } from 'formik';
 import GeneralError from '../../../uiKit/SmartForm/interactions/GeneralError';
 import Box from '@mui/material/Box';
+import StrictAccordion from '../../../uiKit/StrictAccordion';
 
 
 const SECTION_NAMES = {
@@ -118,12 +118,10 @@ function CreateTask() {
             [10, SIZE_UNITS.MB],
             { multiple: true }
           ),
-          [fieldNames.attachmentNames]: Validators.uniqList(
-            string().max(30).matches(
-              /^[-.\w _\d]+$/,
-              'Allowed characters are latin letters, spaces, dots, underscores, hyphens and numbers',
-            ).required('Names must not be empty'), 'Reference name'
-          ),
+          [fieldNames.attachmentNames]: string().max(30).matches(
+            /^[-.\w _\d]+$/,
+            'Allowed characters are latin letters, spaces, dots, underscores, hyphens and numbers',
+          ).required('Names must not be empty').uniqList('Reference name'),
 
           [fieldNames.sampleImage]: Validators.file(
             fieldAccepts[fieldNames.sampleImage],
@@ -144,27 +142,34 @@ function CreateTask() {
           setSectionsExpanded(curr => ({ ...curr, ...toExpand }));
         }}
       >
-        <Form>
-          {
-            sections.map(({ Component, title, name }) =>
-              <SectionWrapper
-                key={Component.name}
-                expanded={sectionsExpanded[name]}
-                setExpanded={upd => setSectionsExpanded(curr => ({
-                  ...curr,
-                  [name]: getUpd(upd, curr[name]),
-                }))}
-                title={title}
-              >
-                <Component />
-              </SectionWrapper>,
-            )
-          }
-          <Box display='flex' justifyContent='end' width='100%' mt={3}>
-            <GitHubTokenField entity='task' action='create' sx={{ width: '50%' }} />
-          </Box>
-          <GeneralError />
-        </Form>
+        {
+          formikContext => <Form>
+            {
+              sections.map(({ Component, title, name }) =>
+                <StrictAccordion
+                  key={Component.name}
+                  isExpanded={sectionsExpanded[name]}
+                  setIsExpanded={upd => setSectionsExpanded(curr => ({
+                    ...curr,
+                    [name]: getUpd(upd, curr[name]),
+                  }))}
+                  summary={
+                    <Typography variant='h5'>
+                      {typeof title === 'string' ? title : title(formikContext)}
+                    </Typography>
+                  }
+                  rotateIcon
+                >
+                  <Component />
+                </StrictAccordion>,
+              )
+            }
+            <Box display='flex' justifyContent='end' width='100%' mt={3}>
+              <GitHubTokenField entity='task' action='create' sx={{ width: '50%' }} />
+            </Box>
+            <GeneralError />
+          </Form>
+        }
       </SmartForm>
     </>
   )

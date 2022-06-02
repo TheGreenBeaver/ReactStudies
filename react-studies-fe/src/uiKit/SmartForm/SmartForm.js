@@ -33,6 +33,9 @@ function SmartForm({
     </Form>
 
   async function validate(values) {
+    if (!validationSchema) {
+      return {};
+    }
     try {
       await yupObject().shape(validationSchema).validate(values, { abortEarly: false, strict: true });
       return {};
@@ -68,7 +71,11 @@ SmartForm.propTypes = {
   switching: bool,
   initialIsEditing: bool,
   validationSchema: (props, propName) => {
-    for (const validator of Object.values(props[propName])) {
+    const prop = props[propName];
+    if (!prop) {
+      return;
+    }
+    for (const validator of Object.values(prop)) {
       if (!isSchema(validator)){
         return new Error(`${propName} must be an object of Yup schemas`);
       }
