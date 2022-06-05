@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Task.init({
     title: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(39),
       allowNull: false
     },
     description: {
@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     repoUrl: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(2000),
       allowNull: false
     },
     trackUpdates: {

@@ -1,6 +1,7 @@
 import usersService from './users';
 import authService from './auth';
 import tasksService from './tasks';
+import solutionsService from './solutions';
 
 
 class Api {
@@ -8,6 +9,7 @@ class Api {
     this.users = usersService;
     this.auth = authService;
     this.tasks = tasksService;
+    this.solutions = solutionsService;
   }
 
   allServices(action) {

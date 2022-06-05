@@ -180,8 +180,9 @@ it('task', () => {
       }
     });
 
-    const mainPagePath = Cypress.env('mainPagePath') || '';
-    cy.visit(`http://localhost:5000${mainPagePath}`);
+    const indexFile = Cypress.env('indexFile')
+    const indexPath = indexFile ? `/${indexFile}.html` : '';
+    cy.visit(`http://localhost:5000${indexPath}`);
     cy.matchImageSnapshot({
       capture: 'fullPage',
       scale: true,

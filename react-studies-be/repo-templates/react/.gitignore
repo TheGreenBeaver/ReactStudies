@@ -1,0 +1,17 @@
+**/node_modules
+
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/sdks
+!**/.yarn/versions
+
+**/.pnp.*
+
+**/.idea
+
+test-engine/cypress/fixtures
+test-engine/cypress/screenshots
+test-engine/cypress.dev.json
+test-engine/report.*.json

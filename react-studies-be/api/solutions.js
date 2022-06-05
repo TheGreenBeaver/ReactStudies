@@ -6,7 +6,8 @@ class SolutionsRouter extends SmartRouter {
   constructor() {
     super(Solution, __filename, {
       AccessRules: {
-        update: { never: true }
+        retrieve: { isAuthorized: true, isVerified: true },
+        list: { isAuthorized: true, isVerified: true },
       },
       DefaultAccessRules: { isAuthorized: true, isVerified: true, isTeacher: false }
     });

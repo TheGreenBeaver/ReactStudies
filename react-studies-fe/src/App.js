@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useUserState } from './store/selectors';
 import { logOut, updateUserData } from './store/slices/account';
-import LoadingPage from './pages/utility/LoadingPage';
+import LoadingPage from './components/LoadingPage';
 import Wrappers from './wrappers';
 import Contexts from './contexts';
 import api from './api';
@@ -51,7 +51,7 @@ function AppContent() {
   }, [userState.isAuthorized]);
 
   if (userState.isAuthorized && !userState.isFetched) {
-    return <LoadingPage />;
+    return <LoadingPage fullScreen />;
   }
 
   return (

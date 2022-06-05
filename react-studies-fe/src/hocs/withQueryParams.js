@@ -7,24 +7,25 @@ import isEqual from 'lodash/isEqual';
 function withQueryParams(
   Component,
   fallbackLink,
-  cleanup,
-  parseOptions = { parseNumbers: true }
-) {
+  cleanup, {
+    parseOptions = { parseNumbers: true },
+    plainFallback = false
+  } = {}) {
   return props => {
     const { search } = useLocation();
 
-    const [paginationParams, shouldRedirect] = useMemo(() => {
+    const [cleanParams, shouldRedirect] = useMemo(() => {
       const rawParams = parse(search, parseOptions);
-      const _paginationParams = cleanup(rawParams);
-      const _shouldRedirect = !isEqual(rawParams, _paginationParams);
-      return [_paginationParams, _shouldRedirect];
+      const _cleanParams = cleanup(rawParams);
+      const _shouldRedirect = !isEqual(rawParams, _cleanParams);
+      return [_cleanParams, _shouldRedirect];
     }, [search]);
 
     if (shouldRedirect) {
-      return <Redirect to={fallbackLink.compose(paginationParams)} />;
+      return <Redirect to={plainFallback ? fallbackLink.path : fallbackLink.compose(cleanParams)} />;
     }
 
-    return <Component {...paginationParams} {...props} />;
+    return <Component {...cleanParams} {...props} />;
   }
 }
 

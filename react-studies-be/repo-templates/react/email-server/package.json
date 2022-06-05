@@ -1,0 +1,10 @@
+{
+  "name": "email-server",
+  "packageManager": "yarn@3.2.0",
+  "scripts": {
+    "serve": "node index"
+  },
+  "dependencies": {
+    "smtp-server": "^3.11.0"
+  }
+}

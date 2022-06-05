@@ -10,12 +10,12 @@ import CheckboxField from './CheckboxField';
 import Button from '@mui/material/Button';
 import { TOKEN_FIELDS } from '../../../util/constants';
 import { useFormikContext } from 'formik';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import SubmitButton from '../interactions/SubmitButton';
-import { useState } from 'react';
-import { updateUserData } from '../../../store/slices/account';
+import { useEffect } from 'react';
 import isEmpty from 'lodash/isEmpty';
 import mapValues from 'lodash/mapValues';
+import useMountedState from '../../../hooks/useMountedState';
 
 
 const infoLink = 'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token';
@@ -34,25 +34,21 @@ function mapErrorsToTouched(errors) {
 }
 
 function GitHubTokenField({ action, entity, ...buttonProps }) {
-  const [open, setOpen] = useState(false);
-  const dispatch = useDispatch();
-  const { submitForm, values, validateForm, setTouched } = useFormikContext();
+  const [open, setOpen] = useMountedState(false);
+  const { submitForm, values, validateForm, setTouched, isSubmitting, errors, submitCount } = useFormikContext();
   const { gitHubToken } = useSelector(state => state.account.userData);
 
-  const rememberValue = values[TOKEN_FIELDS.rememberToken];
   const tokenValue = values[TOKEN_FIELDS.gitHubToken];
 
-  function onFinish() {
-    return submitForm().then(() => {
-      if (rememberValue) {
-        dispatch(updateUserData({ gitHubToken: tokenValue }));
-      }
-    });
-  }
+  useEffect(() => {
+    if (!isSubmitting && submitCount && !errors[TOKEN_FIELDS.gitHubToken]) {
+      setOpen(false);
+    }
+  }, [isSubmitting]);
 
   async function onSubmitAttempt() {
     if (gitHubToken) {
-      return onFinish();
+      return submitForm();
     }
 
     const errors = await validateForm();
@@ -63,13 +59,15 @@ function GitHubTokenField({ action, entity, ...buttonProps }) {
     }
   }
 
-  function onCancel() {
-    setOpen(false);
+  function onClose() {
+    if (!isSubmitting) {
+      setOpen(false);
+    }
   }
 
   return (
     <>
-      <Dialog open={open} onClose={onCancel} keepMounted={false}>
+      <Dialog open={open} onClose={onClose} keepMounted={false}>
         <DialogTitle>{startCase(action)} {entity}</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -81,10 +79,10 @@ function GitHubTokenField({ action, entity, ...buttonProps }) {
           <CheckboxField label='Remember my token' name={TOKEN_FIELDS.rememberToken} />
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={onCancel}>Cancel</Button>
-          <Button variant='contained' onClick={onFinish} disabled={!tokenValue}>
+          <Button variant='outlined' disabled={isSubmitting} onClick={onClose}>Cancel</Button>
+          <SubmitButton type='submit' disabled={!tokenValue}>
             Submit
-          </Button>
+          </SubmitButton>
         </DialogActions>
       </Dialog>
       <SubmitButton {...buttonProps} onClick={onSubmitAttempt}>

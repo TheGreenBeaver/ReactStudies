@@ -2,6 +2,12 @@ import { useState } from 'react';
 import useIsMounted from './useIsMounted';
 
 
+/**
+ *
+ * @template T
+ * @param {T} initialState
+ * @return {[T, Dispatch<SetStateAction<T>>]}
+ */
 function useMountedState(initialState) {
   const isMounted = useIsMounted();
   const [state, setState] = useState(initialState);

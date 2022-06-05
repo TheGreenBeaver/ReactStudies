@@ -80,8 +80,8 @@ class SmartRouter {
     }
     const transformer = this.getSettings('transformers', handlerName);
     if (transformer) {
-      preprocessors.push((req, res, next) => {
-        transformer(req);
+      preprocessors.push(async (req, res, next) => {
+        await transformer(req);
         next();
       });
     }

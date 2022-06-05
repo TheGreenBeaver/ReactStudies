@@ -1,6 +1,6 @@
-const { object, string, boolean, array, number } = require('yup');
+const { object, string, boolean } = require('yup');
 const Validators = require('../../util/validation');
-const { Task, ReactTaskPage } = require('../../models');
+const { Task } = require('../../models');
 
 
 module.exports = {
@@ -14,8 +14,9 @@ module.exports = {
   },
   create: {
     body: object({
+      // General
       kind: Validators.enumOf(Task.TASK_KINDS).required(),
-      title: Validators.standardText(30),
+      title: Validators.standardText(39),
       description: string().optional(),
       attachmentNames: string().max(30).matches(
         /^[-.\w _\d]+$/,
@@ -24,7 +25,7 @@ module.exports = {
         .required()
         .uniqList('Reference name')
         .test('sameLength', 'Must have an entry for each attachment', (value, { options: { context } }) =>
-          !value || !context.body.attachments || context.body.attachments.length === value.length,
+          !value || !context.files.attachments || context.files.attachments.length === value.length,
         ).when('attachments', {
           is: v => !!v,
           then: schema => schema.required(),
@@ -33,27 +34,30 @@ module.exports = {
       trackUpdates: boolean().required(),
 
       gitHubToken: Validators.gitHubToken(),
-      rememberToken: boolean().required(),
+      rememberToken: boolean().optional(),
 
+      // Layout
       mustUse: Validators.elementList(['tag']).onlyKind(Task.TASK_KINDS.layout),
       absPos: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
       rawSizing: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
 
-      includeFuzzing: boolean().required().onlyKind(Task.TASK_KINDS.react),
-      pages: array().of(object({
-        template: Validators.enumOf(ReactTaskPage.PAGE_TEMPLATES).required(),
-        textDump: string().nullable().optional(),
-        fileDumpIndex: number().when('textDump', {
-          is: textDump => !!textDump,
-          then: () => Validators.ensureEmpty(),
-          otherwise: schema => schema.nullable().optional()
-        }),
-        dumpIsTemplate: boolean().nullable().optional(),
-        endpoints: array().of(string().max(2000).required()).min(1).nullable().optional(),
-        route: string().max(2000).nullable().optional()
-      })).onlyKind(Task.TASK_KINDS.react)
+      // React
+      hasFuzzing: boolean().required().onlyKind(Task.TASK_KINDS.react),
+
+      dump: string().dump().canSkip().onlyKind(Task.TASK_KINDS.react),
+      dumpIsTemplate: boolean().canSkip().onlyKind(Task.TASK_KINDS.react),
+      dumpUploadMethod: Validators.enumOf(['post', 'put', 'patch']).canSkip().onlyKind(Task.TASK_KINDS.react),
+      dumpUploadUrl: string().url().canSkip().onlyKind(Task.TASK_KINDS.react),
+
+      authTemplate: object({
+        hasVerification: boolean().required()
+      }).templateConfig(),
+      entityListTemplate: object({
+        hasSearch: boolean().required()
+      }).templateConfig(),
+      singleEntityTemplate: object().templateConfig()
     }).noUnknown(),
-    files: {
+    files: object({
       attachments: Validators.file(
         'image/*,text/*,video/*,audio/*,font/*,application/pdf,application/msword,application/zip',
         [10, Validators.SIZE_UNITS.MB], true,
@@ -61,10 +65,7 @@ module.exports = {
 
       sampleImage: Validators.file('image/*', [4, Validators.SIZE_UNITS.MB]).required()
         .onlyKind(Task.TASK_KINDS.layout),
-
-      fileDumps: Validators.file('application/json', [1, Validators.SIZE_UNITS.MB], true)
-        .optional().onlyKind(Task.TASK_KINDS.react),
-    },
+    }).noUnknown(),
     query: Validators.ensureEmpty()
   },
 };

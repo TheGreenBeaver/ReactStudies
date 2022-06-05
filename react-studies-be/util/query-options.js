@@ -1,8 +1,7 @@
 const { User, ElementRule, LayoutTask, ReactTask, TaskAttachment, Solution } = require('../models');
 
 
-const dummyAttrs = ['id'];
-const Dummy = { attributes: dummyAttrs };
+const Any_Dummy = { attributes: ['id'] };
 
 const userAuthenticationAttrs = ['id', 'password'];
 const userListAttrs = ['id', 'firstName', 'lastName', 'isTeacher'];
@@ -45,14 +44,14 @@ const Task_Default = {
 const Task_List = {
   attributes: ['id', 'title', 'updatedAt'],
   include: [
-    { model: ReactTask, as: 'reactTask', attributes: dummyAttrs },
-    { model: LayoutTask, as: 'layoutTask', attributes: dummyAttrs },
+    { model: ReactTask, as: 'reactTask', ...Any_Dummy },
+    { model: LayoutTask, as: 'layoutTask', ...Any_Dummy },
     { model: User, as: 'teacher', ...User_List }
   ]
 };
 
 module.exports = {
-  Dummy,
+  Any_Dummy,
 
   User_Default,
   User_List,

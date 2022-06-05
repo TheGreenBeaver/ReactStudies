@@ -3,16 +3,13 @@
   "packageManager": "yarn@3.2.0",
   "scripts": {
     "runserver": "node index.js",
-    "runserver:dev": "nodemon index.js",
-    "cypress:dev": "cd repo-templates && cypress run --config-file cypress.local.json"
+    "runserver:dev": "nodemon index.js"
   },
   "dependencies": {
-    "cypress": "^9.6.1",
-    "cypress-image-snapshot": "^4.0.1",
     "express": "^4.18.1",
     "helmet": "^5.1.0",
     "http-status": "^1.5.2",
-    "jest": "^28.1.0",
+    "image-size": "^1.0.1",
     "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "multer": "^1.4.4",

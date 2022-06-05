@@ -3,9 +3,9 @@ import startCase from 'lodash/startCase';
 import { humanizeFileSize, serializeFileSize } from './misc';
 import isEqual from 'lodash/isEqual';
 import { CAVEAT_FIELDS, ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY } from './constants';
-import fs from 'fs';
 import uniq from 'lodash/uniq';
 
+// TODO: Update to match BE
 
 setLocale({
   mixed: {

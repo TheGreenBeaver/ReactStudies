@@ -38,7 +38,7 @@ import useEditableView from '../../../hooks/useEditableView';
 import { uriTransformer as defaultUriTransformer } from 'react-markdown';
 
 
-const LOCAL_PREFIX = 'local:';
+const LOCAL_PREFIX = './attachments/';
 
 function MarkdownField({ name, label, localFiles, localFilesRefs }) {
   const { setFieldValue, values, isEditing } = useEditableView();
@@ -52,7 +52,7 @@ function MarkdownField({ name, label, localFiles, localFilesRefs }) {
   const transformImageUri = useCallback(uri => {
     if (uri.startsWith(LOCAL_PREFIX) && localFiles && localFilesRefs) {
       const ref = uri.replace(LOCAL_PREFIX, '');
-      const refIdx = localFilesRefs.indexOf(ref);
+      const refIdx = localFilesRefs.indexOf(ref.replace(/(?<!^)\.\w+$/, ''));
       if (refIdx !== -1) {
         const file = localFiles[refIdx];
         return file instanceof File ? URL.createObjectURL(file) : file.location;

@@ -1,10 +1,10 @@
 const startCase = require('lodash/startCase');
 const isEqual = require('lodash/isEqual');
-const { setLocale, array, string, object, mixed, number, ArraySchema, addMethod, BaseSchema } = require('yup');
+const { setLocale, array, string, object, mixed, number, ArraySchema, addMethod, BaseSchema, StringSchema, ObjectSchema } = require('yup');
 const mapValues = require('lodash/mapValues');
 const isEmpty = require('lodash/isEmpty');
 const uniq = require('lodash/uniq');
-const fs = require('fs');
+const { Task } = require('../models');
 
 
 setLocale({
@@ -32,6 +32,10 @@ addMethod(BaseSchema, 'uniqList', function uniqList(entryTitle, comparator = isE
       return !parent.some((entry, idx) => comparator(entry, value) && idx !== ownIdx);
     })
   );
+});
+
+addMethod(BaseSchema, 'canSkip', function canSkip() {
+  return this.nullable().optional();
 });
 
 class Validators {
@@ -154,9 +158,9 @@ class Validators {
 
   static caveat(min = 1, max = 99) {
     return object({
-      maxUsage: this.numeric(min, max, true).label('Threshold').optional(),
-      allowedFor: this.#requiredSchema(this.elementList().label('rule')).nullable()
-    }).nullable().optional();
+      maxUsage: this.numeric(min, max, true).label('Threshold').canSkip(),
+      allowedFor: this.#requiredSchema(this.elementList().label('rule')).canSkip()
+    }).noUnknown().canSkip();
   }
 
   static gitHubToken() {
@@ -170,10 +174,14 @@ class Validators {
       });
   }
 
+  static #isBool(v) {
+    return typeof v === 'boolean';
+  }
+
   static #allowedTokensForTypes = {
     string: ['max', 'min', 'nullable', 'email'],
     number: ['max', 'min', 'nullable', 'int'],
-    date: ['utc', 'nullable'],
+    date: ['format', 'nullable', 'allowPast', 'allowFuture'],
     bool: ['nullable'],
     array: ['max', 'min', 'of', 'nullable'],
     enum: ['values', 'nullable']
@@ -181,15 +189,14 @@ class Validators {
   static #validationsForTokens = {
     max: Number.isInteger,
     min: Number.isInteger,
-    int: v => typeof v === 'boolean',
-    utc: v => typeof v === 'boolean',
+    nullable: this.#isBool,
+    email: this.#isBool,
+    int: this.#isBool,
+    format: v => typeof v === 'string',
+    allowPast: this.#isBool,
+    allowFuture: this.#isBool,
     of: v => typeof v === 'object',
-    nullable: v => typeof v === 'boolean',
-    email: v => typeof v === 'boolean',
-    values: v =>
-      Array.isArray(v) &&
-      v.every(opt => typeof opt === 'string') &&
-      uniq(v).length === v.length
+    values: v => Array.isArray(v) && uniq(v).length === v.length
   };
 
   static #unpackTemplateConfig(config) {
@@ -214,9 +221,21 @@ class Validators {
       if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
         return `Token "${tokenName}" for type "${type}" must have non-negative value (got ${tokenDef})`;
       }
+      if (rest.email) {
+        if (tokenName === 'max') {
+          return '"max" for emails is always 100';
+        }
+        if (tokenName === 'min') {
+          return '"min" for emails is always 15';
+        }
+      }
       if (tokenName === 'of') {
         return this.#unpackTemplateConfig(tokenDef);
       }
+    }
+
+    if (type === 'enum' && !rest.values) {
+      return '"values" token is required for type "enum"';
     }
 
     return null;
@@ -242,27 +261,19 @@ addMethod(BaseSchema, 'onlyKind', function onlyKind(kind) {
   });
 });
 
-addMethod(object, 'withPagination', function withPagination() {
+addMethod(ObjectSchema, 'withPagination', function withPagination() {
   return this.shape({
     page: Validators.niceNumber().optional(),
     pageSize: Validators.niceNumber().optional()
   }).noUnknown();
 });
 
-addMethod(BaseSchema, 'dump', function dump() {
-  return this.test('isDump', 'Validation error', async (rawValue, testContext) => {
-    if (!rawValue) {
+addMethod(StringSchema, 'dump', function dump() {
+  return this.test('isDump', 'Validation error', (value, testContext) => {
+    if (!value) {
       return true;
     }
-    const { options: { context: { body: { pages } }, index }, parent, createError } = testContext;
-    const value = typeof rawValue == 'string' ? rawValue : await fs.promises.readFile(rawValue.path);
-    const correspondingPage = index == null
-      ? parent
-      : pages.find(page => page.fileDumpIndex === index);
-    if (!correspondingPage) {
-      return createError({ message: 'Dump is not matched to a page' });
-    }
-    const { dumpIsTemplate } = correspondingPage;
+    const { parent: { dumpIsTemplate }, createError } = testContext;
     try {
       const asJson = JSON.parse(value);
       if (dumpIsTemplate) {
@@ -271,10 +282,19 @@ addMethod(BaseSchema, 'dump', function dump() {
           return createError({ message });
         }
       }
+      return true;
     } catch {
       return createError({ message: 'Not a valid JSON' });
     }
   });
+});
+
+addMethod(ObjectSchema, 'templateConfig', function templateConfig() {
+  return this.shape({
+    endpoints: array().of(string().max(2000).required()).canSkip(),
+    routes: array().of(string().max(2000).required()).canSkip(),
+    special: string().max(2000).canSkip()
+  }).noUnknown().canSkip().onlyKind(Task.TASK_KINDS.react);
 });
 
 module.exports = Validators;

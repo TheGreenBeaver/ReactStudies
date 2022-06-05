@@ -4,6 +4,10 @@ const { WS_PATH } = require('../settings');
 
 
 class FsWebSocketServer extends WebSocketServer {
+  Actions = {
+    taskRepositoryPopulated: 'taskRepositoryPopulated',
+  };
+
   constructor() {
     super({
       clientTracking: true,

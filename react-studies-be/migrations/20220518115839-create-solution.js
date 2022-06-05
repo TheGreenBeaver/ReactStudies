@@ -10,8 +10,17 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       repoUrl: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(2000),
         allowNull: false
+      },
+      dumpUploadUrl: {
+        type: Sequelize.STRING(2000),
+        allowNull: true
+      },
+      dumpUploadMethod: {
+        type: Sequelize.ENUM,
+        values: ['post', 'put', 'patch'],
+        allowNull: true
       },
       createdAt: {
         allowNull: false,

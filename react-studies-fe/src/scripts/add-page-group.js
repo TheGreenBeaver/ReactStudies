@@ -4,7 +4,7 @@ const { insertAtPos, insertAfter } = require('./_utils');
 
 
 const linksFileContent =
-`import { AppLink } from '../config/AppLink';
+`import AppLink from '../config/AppLink';
 
 const links = {
 };

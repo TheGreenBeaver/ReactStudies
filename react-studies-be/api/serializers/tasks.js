@@ -31,9 +31,7 @@ module.exports = {
       delete serialized.layoutTask;
     }
 
-    if (!isEmpty(serialized.reactTask)) {
-      // TODO
-    } else {
+    if (isEmpty(serialized.reactTask)) {
       delete serialized.reactTask;
     }
 

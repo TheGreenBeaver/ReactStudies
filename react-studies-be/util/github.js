@@ -1,70 +1,77 @@
 const { Octokit } = require('octokit');
-const { GITHUB_USER_AGENT } = require('../settings');
-const httpStatus = require('http-status');
-const { getFilesRecursively } = require('./misc');
+const { getFilesRecursively, standardizePath } = require('./misc');
 const fs = require('fs');
 const path = require('path');
+const partition = require('lodash/partition');
 
 
-/**
- * @typedef {Object} GHObj
- * @property {Octokit} octokit
- * @property {{ id: number, login: string, name: string, email: string }} user
- */
+function getRegexFromRule(rule) {
+  const ruleBody = rule
+    .replace(/\\/g, '/')
+    .replace(/\./g, '\\.')
+    .replace(/(\*\*\/)|(\*)/g, match => match.length === 1 ? '[^/]*' : '.*')
+    .replace(/\?/g, '[^/]{1}');
+  return new RegExp(`^${ruleBody}`);
+}
 
-/**
- *
- * @param req
- * @return {Promise<(function | GHObj)>}
- */
-async function getOctokit(req) {
-  const gitHubToken = req.user.gitHubToken || req.body.gitHubToken;
-  if (!gitHubToken) {
-    return res => res.status(httpStatus.BAD_REQUEST).send({ gitHubToken: ['No token found'] });
+async function parseGitignore(dir) {
+  try {
+    const content = await fs.promises.readFile(path.join(dir, '.gitignore'), 'utf-8');
+    const rules = content.split(/[\n\r]/g).filter(Boolean);
+    const [keep, ignore] = partition(rules, rule => rule.startsWith('!'));
+    return {
+      keepRules: keep.map(fPath => getRegexFromRule(path.join(dir, fPath.substring(1)))),
+      ignoreRules: ignore.map(fPath => getRegexFromRule(path.join(dir, fPath)))
+    };
+  } catch {
+    return { keepRules: [], ignoreRules: [] };
   }
-  const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: gitHubToken });
-  const user = await octokit.rest.users.getAuthenticated();
-  return { octokit, user };
 }
 
 function unpack(obj, prefix = '') {
   return Object.entries(obj).map(([key, val]) => val.constructor.name === 'Object'
-    ? unpack(val, [prefix, key].join('/'))
-    : ({ path: [prefix, key].join('/'), content: Buffer.from(val).toString('base64') })
+    ? unpack(val, [prefix, key].filter(Boolean).join('/'))
+    : ({ path: [prefix, key].filter(Boolean).join('/'), content: Buffer.from(val).toString('base64') })
   ).flat();
 }
 
 /**
  * @typedef {Object} Dir
  * @property {string} dir
- * @property {string} place
- * @property {(function(fPath: string): boolean)=} ignore
- * @property {(function(fPath: string): boolean)=} keep
+ * @property {string} mount
+ * @property {(function(filePath: string): boolean)=} ignore
+ * @property {(function(filePath: string): boolean)=} keep
  */
 
 /**
  *
- * @param {GHObj} ghObj
+ * @param {Octokit} octokit
  * @param {string} repo
  * @param {string} [message = 'Generating template']
  * @param {Array<Dir>=} dirs
  * @param {Object=} plain
  * @return {Promise<void>}
  */
-async function uploadFiles(ghObj, repo, {
+async function uploadFiles(octokit, repo, {
   message = 'Generating template', dirs, plain
-}) {
+} = {}) {
   const toCreate = [];
   if (dirs) {
-    for (const { dir, keep, ignore, place } of dirs) {
+    for (const { dir, mount, keep, ignore } of dirs) {
+      const { keepRules, ignoreRules } = await parseGitignore(dir);
       const allFilePaths = await getFilesRecursively(dir);
-      const filePaths = allFilePaths.filter(fPath => (!keep || keep(fPath)) && (!ignore || !ignore(path)));
+      const filePaths = allFilePaths.filter(rawFilePath => {
+        const filePath = standardizePath(rawFilePath);
+        const shouldIgnore = ignoreRules.some(ignoreRule => ignoreRule.test(filePath)) || ignore?.(filePath);
+        const shouldKeep = keepRules.some(keepRule => keepRule.test(filePath) || keep?.(filePath));
+        return !shouldIgnore || shouldKeep;
+      });
 
       for (const filePath of filePaths) {
         const content = await fs.promises.readFile(filePath, 'base64');
         const relativePath = path.relative(dir, filePath);
-        const pathWithPlace = place ? path.join(place, relativePath) : relativePath;
-        toCreate.push({ path: pathWithPlace.replace(/\\/g, '/'), content });
+        const mountedPath = mount ? path.join(mount, relativePath) : relativePath;
+        toCreate.push({ path: standardizePath(mountedPath), content });
       }
     }
   }
@@ -73,13 +80,14 @@ async function uploadFiles(ghObj, repo, {
     toCreate.push(...unpack(plain));
   }
 
+  const { data: { login } } = await octokit.rest.users.getAuthenticated();
   for (const fileData of toCreate) {
-    await ghObj.octokit.rest.repos.createOrUpdateFileContents({
-      owner: ghObj.user.name, repo, ...fileData, message
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: login, repo, ...fileData, message
     });
   }
 }
 
 module.exports = {
-  getOctokit, uploadFiles
+  uploadFiles
 }

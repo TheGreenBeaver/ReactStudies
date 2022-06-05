@@ -4,7 +4,7 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ElementRule extends Model {
-    static RULE_NAMES = {
+    static RULE_KINDS = {
       absPos: 'abs_pos',
       rawSizing: 'raw_sizing',
       mustUse: 'must_use'
@@ -18,9 +18,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   ElementRule.init({
-    ruleName: {
+    kind: {
       type: DataTypes.ENUM,
-      values: Object.values(ElementRule.RULE_NAMES),
+      values: Object.values(ElementRule.RULE_KINDS),
       allowNull: false
     },
     content: {

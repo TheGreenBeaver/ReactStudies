@@ -23,3 +23,13 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('typeWithBlinkCheck', { prevSubject: true }, (subject, text) => {
+  const firstLetter = text[0];
+  cy.wrap(subject).type(firstLetter, { delay: 20 }).should('be.focused').type(text.substring(1));
+  return subject;
+});
+
+Cypress.Commands.add('comparePathname', (chainer, pathname) => {
+  cy.url().then(url => new URL(url)).its('pathname').should(chainer, pathname);
+});

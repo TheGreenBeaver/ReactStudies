@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { origin } = require('./env');
 const { MEDIA_DIR, MEDIA_PATH } = require('../settings');
+const startCase = require('lodash/startCase');
 
 
 function getFileIsUsable(file, basename) {
@@ -55,11 +56,21 @@ function composeMediaPath(file, baseDir = MEDIA_DIR, basePath = MEDIA_PATH) {
   return `${origin}${basePath}/${purePath}`;
 }
 
+function standardizePath(filePath) {
+  return filePath.replace(/\\/g, '/');
+}
+
+function pascalCase(str) {
+  return startCase(str).replace(/ /g, '');
+}
+
 module.exports = {
   listUsableFiles,
   baseNoExt,
   isAsync,
   asyncMap,
   getFilesRecursively,
-  composeMediaPath
+  composeMediaPath,
+  standardizePath,
+  pascalCase
 };

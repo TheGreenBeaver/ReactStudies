@@ -10,7 +10,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       title: {
-        type: Sequelize.STRING(30),
+        type: Sequelize.STRING(39),
         allowNull: false
       },
       description: {
@@ -18,8 +18,13 @@ module.exports = {
         allowNull: true
       },
       repoUrl: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(2000),
         allowNull: false
+      },
+      trackUpdates: {
+        type:Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
       },
       createdAt: {
         allowNull: false,

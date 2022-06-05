@@ -1,4 +1,5 @@
 const { WebSocket } = require('ws');
+const { authorize } = require('../util/user-identity');
 
 
 class FsWebSocket extends WebSocket {
@@ -7,6 +8,24 @@ class FsWebSocket extends WebSocket {
    * @type {User}
    */
   user = null;
+
+  constructor(...args) {
+    super(...args);
+    this.on('message', async token => {
+      if (!/[0-9abcdef]{40}/.test(token)) {
+        return this.send('WebSocket authorization failed');
+      }
+
+      try {
+        const authToken = await authorize(`${token}`);
+        if (authToken?.user) {
+          this.user = authToken.user;
+        }
+      } catch {
+        this.send('WebSocket authorization failed');
+      }
+    });
+  }
 
   async sendMessage(action, payload, onError = () => {}) {
     try {

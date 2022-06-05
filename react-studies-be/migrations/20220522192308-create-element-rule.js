@@ -9,7 +9,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      ruleName: {
+      kind: {
         type: Sequelize.ENUM,
         values: ['abs_pos', 'raw_sizing', 'must_use'],
         allowNull: false
@@ -19,7 +19,7 @@ module.exports = {
         allowNull: true
       },
       tag: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(20),
         allowNull: true
       },
     }));

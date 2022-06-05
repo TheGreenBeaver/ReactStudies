@@ -1,7 +1,7 @@
 const SmartRouter = require('./_smart-router');
-const { GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
+const { GITHUB_USER_AGENT, MEDIA_DIR, REPO_TEMPLATES_DIR } = require('../settings');
 const httpStatus = require('http-status');
-const { Task, TaskAttachment, ElementRule, ReactTaskPage } = require('../models');
+const { Task, TaskAttachment, ElementRule, TemplateConfig } = require('../models');
 const multerMw = require('../middleware/multer');
 const { Octokit } = require('octokit');
 const fs = require('fs');
@@ -10,7 +10,11 @@ const cloneDeep = require('lodash/cloneDeep');
 const { Op } = require('sequelize');
 const isEmpty = require('lodash/isEmpty');
 const now = require('lodash/now');
+const sizeOf = require('image-size')
 const pick = require('lodash/pick');
+const omit = require('lodash/omit');
+const { uploadFiles } = require('../util/github');
+const { pascalCase } = require('../util/misc');
 
 
 class TasksRouter extends SmartRouter {
@@ -80,7 +84,22 @@ class TasksRouter extends SmartRouter {
     return options;
   }
 
+  static #getSampleHtml(sampleExt) {
+    return (
+`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body style='margin: 0; padding: 0; box-sizing: border-box'>
+<img src='./sample${sampleExt}' alt='sample' />
+</body>
+</html>`);
+  }
+
   async handleCreate(req, options, res, next) {
+    const { body, user, files } = req;
     const {
       kind,
       title,
@@ -90,15 +109,17 @@ class TasksRouter extends SmartRouter {
 
       gitHubToken,
       rememberToken
-    } = req.body;
-    const { attachments: attachmentFiles } = req.files;
+    } = body;
+    const { attachments: attachmentFiles } = files;
 
     if (rememberToken && gitHubToken) {
-      req.user.gitHubToken = gitHubToken;
-      await req.user.save();
+      user.gitHubToken = gitHubToken;
+      await user.save();
     }
-    const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: req.user.gitHubToken });
+
+    const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: user.gitHubToken });
     const { data: repo } = await octokit.rest.repos.createForAuthenticatedUser({ name: title });
+
     const attachments = [];
     for (const idx in attachmentFiles) {
       const { mimetype, destination, filename, path: filePath } = attachmentFiles[idx];
@@ -107,35 +128,80 @@ class TasksRouter extends SmartRouter {
       await fs.promises.rename(filePath, location);
       attachments.push({ location, refName, mime: mimetype });
     }
-    const basicTask = await req.user.createTask({ title, description, repoUrl: repo.html_url, attachments, trackUpdates }, {
+    const basicTask = await user.createTask({ title, description, repoUrl: repo.html_url, attachments, trackUpdates }, {
       include: [{ model: TaskAttachment, as: 'attachments' }]
     });
 
+    const { app: { locals: { wsServer } } } = req;
+
     switch (kind) {
       case Task.TASK_KINDS.layout:
-        const { mustUse, absPos, rawSizing } = req.body;
-        const { sampleImage } = req.files;
+        const { mustUse, absPos, rawSizing } = body;
+        const sampleImage = files.sampleImage[0].path;
         const mustUseRules = mustUse?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.mustUse })) || [];
         const absPosRules = absPos?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.absPos })) || [];
         const rawSizingRules = rawSizing?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.rawSizing })) || [];
         await basicTask.createLayoutTask({
-          sampleImage: sampleImage[0].path,
+          sampleImage,
           absPosMaxUsage: absPos?.maxUsage,
           rawSizingMaxUsage: rawSizing?.maxUsage,
           elementRules: [...mustUseRules, ...absPosRules, ...rawSizingRules],
         }, {
           include: [{ model: ElementRule, as: 'elementRules' }],
         });
+
+        const dimensions = await new Promise((resolve, reject) => sizeOf(sampleImage, (err, dim) =>
+          err ? reject(err) : resolve(dim)
+        ));
+        const cypressEnv = JSON.stringify({
+          dimensions, mustUse, absPosAllowedFor: absPos?.allowedFor, rawSizingAllowedFor: rawSizing?.allowedFor
+        }, null, '  ');
+        const sampleImageContent = await fs.promises.readFile(sampleImage);
+        const sampleExt = path.extname(sampleImage);
+        const extraFilesToUpload = {
+          tech: {
+            [`sample${sampleExt}`]: sampleImageContent.toString('base64'),
+            ['sample.html']: TasksRouter.#getSampleHtml(sampleExt)
+          },
+          'cypress.env.json': cypressEnv,
+          'README.md': description
+        };
+        uploadFiles(octokit, repo.name, {
+          dirs: [{
+            dir: path.join(REPO_TEMPLATES_DIR, 'layout'),
+            ignore: filePath => /(src\/.*$)|(tech\/sample\.\w+$)/.test(filePath),
+            keep: filePath => filePath.endsWith('/layout/src/index.html')
+          }, {
+            dir: attachmentFiles[0].destination,
+            mount: 'attachments'
+          }],
+          plain: extraFilesToUpload
+        }).then(() => wsServer.sendToUser(user, wsServer.Actions.taskRepositoryPopulated, {}));
         break;
       case Task.TASK_KINDS.react:
-        const { includeFuzzing, pages: rawPages } = req.body;
-        const { fileDumps } = req.files;
-        const pages = rawPages.map(rawPage => {
-          const dump = rawPage.textDump || fileDumps?.[rawPage.fileDumpIdx];
-          const dumpIsFile = dump ? !rawPage.textDump : null;
-          return { ...pick(rawPage, ['endpoints', 'template', 'dumpIsTemplate', 'route']), dump, dumpIsFile };
+        const pureFields = ['hasFuzzing', 'dump', 'dumpIsTemplate', 'dumpUploadMethod', 'dumpUploadUrl'];
+        const configFields = ['endpoints', 'routes', 'special']
+        const values = pick(body, pureFields);
+        const teacherTemplateConfigs = [];
+        const templateConfigs = omit(body, pureFields);
+        Object.entries(templateConfigs).forEach(([templateName, config]) => {
+          const configValues = pick(config, configFields);
+          values[`has${pascalCase(templateName)}`] = true;
+          Object.assign(values, omit(config, configFields));
+          teacherTemplateConfigs.push({ ...configValues, kind: TemplateConfig.TEMPLATE_KINDS[templateName] });
         });
-        await basicTask.createReactTask({ includeFuzzing, pages }, { include: [{ model: ReactTaskPage, as: 'pages' }] });
+        await basicTask.createReactTask(
+          { ...values, teacherTemplateConfigs },
+          { include: [{ model: TemplateConfig, as: 'teacherTemplateConfigs' }] }
+        );
+
+        uploadFiles(octokit, repo.name, {
+          dirs: [{
+            dir: path.join(REPO_TEMPLATES_DIR, 'react'),
+            ignore: filePath => /(app-backend|app-frontend)\/.*$/.test(filePath)
+          }]
+        }).then(() => wsServer.sendToUser(user, wsServer.Actions.taskRepositoryPopulated, {}));
+        break;
     }
 
     return { status: httpStatus.CREATED, data: basicTask };

@@ -19,6 +19,8 @@ import { Form } from 'formik';
 import GeneralError from '../../../uiKit/SmartForm/interactions/GeneralError';
 import Box from '@mui/material/Box';
 import StrictAccordion from '../../../uiKit/StrictAccordion';
+import { useDispatch } from 'react-redux';
+import { updateUserData } from '../../../store/slices/account';
 
 
 const SECTION_NAMES = {
@@ -67,6 +69,7 @@ const fieldsForKinds = {
 };
 
 function CreateTask() {
+  const dispatch = useDispatch();
   const history = useHistory();
   const [sectionsExpanded, setSectionsExpanded] = useState({
     [SECTION_NAMES.general]: true,
@@ -82,9 +85,12 @@ function CreateTask() {
       ...Object.values(TOKEN_FIELDS)
     ];
     const formData = getFormData(values, fields);
-    finishSubmit(api.tasks.create(formData).then(({ data }) =>
-      history.push(links.singleTask.compose(data.id)),
-    ), formikHelpers);
+    finishSubmit(api.tasks.create(formData).then(({ data }) => {
+      if (values[TOKEN_FIELDS.rememberToken]) {
+        dispatch(updateUserData({ gitHubToken: values[TOKEN_FIELDS.gitHubToken] }));
+      }
+      history.push(links.singleTask.compose(data.id));
+    }), formikHelpers);
   }
 
   return (

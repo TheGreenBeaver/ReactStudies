@@ -9,11 +9,58 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      includeFuzzing: {
+      hasFuzzing: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true
       },
+
+      hasAuthTemplate: {
+        allowNull: false,
+        defaultValue: true,
+        type: Sequelize.BOOLEAN,
+      },
+      hasVerification: {
+        allowNull: false,
+        defaultValue: false,
+        type: Sequelize.BOOLEAN,
+      },
+
+      hasEntityListTemplate: {
+        allowNull: false,
+        defaultValue: true,
+        type: Sequelize.BOOLEAN,
+      },
+      hasSearch: {
+        allowNull: false,
+        defaultValue: false,
+        type: Sequelize.BOOLEAN,
+      },
+
+      hasSingleEntityTemplate: {
+        allowNull: false,
+        defaultValue: true,
+        type: Sequelize.BOOLEAN,
+      },
+
+      dump: {
+        allowNull: true,
+        type: Sequelize.TEXT
+      },
+      dumpIsTemplate: {
+        allowNull: false,
+        defaultValue: true,
+        type: Sequelize.BOOLEAN,
+      },
+      dumpUploadUrl: {
+        type: Sequelize.STRING(2000),
+        allowNull: true
+      },
+      dumpUploadMethod: {
+        type: Sequelize.ENUM,
+        values: ['post', 'put', 'patch'],
+        allowNull: true
+      }
     }));
   },
   async down(queryInterface, Sequelize) {

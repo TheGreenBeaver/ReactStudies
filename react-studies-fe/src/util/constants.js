@@ -1,4 +1,4 @@
-import ReactIcon from '../assets/icons/React';
+import ReactSymbol from '../assets/icons/ReactSymbol';
 import Html from '@mui/icons-material/Html';
 
 
@@ -25,7 +25,7 @@ const TASK_KIND_DEFINITIONS = {
   [TASK_KINDS.layout]: 'HTML layout'
 };
 const TASK_KIND_ICONS = {
-  [TASK_KINDS.react]: ReactIcon,
+  [TASK_KINDS.react]: ReactSymbol,
   [TASK_KINDS.layout]: Html
 };
 

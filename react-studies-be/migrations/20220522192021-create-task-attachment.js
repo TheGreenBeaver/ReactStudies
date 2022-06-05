@@ -7,16 +7,20 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       location: {
         type: Sequelize.TEXT,
+        allowNull: false,
+      },
+      mime: {
+        type: Sequelize.STRING(50),
         allowNull: false
       },
       refName: {
         type: Sequelize.STRING(30),
-      allowNull: false
-      }
+        allowNull: false,
+      },
     }));
   },
   async down(queryInterface, Sequelize) {
