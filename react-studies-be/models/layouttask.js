@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const { composeMediaPath } = require('../util/misc');
 module.exports = (sequelize, DataTypes) => {
   class LayoutTask extends Model {
     static associate({ ElementRule, Task }) {
@@ -16,7 +17,11 @@ module.exports = (sequelize, DataTypes) => {
   LayoutTask.init({
     sampleImage: {
       allowNull: false,
-      type: DataTypes.TEXT
+      type: DataTypes.TEXT,
+      get() {
+        const rawValue = this.getDataValue('sampleImage');
+        return composeMediaPath(rawValue);
+      }
     },
     absPosMaxUsage: {
       type: DataTypes.INTEGER,
@@ -32,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'LayoutTask',
     timestamps: false,
     hooks: {
-      afterUpdate: async (instance, options) => {
+      afterUpdate: async instance => {
         const basicTask = await instance.getBasicTask();
         basicTask.updatedAt = new Date();
         await basicTask.save();

@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class LayoutSolutionResult extends Model {
+  class ReactSolutionResult extends Model {
     static associate({ SolutionResult }) {
       this.belongsTo(SolutionResult, {
         foreignKey: { name: 'basic_result_id', allowNull: false },
@@ -11,20 +11,24 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  LayoutSolutionResult.init({
-    diffLocation: {
-      type: DataTypes.TEXT,
+  ReactSolutionResult.init({
+    failedAt: {
+      type: DataTypes.STRING(100),
       allowNull: true
     },
-    reportLocation: {
-      type: DataTypes.TEXT,
+    listDataPercentage: {
+      type: DataTypes.FLOAT,
       allowNull: true
-    }
+    },
+    singleDataPercentage: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
   }, {
     sequelize,
-    tableName: 'layout_solution_result',
-    modelName: 'LayoutSolutionResult',
+    tableName: 'react_solution_result',
+    modelName: 'ReactSolutionResult',
     timestamps: false
   });
-  return LayoutSolutionResult;
+  return ReactSolutionResult;
 };

@@ -4,7 +4,7 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Solution extends Model {
-    static associate({ User, Task, TemplateConfig, LayoutSolutionResult }) {
+    static associate({ User, Task, TemplateConfig, SolutionResult }) {
       this.belongsTo(User, {
         foreignKey: { allowNull: false, name: 'student_id' },
         as: 'student'
@@ -14,9 +14,9 @@ module.exports = (sequelize, DataTypes) => {
         as: 'task'
       });
       this.hasMany(TemplateConfig, { foreignKey: 'solution_id', as: 'studentTemplateConfigs' });
-      this.hasMany(LayoutSolutionResult, {
-        foreignKey: 'solution_id', as: 'layoutResults'
-      })
+      this.hasMany(SolutionResult, {
+        foreignKey: 'solution_id', as: 'results'
+      });
     }
   }
   Solution.init({
@@ -36,11 +36,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM,
       values: ['post', 'put', 'patch'],
       allowNull: true
-    },
-    awaitingToken: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false
     }
   }, {
     sequelize,

@@ -1,7 +1,7 @@
 const { Webhooks, createNodeMiddleware } = require('@octokit/webhooks');
 const { getVar } = require('../util/env');
 const { WEBHOOKS_PATH, TEMP_DIR } = require('../settings');
-const { Solution, User, Task, LayoutSolutionResult, LayoutTask, ReactTask } = require('../models');
+const { Solution, User, Task, SolutionResult, LayoutTask, ReactTask } = require('../models');
 const { User_Private, Any_Dummy } = require('../util/query-options');
 const pick = require('lodash/pick');
 const { downloadArtifacts } = require('../util/github');
@@ -34,19 +34,10 @@ function apply(app) {
       }],
       attributes: ['id', 'repoUrl']
     });
-    const [solutionKind] = workflow.name.split('-');
 
     const tokenIsSaved = !!solution.student.gitHubToken;
     const tempDest = path.join(TEMP_DIR, `${now()}.zip`);
-    const values = tokenIsSaved ? {} : { unprocessedReportLocation: tempDest };
-    let solutionResult;
-    switch (solutionKind) {
-      case Task.TASK_KINDS.layout:
-        solutionResult = LayoutSolutionResult.build({ ...values, solution_id: solution.id });
-        break;
-      case Task.TASK_KINDS.react:
-      // TODO
-    }
+    const solutionResult = SolutionResult.build({ solution_id: solution.id, runId: workflow_run.id });
     if (tokenIsSaved) {
       await downloadArtifacts(
         solution.student.gitHubToken,
@@ -56,15 +47,12 @@ function apply(app) {
         wsServer,
         solutionResult,
         solution,
-        tempDest
+        tempDest,
       );
     } else {
       wsServer.sendToUser(solution.student, wsServer.Actions.workflowCompleted, pick(solution, ['id', 'repoUrl']));
-
-      solution.awaitingToken = true;
       await solution.save();
-
-      solutionResult.runId = workflow_run.id;
+      solutionResult.set({ unprocessedReportLocation: tempDest })
       await solutionResult.save();
     }
   });

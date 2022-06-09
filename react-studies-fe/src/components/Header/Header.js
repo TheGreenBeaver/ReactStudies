@@ -20,7 +20,7 @@ function Header() {
         </StyledLink>
         <Box display='flex' alignItems='center' columnGap={1}>
           <ColourModeMenu />
-          {userState.isAuthorized && <UserMenu />}
+          {userState.isAuthorized && userState.isFetched && <UserMenu />}
         </Box>
       </Toolbar>
     </AppBar>

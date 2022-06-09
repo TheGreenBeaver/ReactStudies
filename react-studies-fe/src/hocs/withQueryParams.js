@@ -1,7 +1,8 @@
-import { Redirect, useLocation } from 'react-router-dom';
+import { Redirect, useLocation, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { parse } from 'query-string';
 import isEqual from 'lodash/isEqual';
+import pick from 'lodash/pick';
 
 
 function withQueryParams(
@@ -9,10 +10,11 @@ function withQueryParams(
   fallbackLink,
   cleanup, {
     parseOptions = { parseNumbers: true },
-    plainFallback = false
+    params = []
   } = {}) {
   return props => {
     const { search } = useLocation();
+    const allParams = useParams();
 
     const [cleanParams, shouldRedirect] = useMemo(() => {
       const rawParams = parse(search, parseOptions);
@@ -22,7 +24,7 @@ function withQueryParams(
     }, [search]);
 
     if (shouldRedirect) {
-      return <Redirect to={plainFallback ? fallbackLink.path : fallbackLink.compose(cleanParams)} />;
+      return <Redirect to={fallbackLink.compose(...Object.values(pick(allParams, params)), cleanParams)} />;
     }
 
     return <Component {...cleanParams} {...props} />;

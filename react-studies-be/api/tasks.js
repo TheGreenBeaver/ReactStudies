@@ -15,7 +15,7 @@ const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const { uploadFiles } = require('../util/github');
 const { pascalCase, getBase64 } = require('../util/misc');
-const { StatusError } = require('../util/custom-errors');
+const { Task_List } = require('../util/query-options');
 
 
 class TasksRouter extends SmartRouter {
@@ -50,16 +50,6 @@ class TasksRouter extends SmartRouter {
     const options = cloneDeep(super.getQueryOptions(handlerName, req));
 
     switch (handlerName) {
-      case 'retrieve': {
-        if (!req.user.isTeacher) {
-          options.include = options.include.map(includedModel =>
-            includedModel.as === 'solutions'
-              ? { ...includedModel, where: { student_id: req.user.id } }
-              : includedModel
-          );
-        }
-        break;
-      }
       case 'list': {
         const { query } = req;
         const where = {};
@@ -79,18 +69,16 @@ class TasksRouter extends SmartRouter {
         if (!isEmpty(where)) {
           options.where = where;
         }
+        break;
+      }
+      case 'retrieve': {
+        if (req.query.mini) {
+          return Task_List;
+        }
       }
     }
 
     return options;
-  }
-
-  async handleRetrieve(req, options, res, next) {
-    const { data } = await super.handleRetrieve(req, options, res, next);
-    if (!data) {
-      throw new StatusError(httpStatus.NOT_FOUND);
-    }
-    return { data };
   }
 
   static #getSampleHtml(sampleExt) {
@@ -203,6 +191,7 @@ class TasksRouter extends SmartRouter {
           pick(basicTask, ['id', 'title']))
         );
         break;
+
       case Task.TASK_KINDS.react:
         const pureFields = ['hasFuzzing', 'dump', 'dumpIsTemplate', 'dumpUploadMethod', 'dumpUploadUrl'];
         const configFields = ['endpoints', 'routes', 'special']

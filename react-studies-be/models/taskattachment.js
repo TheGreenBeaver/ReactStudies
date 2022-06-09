@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const { composeMediaPath } = require('../util/misc');
 module.exports = (sequelize, DataTypes) => {
   class TaskAttachment extends Model {
     static associate(models) {
@@ -14,7 +15,11 @@ module.exports = (sequelize, DataTypes) => {
   TaskAttachment.init({
     location: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: false,
+      get() {
+        const rawValue = this.getDataValue('location');
+        return composeMediaPath(rawValue);
+      }
     },
     mime: {
       type: DataTypes.STRING(50),

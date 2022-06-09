@@ -9,7 +9,6 @@ const capitalize = require('lodash/capitalize');
 const { origin } = require('../util/env');
 const cloneDeep = require('lodash/cloneDeep');
 const { Op } = require('sequelize');
-const { User_List } = require('../util/query-options');
 
 
 class UsersRouter extends SmartRouter {
@@ -17,12 +16,13 @@ class UsersRouter extends SmartRouter {
     super(User, __filename, {
       AccessRules: {
         create: { isAuthorized: false },
-        update: { never: true },
-        remove: { never: true },
+        list: { isAuthorized: true, isVerified: true },
         verify: { isVerified: false },
-        getMe: { isAuthorized: true },
+        retrieve: { isAuthorized: true, isVerified: true },
+        retrieveMe: { isAuthorized: true },
         updateMe: { isAuthorized: true, isVerified: true },
       },
+      DefaultAccessRules: { never: true }
     });
   }
 
@@ -30,30 +30,23 @@ class UsersRouter extends SmartRouter {
     const options = cloneDeep(super.getQueryOptions(handlerName, req));
     const { query } = req;
 
-    switch (handlerName) {
-      case 'retrieve': {
-        if (query.mini) {
-          return User_List;
-        }
-        break;
+    if (handlerName === 'list') {
+      const where = [];
+      if ('q' in query) {
+        where.push(sequelize.where(sequelize.fn(
+          'concat_ws',
+          ' ',
+          sequelize.col('first_name'),
+          sequelize.col('last_name'),
+        ), { [Op.iLike]: `%${query.q}%` }));
       }
-      case 'list': {
-        const where = [];
-        if ('q' in query) {
-          where.push(sequelize.where(sequelize.fn(
-            'concat_ws',
-            ' ',
-            sequelize.col('first_name'),
-            sequelize.col('last_name')
-          ), { [Op.iLike]: `%${query.q}%` }));
-        }
-        if ('isTeacher' in query) {
-          where.push({ is_teacher: query.isTeacher });
-        }
-        if (where.length) {
-          options.where = where;
-        }
+      if ('isTeacher' in query) {
+        where.push({ is_teacher: query.isTeacher });
       }
+      if (where.length) {
+        options.where = where;
+      }
+
     }
 
     return options;
@@ -83,7 +76,7 @@ class UsersRouter extends SmartRouter {
   }, SmartRouter.HttpMethods.post, '/verify', 'verify');
 
   retrieveMe = this.apiDecorator(
-    req => ({ data: req.user }), SmartRouter.HttpMethods.get, '/me', 'getMe'
+    req => ({ data: req.user }), SmartRouter.HttpMethods.get, '/me', 'retrieveMe'
   );
 
   updateMe = this.apiDecorator(() => {

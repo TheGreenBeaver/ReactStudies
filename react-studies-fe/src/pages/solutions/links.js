@@ -1,7 +1,8 @@
 import AppLink from '../config/AppLink';
 
 const links = {
-  singleSolution: new AppLink('/solutions/:id'),
+  solutionsList: new AppLink('/solutions'),
+  singleSolution: new AppLink('/solutions/:id(\\d+)'),
 };
 
 export default links;

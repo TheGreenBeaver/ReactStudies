@@ -3,6 +3,7 @@ import pick from 'lodash/pick';
 import last from 'lodash/last';
 import { CheckCircleOutlined, CircleOutlined, PendingOutlined } from '@mui/icons-material';
 import { Tooltip } from '@mui/material';
+import isEmpty from 'lodash/isEmpty';
 
 
 function getUpd(upd, curr) {
@@ -104,18 +105,22 @@ function wAmount(amount, text) {
   return `${amount} ${text}${amount === 1 ? '' : 's'}`;
 }
 
-function getSolutionResultIndicator(summary, awaitingToken) {
+function getTaskKind(task) {
+  return task ? Object.values(TASK_KINDS).find(taskKind => !isEmpty(task[`${taskKind}Task`])) : null;
+}
+
+function getSolutionResultIndicator(result) {
   let icon;
   let tooltipTitle;
-  if (awaitingToken) {
-    tooltipTitle = 'Pending';
-    icon = <PendingOutlined color='action' />;
-  } else if (!summary) {
+  if (!result?.summary) {
     tooltipTitle = 'No results yet';
     icon = <CircleOutlined color='disabled' />;
-  } else {
-    tooltipTitle = summary;
-    icon = <CheckCircleOutlined color={SUMMARY_INDICATOR_COLOURS[summary]} />;
+  } else if (result?.unprocessedReportLocation) {
+    tooltipTitle = 'Pending';
+    icon = <PendingOutlined color='action' />;
+  } else if (result) {
+    tooltipTitle = result.summary;
+    icon = <CheckCircleOutlined color={SUMMARY_INDICATOR_COLOURS[result.summary]} />;
   }
   return (
     <Tooltip placement='top' title={tooltipTitle}>
@@ -137,5 +142,6 @@ export {
   getOptions,
   getBaseAndExt,
   wAmount,
-  getSolutionResultIndicator
+  getSolutionResultIndicator,
+  getTaskKind,
 };

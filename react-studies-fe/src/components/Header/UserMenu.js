@@ -6,6 +6,9 @@ import usePopover from '../../hooks/usePopover';
 import api from '../../api';
 import { logOut } from '../../store/slices/account';
 import Typography from '@mui/material/Typography';
+import { Link } from 'react-router-dom';
+import links from '../../pages/config/links';
+import { DEFAULT_PAGE_SIZE } from '../../util/constants';
 
 
 function UserMenu() {
@@ -29,6 +32,15 @@ function UserMenu() {
         MenuListProps={{ sx: { minWidth: 220 } }}
         {...popoverProps}
       >
+        {!userData.isTeacher && userData.isVerified && (
+          <MenuItem
+            onClick={closeMenu}
+            component={Link}
+            to={links.solutions.solutionsList.compose({ page: 1, pageSize: DEFAULT_PAGE_SIZE })}
+          >
+            My solutions
+          </MenuItem>
+        )}
         <MenuItem onClick={onLogOutClick}>
           Log out
         </MenuItem>

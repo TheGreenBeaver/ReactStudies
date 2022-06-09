@@ -71,7 +71,7 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false,
     modelName: 'ReactTask',
     hooks: {
-      afterUpdate: async (instance, options) => {
+      afterUpdate: async instance => {
         const basicTask = await instance.getBasicTask();
         basicTask.updatedAt = new Date();
         await basicTask.save();

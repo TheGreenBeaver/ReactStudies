@@ -26,8 +26,8 @@ function UrgentTokenModal() {
 
   return (
     <Dialog open={open} onClose={() => {}} keepMounted={false}>
-      <DialogTitle>
-        <Warning sx={{ mr: 1 }} />
+      <DialogTitle alignItems='center' display='flex' columnGap={1}>
+        <Warning />
         {wAmount(awaitingSolutionsAmt, 'unprocessed solution result')}
       </DialogTitle>
       <SmartForm

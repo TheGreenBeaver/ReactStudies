@@ -5,26 +5,40 @@ const {
   ReactTask,
   TaskAttachment,
   Solution,
-  LayoutSolutionResult
+  SolutionResult,
+  LayoutSolutionResult,
+  ReactSolutionResult,
+  Task
 } = require('../models');
+const { Op } = require('sequelize');
+const omit = require('lodash/omit');
 
 
 const Any_Dummy = { attributes: ['id'] };
 
 const userAuthenticationAttrs = ['id', 'password'];
-const userListAttrs = ['id', 'firstName', 'lastName', 'isTeacher'];
-const userPublicAttrs = ['email', ...userListAttrs];
-const userPrivateAttrs = [...userPublicAttrs, 'isVerified', 'gitHubToken'];
-const User_Default = { attributes: userPublicAttrs };
+const userListAttrs = ['id', 'firstName', 'lastName', 'isTeacher', 'email'];
+const userPrivateAttrs = [...userListAttrs, 'isVerified', 'gitHubToken', 'newPassword'];
 const User_List = { attributes: userListAttrs };
+
+const Solution_UnprocessedResults = {
+  ...Any_Dummy,
+  order: [[SolutionResult, 'createdAt', 'DESC']],
+  include: [{
+    where: { unprocessedReportLocation: { [Op.not]: null } },
+    model: SolutionResult,
+    as: 'results',
+    attributes: ['summary', 'createdAt'],
+    required: true,
+  }]
+};
+
 const User_Private = {
   attributes: userPrivateAttrs,
   include: [{
-    where: { awaitingToken: true },
     model: Solution,
     as: 'solutions',
-    required: false,
-    ...Any_Dummy
+    ...Solution_UnprocessedResults
   }]
 };
 const User_Authentication = { attributes: userAuthenticationAttrs };
@@ -43,37 +57,6 @@ const LayoutTask_Default = {
   include: [{ model: ElementRule, as: 'elementRules', ...ElementRule_Default }]
 };
 
-const Solution_List = {
-  attributes: ['id', 'updatedAt', 'awaitingToken'],
-  include: [{
-    model: User, as: 'student', ...User_List
-  }, {
-    model: LayoutSolutionResult,
-    as: 'layoutResults',
-    order: [['updatedAt', 'DESC']],
-    attributes: ['summary', 'updatedAt'],
-    separate: true,
-    limit: 1,
-    required: false
-  }],
-  required: false
-};
-
-const TaskAttachment_Default = {
-  attributes: { exclude: ['task_id'] }
-};
-
-const Task_Default = {
-  attributes: ['id', 'title', 'description', 'repoUrl', 'createdAt', 'updatedAt'],
-  include: [
-    { model: User, as: 'teacher', ...User_Default },
-    { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
-    { model: ReactTask, as: 'reactTask' },
-    { model: TaskAttachment, as: 'attachments', ...TaskAttachment_Default },
-    { model: Solution, as: 'solutions', ...Solution_List }
-  ],
-  rejectOnEmpty: false
-};
 const Task_List = {
   attributes: ['id', 'title', 'updatedAt'],
   include: [
@@ -84,10 +67,57 @@ const Task_List = {
   order: [['updatedAt', 'DESC']]
 };
 
+const SolutionResult_List = {
+  attributes: ['id', 'summary', 'unprocessedReportLocation', 'runId', 'createdAt'],
+  include: [
+    { model: LayoutSolutionResult, as: 'layoutResult', ...Any_Dummy },
+    { model: ReactSolutionResult, as: 'reactResult', ...Any_Dummy },
+    { model: Solution, as: 'solution', ...Any_Dummy }
+  ],
+  order: [['createdAt', 'DESC']]
+};
+
+const Solution_List = {
+  attributes: ['id', 'updatedAt'],
+  order: [['updatedAt', 'DESC']],
+  include: [{
+    model: SolutionResult,
+    as: 'results',
+    order: [['createdAt', 'DESC']],
+    attributes: ['summary', 'createdAt', 'unprocessedReportLocation'],
+    required: false,
+    limit: 1
+  }, {
+    model: User, as: 'student', ...User_List
+  }, {
+    model: Task, as: 'task', ...omit(Task_List, 'order')
+  }]
+};
+const Solution_Default = {
+  attributes: ['id', 'repoUrl', 'updatedAt'],
+  include: [
+    { model: User, as: 'student', ...User_List },
+    { model: Task, as: 'task', ...omit(Task_List, 'order') }
+  ]
+};
+
+const TaskAttachment_Default = {
+  attributes: { exclude: ['task_id'] }
+};
+
+const Task_Default = {
+  attributes: ['id', 'title', 'description', 'repoUrl', 'createdAt', 'updatedAt'],
+  include: [
+    { model: User, as: 'teacher', ...User_List },
+    { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
+    { model: ReactTask, as: 'reactTask' },
+    { model: TaskAttachment, as: 'attachments', ...TaskAttachment_Default },
+  ]
+};
+
 module.exports = {
   Any_Dummy,
 
-  User_Default,
   User_List,
   User_Private,
   User_Authentication,
@@ -97,9 +127,12 @@ module.exports = {
   LayoutTask_Default,
 
   Solution_List,
+  Solution_Default,
 
   TaskAttachment_Default,
 
   Task_Default,
   Task_List,
+
+  SolutionResult_List
 };

@@ -2,12 +2,17 @@
 const {
   Model
 } = require('sequelize');
+const isEmpty = require('lodash/isEmpty');
 module.exports = (sequelize, DataTypes) => {
   class Task extends Model {
     static TASK_KINDS = {
       layout: 'layout',
       react: 'react',
     };
+
+    get kind() {
+      return Object.values(Task.TASK_KINDS).find(taskKind => !isEmpty(this[`${taskKind}Task`]));
+    }
 
     static associate({ User, Solution, ReactTask, LayoutTask, TaskAttachment }) {
       this.belongsTo(User, {

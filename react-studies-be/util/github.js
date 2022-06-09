@@ -6,7 +6,7 @@ const partition = require('lodash/partition');
 const { GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
 const now = require('lodash/now');
 const unzip = require('./unzip');
-const { LayoutSolutionResult } = require('../models');
+const { SolutionResult, Task } = require('../models');
 const pick = require('lodash/pick');
 
 
@@ -95,6 +95,7 @@ async function uploadFiles(octokit, repo, {
 
 async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, solutionResult, solution, tempDest) {
   const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: gitHubToken });
+  const taskKind = solution.task.kind;
 
   const { data: { artifacts } } = await octokit.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id });
 
@@ -104,79 +105,82 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
     archive_format: 'zip'
   });
   await fs.promises.writeFile(tempDest, Buffer.from(reportsArchive));
-  const dest = path.join(MEDIA_DIR, 'solution-results', now().toString());
+  const dest = path.join(MEDIA_DIR, 'solution-results', taskKind, now().toString());
   await new Promise((resolve, reject) => unzip(tempDest, dest, e => e ? reject(e) : resolve()));
   await fs.promises.rm(tempDest);
 
-  if (solutionResult instanceof LayoutSolutionResult) {
-    let points = 0;
-    const values = { reportLocation: path.join(dest, 'report.json') };
-    const diffLocation = path.join(dest, 'cypress', 'snapshots', 'main.spec.js', '__diff_output__', 'task.diff.png');
-    const diffPresent = await new Promise(resolve =>
-      fs.access(diffLocation, fs.constants.F_OK, err => resolve(!err))
-    );
-    if (diffPresent) {
-      values.diffLocation = diffLocation;
+  switch (taskKind) {
+    case Task.TASK_KINDS.layout: {
+      let points = 0;
+      const values = { reportLocation: path.join(dest, 'report.json') };
+
+      const report = await fs.promises.readFile(values.reportLocation, 'utf8');
+      const {
+        summary: {
+          diffPercentage,
+          absPosUsage,
+          rawSizingUsage,
+          includedMustUseTags,
+          properlyTaggedTextBlocks,
+        },
+      } = JSON.parse(report);
+
+      const diffPresent = diffPercentage != null && diffPercentage > 0.07;
+      if (diffPresent) {
+        values.diffLocation =
+          path.join(dest, 'cypress', 'snapshots', 'main.spec.js', '__diff_output__', 'task.diff.png')
+      }
+
+      const { absPosMaxUsage, rawSizingMaxUsage } = solution.task.layoutTask;
+      const trackAbsPos = absPosMaxUsage != null;
+      const trackRawSizing = rawSizingMaxUsage != null;
+
+      const nonUsageMax = 100 - (trackAbsPos ? 15 : 0) - (trackRawSizing ? 15 : 0);
+      const snapMax = 4 * nonUsageMax / 7;
+      const usedMax = 3 * nonUsageMax / 7;
+
+      if (diffPercentage) {
+        const fixedPercentage = Math.max(Math.min(diffPercentage, 9.07), 0.07);
+        points += snapMax - (fixedPercentage - 0.07) / 9 * snapMax;
+      }
+
+      const mustUsePoints = (
+        (includedMustUseTags == null ? 100 : includedMustUseTags) +
+        (properlyTaggedTextBlocks == null ? 100 : properlyTaggedTextBlocks)
+      ) / 2 * (usedMax / 100);
+      points += mustUsePoints;
+
+      if (trackAbsPos) {
+        const fixedUsage = Math.max(absPosUsage, absPosMaxUsage);
+        points += 15 - fixedUsage / 15 * absPosMaxUsage;
+      }
+
+      if (trackRawSizing) {
+        const fixedUsage = Math.max(rawSizingUsage, rawSizingMaxUsage);
+        points += 15 - fixedUsage / 15 * rawSizingMaxUsage;
+      }
+
+      if (points < 34) {
+        solutionResult.summary = SolutionResult.SUMMARY.bad;
+      } else if (points < 67) {
+        solutionResult.summary = SolutionResult.SUMMARY.medium;
+      } else {
+        solutionResult.summary = SolutionResult.SUMMARY.good;
+      }
+
+      solutionResult.unprocessedReportLocation = null;
+      await solutionResult.save();
+      await solutionResult.createLayoutResult(values);
+      break;
     }
-    const report = await fs.promises.readFile(values.reportLocation, 'utf8');
-    const { absPosMaxUsage, rawSizingMaxUsage } = solution.task.layoutTask;
-    const {
-      summary: {
-        diffPercentage,
-        absPosUsage,
-        rawSizingUsage,
-        includedMustUseTags,
-        properlyTaggedTextBlocks,
-      },
-    } = JSON.parse(report);
+    case Task.TASK_KINDS.react: {
 
-    const trackAbsPos = absPosMaxUsage != null;
-    const trackRawSizing = rawSizingMaxUsage != null;
-
-    const nonUsageMax = 100 - (trackAbsPos ? 15 : 0) - (trackRawSizing ? 15 : 0);
-    const snapMax = 4 * nonUsageMax / 7;
-    const usedMax = 3 * nonUsageMax / 7;
-
-    if (diffPercentage) {
-      const fixedPercentage = Math.max(Math.min(diffPercentage, 9.07), 0.07);
-      points += snapMax - (fixedPercentage - 0.07) / 9 * snapMax;
     }
-
-    const mustUsePoints = (
-      (includedMustUseTags == null ? 100 : includedMustUseTags) +
-      (properlyTaggedTextBlocks == null ? 100 : properlyTaggedTextBlocks)
-    ) / 2 * (usedMax / 100);
-    points += mustUsePoints;
-
-    if (trackAbsPos) {
-      const fixedUsage = Math.max(absPosUsage, absPosMaxUsage);
-      points += 15 - fixedUsage / 15 * absPosMaxUsage;
-    }
-
-    if (trackRawSizing) {
-      const fixedUsage = Math.max(rawSizingUsage, rawSizingMaxUsage);
-      points += 15 - fixedUsage / 15 * rawSizingMaxUsage;
-    }
-
-    if (points < 34) {
-      values.summary = LayoutSolutionResult.SUMMARY.bad;
-    } else if (points < 67) {
-      values.summary = LayoutSolutionResult.SUMMARY.medium;
-    } else {
-      values.summary = LayoutSolutionResult.SUMMARY.good;
-    }
-
-    solutionResult.set({ ...values, unprocessedReportLocation: null });
-    await solutionResult.save();
   }
-  // TODO
-  // else if (solutionResult instanceof ReactSolutionResult) {
-  //
-  // }
 
   return wsServer.sendToUser(solution.student, wsServer.Actions.workflowResultsReady, {
-    solution: pick(solution, ['id', 'repoUrl']),
-    result: pick(solutionResult, ['summary', 'updatedAt'])
+    solution: pick(solution, ['id']),
+    result: pick(solutionResult, ['summary', 'updatedAt']),
   });
 }
 

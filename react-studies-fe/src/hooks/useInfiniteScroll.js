@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import useDeferredFunction from './useDeferredFunction';
 
 
-function useInfiniteScroll(loadMore, shouldLoad, threshold = 100) {
+function useInfiniteScroll(loadMore, shouldLoad, { threshold = 100, initialLoad = false } = {}) {
   const scrollBoxRef = useRef(null);
   const pageRef = useRef(1);
+  const initialLoadDone = useRef(false);
 
   function scrollHandler() {
     const scrollBox = scrollBoxRef.current;
@@ -13,11 +14,16 @@ function useInfiniteScroll(loadMore, shouldLoad, threshold = 100) {
     }
     const { scrollHeight, scrollTop, clientHeight } = scrollBox;
     if (scrollHeight - scrollTop - clientHeight <= threshold) {
-      const nextPage = pageRef.current + 1;
-      loadMore(nextPage);
-      pageRef.current = nextPage;
+      loadMore(++pageRef.current);
     }
   }
+
+  useEffect(() => {
+    if (initialLoad && !initialLoadDone.current) {
+      loadMore(pageRef.current++);
+      initialLoadDone.current = true;
+    }
+  }, [initialLoad]);
 
   const onScroll = useDeferredFunction(scrollHandler, 'throttle', 300, [shouldLoad, loadMore]);
 

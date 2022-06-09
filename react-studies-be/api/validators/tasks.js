@@ -12,6 +12,12 @@ module.exports = {
     }).withPagination(),
     body: Validators.ensureEmpty()
   },
+  retrieve: {
+    body: Validators.ensureEmpty(),
+    query: object({
+      mini: boolean().optional()
+    }).noUnknown()
+  },
   create: {
     body: object({
       // General
@@ -33,7 +39,7 @@ module.exports = {
         }),
       trackUpdates: boolean().required(),
 
-      gitHubToken: Validators.gitHubToken(),
+      gitHubToken: Validators.gitHubToken().canSkip(),
       rememberToken: boolean().optional(),
 
       // Layout

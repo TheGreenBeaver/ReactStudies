@@ -16,7 +16,13 @@ import ListItemText from '@mui/material/ListItemText';
 import { DEFAULT_PAGINATED_DATA, TASK_KIND_DEFINITIONS, TASK_KIND_ICONS } from '../../../util/constants';
 import Preloader from '../../../uiKit/Preloader';
 import ListItemButton from '@mui/material/ListItemButton';
-import { cleanupPaginationParams, cleanupTaskKindParams, getOptions, isPositiveInt } from '../../../util/misc';
+import {
+  cleanupPaginationParams,
+  cleanupTaskKindParams,
+  getOptions,
+  getTaskKind,
+  isPositiveInt,
+} from '../../../util/misc';
 import { TaskKind } from '../../../util/types';
 import pick from 'lodash/pick';
 import StrictAccordion from '../../../uiKit/StrictAccordion';
@@ -29,7 +35,7 @@ import { Form } from 'formik';
 import StandardTextField from '../../../uiKit/SmartForm/fields/StandardTextField';
 import StandardSelectField from '../../../uiKit/SmartForm/fields/StandardSelectField';
 import withCache from '../../../hofs/withCache';
-import UsersAutocompleteField from '../../../uiKit/SmartForm/fields/UsersAutocompleteField';
+import EntityAutocompleteField from '../../../uiKit/SmartForm/fields/EntityAutocompleteField';
 import SubmitButton from '../../../uiKit/SmartForm/interactions/SubmitButton';
 import { DateTime } from 'luxon';
 
@@ -38,6 +44,7 @@ const taskKindOptions = getOptions(TASK_KIND_DEFINITIONS, 'Any');
 const listTasks = withCache((page, pageSize, q, kind, teacherId) => api.tasks.list({
   params: { page, pageSize, q, kind, teacherId },
 }));
+const autocompleteExtraParams = { isTeacher: true };
 
 function TaskList({ page, pageSize, q, kind, teacherId }) {
   const { isTeacher } = useSelector(state => state.account.userData);
@@ -97,7 +104,19 @@ function TaskList({ page, pageSize, q, kind, teacherId }) {
                     />
                   </Grid>
                   <Grid item xs={4}>
-                    <UsersAutocompleteField name='teacherId' isTeacher label='Task author' />
+                    <EntityAutocompleteField
+                      name='teacherId'
+                      service={api.users}
+                      label='Task author'
+                      getOptionLabel={user => `${user.firstName} ${user.lastName}`}
+                      renderOption={(props, user) => (
+                        <Box {...{ ...props, key: user.id }} display='block !important'>
+                          <Typography>{user.firstName} {user.lastName}</Typography>
+                          <Typography display='block' variant='caption' color='text.secondary'>{user.email}</Typography>
+                        </Box>
+                      )}
+                      extraParams={autocompleteExtraParams}
+                    />
                   </Grid>
                   <Grid item xs={2}>
                     <SubmitButton fullWidth type='submit'>Apply filters</SubmitButton>
@@ -129,7 +148,7 @@ function TaskList({ page, pageSize, q, kind, teacherId }) {
                   component={Link}
                   to={links.singleTask.compose(task.id)}
                 >
-                  <ListItemIcon>{TASK_KIND_ICONS[task.kind]}</ListItemIcon>
+                  <ListItemIcon>{TASK_KIND_ICONS[getTaskKind(task)]}</ListItemIcon>
                   <ListItemText
                     primary={task.title}
                     secondary={
@@ -148,7 +167,7 @@ function TaskList({ page, pageSize, q, kind, teacherId }) {
         sx={{ pt: 1 }}
         page={page}
         onChange={(_, newPage) =>
-          history.push(links.taskList.compose({ page: newPage }))
+          history.push(links.taskList.compose({ page: newPage, pageSize, q, kind, teacherId }))
         }
         count={Math.ceil(tasksData.count / pageSize)}
       />

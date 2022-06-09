@@ -44,6 +44,11 @@ module.exports = {
     if ('teacherId' in req.query) {
       req.query.teacherId = parseInt(req.query.teacherId);
     }
+  },
+  retrieve: req => {
+    if ('mini' in req.query) {
+      req.query.mini = boolTransformer(req.query.mini);
+    }
   }
 };
 

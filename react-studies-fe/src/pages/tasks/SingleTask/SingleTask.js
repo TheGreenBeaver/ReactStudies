@@ -4,9 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
-import { TASK_KIND_ICONS, TASK_KINDS } from '../../../util/constants';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PAGINATED_DATA, TASK_KIND_ICONS, TASK_KINDS } from '../../../util/constants';
 import LoadingPage from '../../../components/LoadingPage';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import TabContext from '@mui/lab/TabContext';
@@ -23,10 +23,15 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemButton from '@mui/material/ListItemButton';
 import { DateTime } from 'luxon';
-import { getSolutionResultIndicator } from '../../../util/misc';
+import { getSolutionResultIndicator, getTaskKind } from '../../../util/misc';
 import links from '../../config/links';
 import useWsAction from '../../../hooks/useWsAction';
 import WsWithQueue from '../../../ws/ws-with-queue';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import usePromise from '../../../hooks/usePromise';
+import withCache from '../../../hofs/withCache';
+import Layout from '../../../uiKit/Layout';
+import Preloader from '../../../uiKit/Preloader';
 
 
 function taskNeedsStudentInput(task, taskKind) {
@@ -65,12 +70,32 @@ const TASK_EXPLANATIONS = {
   [TASK_KINDS.react]: 'Use JavaScript and React to create a fully functional Web Application integrated with a REST Backend.'
 };
 
+function getData(fresh, curr) {
+  return { ...curr, ...fresh.data, results: [...curr.results, ...fresh.data.results] };
+}
+
 function SingleTask() {
-  const { isTeacher, firstName, lastName } = useSelector(state => state.account.userData);
+  const { isTeacher, id: currentUserId } = useSelector(state => state.account.userData);
   const { id } = useParams();
   const [task, isFetchingTask] = useFetch(api.tasks.retrieve, {
     deps: [id], initialData: null,
   });
+
+  const listSolutions = useCallback(
+    withCache(page => api.solutions.list({ params: { page, taskId: id } })), [id]
+  )
+  const {
+    handler: fetchSolutions,
+    isProcessing: isFetchingSolutions,
+    data: solutionsData
+  } = usePromise(listSolutions, {
+    initialData: DEFAULT_PAGINATED_DATA, getData
+  });
+  const [solutionsBoxProps] = useInfiniteScroll(
+    fetchSolutions, !isFetchingSolutions && solutionsData.next != null, {
+      initialLoad: true, threshold: 80
+    }
+  );
 
   const [freshResults, setFreshResults] = useState([]);
   useWsAction(WsWithQueue.Actions.workflowResultsReady, ({ solution, result }) =>
@@ -78,35 +103,31 @@ function SingleTask() {
       const newData = [...curr];
       const idx = newData.findIndex(entry => entry.id === solution.id);
       if (idx !== -1) {
-        newData[idx].result = result;
+        newData[idx].results[0] = result;
       } else {
-        newData.push({ ...solution, result, student: { firstName, lastName } })
+        newData.push({ ...solution, results: [result], student: { id: currentUserId } })
       }
       return newData;
     })
   );
 
   const allSolutions = useMemo(() => {
-    const solutionsList = [...(task?.solutions || [])];
+    const solutionsList = [...solutionsData.results];
     freshResults.forEach(res => {
-      const idx = solutionsList.indexOf(solution => solution.id === res.id);
+      const idx = solutionsList.findIndex(solution => solution.id === res.id);
       if (idx !== -1) {
-        solutionsList[idx] = res;
+        solutionsList.splice(idx, 1, res);
       } else {
         solutionsList.unshift(res);
       }
     });
     return solutionsList;
-  }, [freshResults, task]);
+  }, [freshResults, solutionsData]);
 
   const [isConfiguringSolution, setIsConfiguringSolution] = useState(false);
   const [currentTab, setCurrentTab] = useState(tabs.task);
 
-  const taskKind = useMemo(() => task
-      ? Object.values(TASK_KINDS).find(taskKind => `${taskKind}Task` in task)
-      : null,
-    [task],
-  );
+  const taskKind = useMemo(() => getTaskKind(task), [task]);
 
   const attachmentsData = useMemo(() => {
     if (!task) {
@@ -183,19 +204,21 @@ function SingleTask() {
 
         <Box mt={4}>
           <Typography variant='h5' mb={1}>Solutions</Typography>
-          {allSolutions ? (
-            <List sx={{ height: 180, overflowY: 'auto' }} disablePadding>
-              {allSolutions.map(({ id: solutionId, result, awaitingToken, student }) => (
+          {allSolutions.length ? (
+            <List sx={{ height: 200, overflowY: 'auto' }} disablePadding {...solutionsBoxProps}>
+              {allSolutions.map(({ id: solutionId, results, student }) => (
                 <ListItem key={solutionId} divider>
                   <ListItemButton
                     component={Link}
-                    to={links.solutions.singleSolution.compose(solutionId)}
+                    to={links.solutions.singleSolution.compose(solutionId, {
+                      pageSize: DEFAULT_PAGE_SIZE, resultsPage: 1
+                    })}
                   >
-                    <ListItemIcon>{getSolutionResultIndicator(result?.summary, awaitingToken)}</ListItemIcon>
+                    <ListItemIcon>{getSolutionResultIndicator(results[0])}</ListItemIcon>
                     <ListItemText
-                      primary={`Author: ${student.firstName} ${student.lastName}`}
-                      secondary={result
-                        ? <>Last submit {DateTime.fromISO(result.updatedAt).toFormat('f')}</>
+                      primary={`Author: ${student.id === currentUserId ? 'You' : `${student.firstName} ${student.lastName}`}`}
+                      secondary={results[0]
+                        ? <>Last submit {DateTime.fromISO(results[0].createdAt).toFormat('f')}</>
                         : 'No submits yet'
                       }
                     />
@@ -204,8 +227,9 @@ function SingleTask() {
               ))}
             </List>
           ) : (
-            <Typography component='i'>No solutions yet</Typography>
+            !isFetchingSolutions && <Typography component='i'>No solutions yet</Typography>
           )}
+          {isFetchingSolutions && <Layout.Center height='1.5em' mt={1}><Preloader size='1.5em' /></Layout.Center>}
         </Box>
       </TabPanel>
 
