@@ -65,7 +65,7 @@ function CaveatField({
     <Box {...wrapperProps}>
       <FormControlLabel
         control={<Checkbox checked={shouldTrack} onChange={toggleShouldTrack} />}
-        label={<Typography variant='h6'>Common caveat{label ? `: ${label}` : ''}</Typography>}
+        label={<Typography variant='h6' mb={0}>Common caveat{label ? `: ${label}` : ''}</Typography>}
       />
       <Collapse {...shouldTrackCollapseProps} orientation='vertical'>
         <MaxUsage name={`${name}.${CAVEAT_FIELDS.maxUsage}`} recommended={recommended} />

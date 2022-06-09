@@ -1,8 +1,11 @@
-name: frontend-studies-react-task
+name: react-task
 on:
   push:
     branches:
-      - master
+      - main
+    paths:
+      - 'app-backend/**'
+      - 'app-frontend/**'
   workflow_dispatch:
 
 jobs:
@@ -17,12 +20,36 @@ jobs:
         with:
           node-version: '16.13.1'
 
-      - name: Install dependencies
+      - name: Install email server dependencies
+        working-directory: email-server
+        run: yarn install
+
+      - name: Run email server
+        working-directory: email-server
+        run: yarn serve
+
+      - name: Run backend
+        uses: ./.github/actions/run-backend
+
+      - name: Install frontend dependencies
         working-directory: app-frontend
         run: yarn install
 
-      - name: Run tests
+      - name: Run frontend
         working-directory: app-frontend
+        run: yarn start
+
+      - name: Install test dependencies
+        working-directory: test-engine
+        run: yarn install
+
+      - name: Run tests
+        working-directory: test-engine
         run: yarn test
 
       - name: Archive test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: reports
+          if-no-files-found: ignore

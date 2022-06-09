@@ -42,6 +42,10 @@ class FsWebSocket extends WebSocket {
     return !!this.user;
   }
 
+  logOut() {
+    this.user = null;
+  }
+
   /**
    *
    * @param {number | User} otherUser

@@ -1,4 +1,12 @@
-const { User, ElementRule, LayoutTask, ReactTask, TaskAttachment, Solution } = require('../models');
+const {
+  User,
+  ElementRule,
+  LayoutTask,
+  ReactTask,
+  TaskAttachment,
+  Solution,
+  LayoutSolutionResult
+} = require('../models');
 
 
 const Any_Dummy = { attributes: ['id'] };
@@ -9,7 +17,16 @@ const userPublicAttrs = ['email', ...userListAttrs];
 const userPrivateAttrs = [...userPublicAttrs, 'isVerified', 'gitHubToken'];
 const User_Default = { attributes: userPublicAttrs };
 const User_List = { attributes: userListAttrs };
-const User_Private = { attributes: userPrivateAttrs };
+const User_Private = {
+  attributes: userPrivateAttrs,
+  include: [{
+    where: { awaitingToken: true },
+    model: Solution,
+    as: 'solutions',
+    required: false,
+    ...Any_Dummy
+  }]
+};
 const User_Authentication = { attributes: userAuthenticationAttrs };
 
 const AuthToken_Authorization = {
@@ -17,14 +34,29 @@ const AuthToken_Authorization = {
   include: [{ model: User, as: 'user', ...User_Private }],
 };
 
+const ElementRule_Default = {
+  attributes: { exclude: ['task_id'] }
+};
+
 const LayoutTask_Default = {
   attributes: { exclude: ['id', 'basic_task_id'] },
-  include: [{ model: ElementRule, as: 'elementRules' }]
+  include: [{ model: ElementRule, as: 'elementRules', ...ElementRule_Default }]
 };
 
 const Solution_List = {
-  attributes: ['id', 'updatedAt'],
-  include: [{ model: User, as: 'student', ...User_List }]
+  attributes: ['id', 'updatedAt', 'awaitingToken'],
+  include: [{
+    model: User, as: 'student', ...User_List
+  }, {
+    model: LayoutSolutionResult,
+    as: 'layoutResults',
+    order: [['updatedAt', 'DESC']],
+    attributes: ['summary', 'updatedAt'],
+    separate: true,
+    limit: 1,
+    required: false
+  }],
+  required: false
 };
 
 const TaskAttachment_Default = {
@@ -39,7 +71,8 @@ const Task_Default = {
     { model: ReactTask, as: 'reactTask' },
     { model: TaskAttachment, as: 'attachments', ...TaskAttachment_Default },
     { model: Solution, as: 'solutions', ...Solution_List }
-  ]
+  ],
+  rejectOnEmpty: false
 };
 const Task_List = {
   attributes: ['id', 'title', 'updatedAt'],
@@ -47,7 +80,8 @@ const Task_List = {
     { model: ReactTask, as: 'reactTask', ...Any_Dummy },
     { model: LayoutTask, as: 'layoutTask', ...Any_Dummy },
     { model: User, as: 'teacher', ...User_List }
-  ]
+  ],
+  order: [['updatedAt', 'DESC']]
 };
 
 module.exports = {

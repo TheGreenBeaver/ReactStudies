@@ -1,21 +1,20 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import { bool, node, object } from 'prop-types';
+import { bool, node } from 'prop-types';
 import { useFormikContext } from 'formik';
 import Preloader from '../../Preloader';
 
 
-function SubmitButton({ children, sx, disabled, ...props }) {
+function SubmitButton({ children, sx, disabled, startIcon, ...props }) {
   const { isSubmitting } = useFormikContext();
 
   return (
     <Button
       disabled={disabled || isSubmitting}
       variant='contained'
-      sx={{ display: 'flex', columnGap: 1, ...sx }}
+      startIcon={isSubmitting ? <Preloader size='1em' /> : startIcon}
       {...props}
     >
-      {isSubmitting && <Preloader size='1em' />}
       {children}
     </Button>
   );
@@ -23,8 +22,8 @@ function SubmitButton({ children, sx, disabled, ...props }) {
 
 SubmitButton.propTypes = {
   children: node,
-  sx: object,
-  disabled: bool
+  disabled: bool,
+  startIcon: node,
 };
 
 export default SubmitButton;

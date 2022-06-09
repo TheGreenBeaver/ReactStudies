@@ -25,7 +25,13 @@ module.exports = (sequelize, DataTypes) => {
     },
     content: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
-      allowNull: true
+      allowNull: true,
+      get() {
+        const rawValue = this.getDataValue('content');
+        return rawValue
+          ? JSON.parse(rawValue.replace(/(^{)|(}$)/g, match => ({ '{': '[', '}': ']' }[match])))
+          : null;
+      }
     },
     tag: {
       type: DataTypes.STRING(20),

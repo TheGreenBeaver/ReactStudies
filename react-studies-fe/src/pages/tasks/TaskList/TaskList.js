@@ -31,6 +31,7 @@ import StandardSelectField from '../../../uiKit/SmartForm/fields/StandardSelectF
 import withCache from '../../../hofs/withCache';
 import UsersAutocompleteField from '../../../uiKit/SmartForm/fields/UsersAutocompleteField';
 import SubmitButton from '../../../uiKit/SmartForm/interactions/SubmitButton';
+import { DateTime } from 'luxon';
 
 
 const taskKindOptions = getOptions(TASK_KIND_DEFINITIONS, 'Any');
@@ -42,7 +43,7 @@ function TaskList({ page, pageSize, q, kind, teacherId }) {
   const { isTeacher } = useSelector(state => state.account.userData);
   const history = useHistory();
 
-  const [tasksData, isProcessing] = useFetch(listTasks, {
+  const [tasksData, isFetching, error] = useFetch(listTasks, {
     deps: [page, pageSize, q, kind, teacherId],
     initialData: DEFAULT_PAGINATED_DATA,
     shouldFetch: (currentPage, currentPageSize) => !!(currentPage && currentPageSize)
@@ -120,28 +121,31 @@ function TaskList({ page, pageSize, q, kind, teacherId }) {
       </StrictAccordion>
       <List sx={{ flex: 1 }}>
         {
-          isProcessing
+          isFetching
             ? <Preloader size={80} />
-            : tasksData.results.map(task => {
-              const Icon = TASK_KIND_ICONS[task.kind];
-              return (
-                <ListItem key={task.id}>
-                  <ListItemButton
-                    component={Link}
-                    to={links.singleTask.compose(task.id)}
-                  >
-                    <ListItemIcon><Icon /></ListItemIcon>
-                    <ListItemText
-                      primary={task.title}
-                      secondary={`By ${task.teacher.firstName} ${task.teacher.lastName}`}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              );
-            })
+            : (!error && tasksData.results.map(task =>
+              <ListItem key={task.id} divider>
+                <ListItemButton
+                  component={Link}
+                  to={links.singleTask.compose(task.id)}
+                >
+                  <ListItemIcon>{TASK_KIND_ICONS[task.kind]}</ListItemIcon>
+                  <ListItemText
+                    primary={task.title}
+                    secondary={
+                      <>
+                        By {task.teacher.firstName} {task.teacher.lastName} &bull;{' '}
+                        Last update {DateTime.fromISO(task.updatedAt).toFormat('f')}
+                      </>
+                    }
+                  />
+                </ListItemButton>
+              </ListItem>,
+            ))
         }
       </List>
       <Pagination
+        sx={{ pt: 1 }}
         page={page}
         onChange={(_, newPage) =>
           history.push(links.taskList.compose({ page: newPage }))

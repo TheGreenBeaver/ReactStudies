@@ -7,7 +7,7 @@ class EndpointService {
   static API_ROOT = '/api';
 
   constructor(endpoint) {
-    const origin = isDev ? getVar('REACT_APP_ORIGIN') : window.location.origin;
+    const origin = isDev ? `http://${getVar('REACT_APP_HOST')}` : window.location.origin;
     const options = { baseURL: `${origin}${EndpointService.API_ROOT}${endpoint}` };
     if (getIsAuthorized()) {
       options.headers = { Authorization: `Token ${getCredentials()}` };
@@ -28,11 +28,11 @@ class EndpointService {
   }
 
   authorize(token) {
-    this.instance.defaults.headers.common.Authorization = `Token ${token}`;
+    this.instance.defaults.headers.Authorization = `Token ${token}`;
   }
 
   unAuthorize() {
-    delete this.instance.defaults.headers.common.Authorization;
+    delete this.instance.defaults.headers.Authorization;
   }
 
   async retrieve(id, options) {

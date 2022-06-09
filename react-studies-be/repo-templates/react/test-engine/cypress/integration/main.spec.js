@@ -390,7 +390,7 @@ it('task', () => {
           report.dump.detail = markData(uploadedDump, getMark('dump'));
         }
 
-        cy.writeFile('report.entityList.json', JSON.stringify(report, null, '  '));
+        cy.writeFile('reports/entityList.json', JSON.stringify(report, null, '  '));
 
         cy.wait(10000);
         aliases.forEach(alias => {

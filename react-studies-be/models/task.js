@@ -33,6 +33,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(2000),
       allowNull: false
     },
+    repoId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
     trackUpdates: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

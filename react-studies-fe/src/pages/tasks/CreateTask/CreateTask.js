@@ -13,7 +13,7 @@ import AdvancedTypeSettings from './sections/AdvancedTypeSettings';
 import React, { useState } from 'react';
 import { getUpd } from '../../../util/misc';
 import fieldAccepts from './fieldAccepts';
-import { finishSubmit, getFormData } from '../../../util/form';
+import { getFormData } from '../../../util/form';
 import GitHubTokenField from '../../../uiKit/SmartForm/fields/GitHubTokenField';
 import { Form } from 'formik';
 import GeneralError from '../../../uiKit/SmartForm/interactions/GeneralError';
@@ -21,6 +21,7 @@ import Box from '@mui/material/Box';
 import StrictAccordion from '../../../uiKit/StrictAccordion';
 import { useDispatch } from 'react-redux';
 import { updateUserData } from '../../../store/slices/account';
+import useAlert from '../../../hooks/useAlert';
 
 
 const SECTION_NAMES = {
@@ -71,13 +72,14 @@ const fieldsForKinds = {
 function CreateTask() {
   const dispatch = useDispatch();
   const history = useHistory();
+  const showAlert = useAlert();
   const [sectionsExpanded, setSectionsExpanded] = useState({
     [SECTION_NAMES.general]: true,
     [SECTION_NAMES.main]: true,
     [SECTION_NAMES.advanced]: false
   });
 
-  function onSubmit(values, formikHelpers) {
+  async function onSubmit(values) {
     const kind = values[fieldNames.kind];
     const fields = [
       ...fieldsForKinds[kind],
@@ -85,12 +87,13 @@ function CreateTask() {
       ...Object.values(TOKEN_FIELDS)
     ];
     const formData = getFormData(values, fields);
-    finishSubmit(api.tasks.create(formData).then(({ data }) => {
+    return api.tasks.create(formData).then(({ data }) => {
       if (values[TOKEN_FIELDS.rememberToken]) {
         dispatch(updateUserData({ gitHubToken: values[TOKEN_FIELDS.gitHubToken] }));
       }
+      showAlert('Task created, the repository will be ready soon', 'success');
       history.push(links.singleTask.compose(data.id));
-    }), formikHelpers);
+    });
   }
 
   return (
@@ -98,7 +101,6 @@ function CreateTask() {
       <Typography variant='h4' mb={2}>Create new task</Typography>
       <SmartForm
         onSubmit={onSubmit}
-        noSubmitLogic
         fast
         doNotPopulate
         initialValues={{
@@ -118,6 +120,7 @@ function CreateTask() {
           [fieldNames.rawSizing]: null
         }}
         validationSchema={{
+          [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(),
           [fieldNames.title]: Validators.standardText(30),
           [fieldNames.attachments]: Validators.file(
             fieldAccepts[fieldNames.attachments],

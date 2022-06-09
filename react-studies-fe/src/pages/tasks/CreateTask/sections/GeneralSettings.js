@@ -32,7 +32,7 @@ function GeneralSettings() {
       </Grid>
       <Grid item xs={12}>
         <MarkdownField
-          label='Description'
+          label='Extra notes'
           name={fieldNames.description}
           localFiles={values[fieldNames.attachments]}
           localFilesRefs={values[fieldNames.attachmentNames]}

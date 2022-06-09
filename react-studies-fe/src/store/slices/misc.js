@@ -4,15 +4,19 @@ const miscSlice = createSlice({
   name: 'misc',
   initialState: {
     fatalError: null,
+    urgentTokenModalOpen: false
   },
   reducers: {
     setFatalError: (state, action) => {
       state.fatalError = action.payload;
     },
+    setUrgentTokenModalOpen: (state, action) => {
+      state.urgentTokenModalOpen = action.payload;
+    }
   }
 });
 
-const { setFatalError } = miscSlice.actions;
+const { setFatalError, setUrgentTokenModalOpen } = miscSlice.actions;
 const clearFatalError = () => setFatalError(null);
-export { setFatalError, clearFatalError };
+export { setFatalError, clearFatalError, setUrgentTokenModalOpen };
 export default miscSlice.reducer;

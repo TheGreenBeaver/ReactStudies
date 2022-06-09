@@ -15,9 +15,12 @@ class AuthRouter extends SmartRouter {
     });
   }
 
-  signIn = this.apiDecorator(authenticate, SmartRouter.HttpMethods.post, '/sign_in', 'signIn');
+  signIn = this.apiDecorator((req, options) =>
+    authenticate(req.body, options), SmartRouter.HttpMethods.post, '/sign_in', 'signIn'
+  );
   logOut = this.apiDecorator(async (req) => {
     await this.Model.destroy({ where: { key: extractToken(req) } });
+    req.app.locals.wsServer.logUserOut(req.user);
     return { status: httpStatus.NO_CONTENT };
   }, SmartRouter.HttpMethods.post, '/log_out', 'logOut');
 }

@@ -82,7 +82,7 @@ class UsersRouter extends SmartRouter {
     return { status: httpStatus.BAD_REQUEST, data: { [NON_FIELD_ERR]: [`${capitalize(status)} Link`] } };
   }, SmartRouter.HttpMethods.post, '/verify', 'verify');
 
-  getMe = this.apiDecorator(
+  retrieveMe = this.apiDecorator(
     req => ({ data: req.user }), SmartRouter.HttpMethods.get, '/me', 'getMe'
   );
 

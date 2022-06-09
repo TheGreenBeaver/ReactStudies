@@ -47,7 +47,7 @@ function ElementsListField({ name, label, requiredElementFields, prefixes }) {
 
   return (
     <Box>
-      {label && <InputLabel sx={{ mb: 1 }}>{label}</InputLabel>}
+      {label && <InputLabel>{label}</InputLabel>}
       <FormHelperText error>
         {topLevelTouched && typeof topLevelError === 'string' && topLevelError}
       </FormHelperText>

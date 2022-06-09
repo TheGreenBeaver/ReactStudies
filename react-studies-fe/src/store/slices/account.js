@@ -13,6 +13,9 @@ const accountSlice = createSlice({
     updateUserData: (state, action) => {
       state.userData = { ...state.userData, ...action.payload };
     },
+    newAwaitingSolution: (state, action) => {
+      state.userData.solutions.push(action.payload);
+    },
     signIn: (state, action) => {
       saveCredentials(action.payload);
       api.authorizeAll(action.payload);
@@ -20,11 +23,10 @@ const accountSlice = createSlice({
     },
     logOut: () => {
       clearCredentials();
-      api.unAuthorizeAll();
       return { userData: undefined, isAuthorized: false };
     }
   }
 });
 
-export const { updateUserData, logOut, signIn } = accountSlice.actions;
+export const { updateUserData, logOut, signIn, newAwaitingSolution } = accountSlice.actions;
 export default accountSlice.reducer;

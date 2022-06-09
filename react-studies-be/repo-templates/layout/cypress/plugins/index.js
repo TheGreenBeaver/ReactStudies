@@ -30,8 +30,9 @@ module.exports = (on, config) => {
 
   on('task', {
     'prep:rectangle': () => new Promise(resolve => {
-      const rootDir = __dirname.split(path.sep).slice(0, -1);
-      const pathToScreenshot = path.join(...rootDir, 'screenshots', 'main.spec.js', 'task.png');
+      const lastSepIdx = __dirname.lastIndexOf(path.sep);
+      const rootDir = __dirname.substring(0, lastSepIdx);
+      const pathToScreenshot = path.join(rootDir, 'screenshots', 'main.spec.js', 'task.png');
       fs.createReadStream(pathToScreenshot).pipe(new PNG({ filterType: 4 })).on('parsed', function () {
         const { width, height, data } = this;
         const result = { left: 0, right: 0, bottom: 0 };

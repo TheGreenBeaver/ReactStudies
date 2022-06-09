@@ -1,8 +1,10 @@
+import solutionsLinks from '../solutions/links';
 import tasksLinks from '../tasks/links';
 import authLinks from '../auth/links';
 import { DEFAULT_PAGE_SIZE } from '../../util/constants';
 
 const links = {
+  solutions: solutionsLinks,
   tasks: tasksLinks,
   auth: authLinks,
 };

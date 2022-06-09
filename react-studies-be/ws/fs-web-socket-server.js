@@ -6,6 +6,9 @@ const { WS_PATH } = require('../settings');
 class FsWebSocketServer extends WebSocketServer {
   Actions = {
     taskRepositoryPopulated: 'taskRepositoryPopulated',
+    solutionRepositoryPopulated: 'solutionRepositoryPopulated',
+    workflowCompleted: 'workflowCompleted',
+    workflowResultsReady: 'workflowResultsReady',
   };
 
   constructor() {
@@ -34,7 +37,16 @@ class FsWebSocketServer extends WebSocketServer {
    */
   async sendToUser(user, action, payload) {
     const client = this.openClients.find(c => c.userIs(user));
-    return client.sendMessage(action, payload);
+    if (client) {
+      return client.sendMessage(action, payload);
+    }
+  }
+
+  logUserOut(user) {
+    const client = this.openClients.find(c => c.userIs(user));
+    if (client) {
+      client.logOut();
+    }
   }
 
   /**

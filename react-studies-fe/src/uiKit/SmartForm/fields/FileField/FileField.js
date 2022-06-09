@@ -9,12 +9,13 @@ import InputLabel from '@mui/material/InputLabel';
 import UploadArea from './UploadArea';
 import { MultiField, Ratio, StyleProp } from '../../../../util/types';
 import { STANDARD_RATIO } from '../../../../util/constants';
-import FilePreview from './FilePreview';
-import { combineRefs, getUpd } from '../../../../util/misc';
+import FilePreview from '../../../FilePreview';
+import { combineRefs, getBaseAndExt, getUpd } from '../../../../util/misc';
 import SwitchingTextField from '../SwitchingTextField';
 import useScrollbarCompensation from '../../../../hooks/useScrollbarCompensation';
 import FormHelperText from '@mui/material/FormHelperText';
 import useScrollToNewInput from '../../../../hooks/useScrollToNewInput';
+import InputAdornment from '@mui/material/InputAdornment';
 
 
 function FileField({ label, height, ratio, width, name, multiple, accept }) {
@@ -115,6 +116,18 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
             <SwitchingTextField
               label={refFieldLabel}
               name={refFieldName}
+              InputProps={{
+                endAdornment:
+                  <InputAdornment position='end'>
+                    {getBaseAndExt(fileFieldValue)[1]}
+                  </InputAdornment>,
+                sx: {
+                  '& input': {
+                    pr: 0.5,
+                    borderRight: theme => `1px solid ${theme.palette.divider}`
+                  },
+                },
+              }}
               autoComplete='false'
               sx={{ width: '100%', mt: 0.5 }}
               typographyProps={{ sx: { width: '100%', mt: 0.5 } }}
@@ -198,7 +211,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
           refFieldName && !!fileFieldValue.length &&
           <Box mt={0.5} display='flex' alignItems='stretch' columnGap={1.5} width={width}>
             <Box width={height} minWidth={height} display='flex'>
-              {refFieldLabel && <InputLabel>{refFieldLabel}:</InputLabel>}
+              {refFieldLabel && <InputLabel sx={{ mb: 0 }}>{refFieldLabel}:</InputLabel>}
             </Box>
             <Box
               display='flex'
@@ -219,6 +232,18 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
                   name={`${refFieldName}[${idx}]`}
                   label={null}
                   autoComplete='false'
+                  InputProps={{
+                    endAdornment:
+                      <InputAdornment position='end'>
+                        {getBaseAndExt(fileFieldValue[idx])[1]}
+                      </InputAdornment>,
+                    sx: {
+                      '& input': {
+                        pr: 0.5,
+                        borderRight: theme => `1px solid ${theme.palette.divider}`
+                      },
+                    },
+                  }}
                   typographyProps={{ width: height, minWidth: height }}
                   sx={{ width: height, minWidth: height }}
                 />,
@@ -232,7 +257,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
 
   return (
     <>
-      {fileFieldLabel && <InputLabel sx={{ mb: 0.5 }}>{fileFieldLabel}</InputLabel>}
+      {fileFieldLabel && <InputLabel>{fileFieldLabel}</InputLabel>}
       {getContent()}
     </>
   );

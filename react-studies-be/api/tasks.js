@@ -14,7 +14,8 @@ const sizeOf = require('image-size')
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const { uploadFiles } = require('../util/github');
-const { pascalCase } = require('../util/misc');
+const { pascalCase, getBase64 } = require('../util/misc');
+const { StatusError } = require('../util/custom-errors');
 
 
 class TasksRouter extends SmartRouter {
@@ -84,6 +85,14 @@ class TasksRouter extends SmartRouter {
     return options;
   }
 
+  async handleRetrieve(req, options, res, next) {
+    const { data } = await super.handleRetrieve(req, options, res, next);
+    if (!data) {
+      throw new StatusError(httpStatus.NOT_FOUND);
+    }
+    return { data };
+  }
+
   static #getSampleHtml(sampleExt) {
     return (
 `<!DOCTYPE html>
@@ -125,10 +134,19 @@ class TasksRouter extends SmartRouter {
       const { mimetype, destination, filename, path: filePath } = attachmentFiles[idx];
       const refName = attachmentNames[idx];
       const location = path.join(destination, `${refName}${path.extname(filename)}`);
-      await fs.promises.rename(filePath, location);
-      attachments.push({ location, refName, mime: mimetype });
+      try {
+        await fs.promises.rename(filePath, location);
+        attachments.push({ location, refName, mime: mimetype });
+      } catch {}
     }
-    const basicTask = await user.createTask({ title, description, repoUrl: repo.html_url, attachments, trackUpdates }, {
+    const basicTask = await user.createTask({
+      title,
+      description,
+      repoUrl: repo.html_url,
+      attachments,
+      trackUpdates,
+      repoId: repo.id
+    }, {
       include: [{ model: TaskAttachment, as: 'attachments' }]
     });
 
@@ -138,9 +156,9 @@ class TasksRouter extends SmartRouter {
       case Task.TASK_KINDS.layout:
         const { mustUse, absPos, rawSizing } = body;
         const sampleImage = files.sampleImage[0].path;
-        const mustUseRules = mustUse?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.mustUse })) || [];
-        const absPosRules = absPos?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.absPos })) || [];
-        const rawSizingRules = rawSizing?.allowedFor?.map(r => ({ ...r, ruleName: ElementRule.RULE_NAMES.rawSizing })) || [];
+        const mustUseRules = mustUse?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.mustUse })) || [];
+        const absPosRules = absPos?.allowedFor?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.absPos })) || [];
+        const rawSizingRules = rawSizing?.allowedFor?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.rawSizing })) || [];
         await basicTask.createLayoutTask({
           sampleImage,
           absPosMaxUsage: absPos?.maxUsage,
@@ -156,27 +174,34 @@ class TasksRouter extends SmartRouter {
         const cypressEnv = JSON.stringify({
           dimensions, mustUse, absPosAllowedFor: absPos?.allowedFor, rawSizingAllowedFor: rawSizing?.allowedFor
         }, null, '  ');
-        const sampleImageContent = await fs.promises.readFile(sampleImage);
+        const sampleImageContent = await fs.promises.readFile(sampleImage, 'base64');
         const sampleExt = path.extname(sampleImage);
         const extraFilesToUpload = {
           tech: {
-            [`sample${sampleExt}`]: sampleImageContent.toString('base64'),
-            ['sample.html']: TasksRouter.#getSampleHtml(sampleExt)
+            [`sample${sampleExt}`]: sampleImageContent,
+            ['sample.html']: getBase64(TasksRouter.#getSampleHtml(sampleExt))
           },
-          'cypress.env.json': cypressEnv,
-          'README.md': description
+          'cypress.env.json': getBase64(cypressEnv),
+          'README.md': getBase64(description)
         };
-        uploadFiles(octokit, repo.name, {
-          dirs: [{
-            dir: path.join(REPO_TEMPLATES_DIR, 'layout'),
-            ignore: filePath => /(src\/.*$)|(tech\/sample\.\w+$)/.test(filePath),
-            keep: filePath => filePath.endsWith('/layout/src/index.html')
-          }, {
+        const dirs = [{
+          dir: path.join(REPO_TEMPLATES_DIR, 'layout'),
+          ignore: filePath => /(src\/.*$)|(tech\/sample\.\w+$)/.test(filePath),
+          keep: filePath => filePath.endsWith('/layout/src/index.html')
+        }];
+        if (attachmentFiles) {
+          dirs.push({
             dir: attachmentFiles[0].destination,
             mount: 'attachments'
-          }],
-          plain: extraFilesToUpload
-        }).then(() => wsServer.sendToUser(user, wsServer.Actions.taskRepositoryPopulated, {}));
+          });
+        }
+        uploadFiles(octokit, repo.name, {
+          dirs, plain: extraFilesToUpload
+        }).then(() => wsServer.sendToUser(
+          user,
+          wsServer.Actions.taskRepositoryPopulated,
+          pick(basicTask, ['id', 'title']))
+        );
         break;
       case Task.TASK_KINDS.react:
         const pureFields = ['hasFuzzing', 'dump', 'dumpIsTemplate', 'dumpUploadMethod', 'dumpUploadUrl'];
@@ -200,7 +225,11 @@ class TasksRouter extends SmartRouter {
             dir: path.join(REPO_TEMPLATES_DIR, 'react'),
             ignore: filePath => /(app-backend|app-frontend)\/.*$/.test(filePath)
           }]
-        }).then(() => wsServer.sendToUser(user, wsServer.Actions.taskRepositoryPopulated, {}));
+        }).then(() => wsServer.sendToUser(
+          user,
+          wsServer.Actions.taskRepositoryPopulated,
+          pick(basicTask, ['id', 'title']))
+        );
         break;
     }
 

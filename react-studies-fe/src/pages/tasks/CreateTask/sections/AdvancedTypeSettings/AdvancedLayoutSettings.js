@@ -8,7 +8,7 @@ import CaveatField from '../../../../../uiKit/SmartForm/fields/CaveatField';
 function AdvancedLayoutSettings() {
   return (
     <>
-      <Typography variant='h6' mb={1}>Must-use tags</Typography>
+      <Typography variant='h6'>Must-use tags</Typography>
       <ElementsListField
         name={fieldNames.mustUse}
         requiredElementFields={[ELEMENT_FIELDS.tag]}

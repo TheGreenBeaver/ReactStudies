@@ -1,5 +1,8 @@
-import { SIZE_UNITS, FILE_TRIBES, DEFAULT_PAGE_SIZE, TASK_KINDS } from './constants';
+import { SIZE_UNITS, FILE_TRIBES, DEFAULT_PAGE_SIZE, TASK_KINDS, SUMMARY_INDICATOR_COLOURS } from './constants';
 import pick from 'lodash/pick';
+import last from 'lodash/last';
+import { CheckCircleOutlined, CircleOutlined, PendingOutlined } from '@mui/icons-material';
+import { Tooltip } from '@mui/material';
 
 
 function getUpd(upd, curr) {
@@ -87,6 +90,40 @@ function cleanupTaskKindParams(params) {
   return cleanParams;
 }
 
+function getBaseAndExt(file) {
+  const fileName = file instanceof File ? file.name : (typeof file === 'string' ? file : file.location);
+  const firstDotIndex = fileName.indexOf('.');
+  if (firstDotIndex < 1 && firstDotIndex === fileName.lastIndexOf('.')) {
+    return [fileName, ''];
+  }
+  const splitName = fileName.split('.');
+  return [splitName.slice(0, -1).join('.'), last(splitName)];
+}
+
+function wAmount(amount, text) {
+  return `${amount} ${text}${amount === 1 ? '' : 's'}`;
+}
+
+function getSolutionResultIndicator(summary, awaitingToken) {
+  let icon;
+  let tooltipTitle;
+  if (awaitingToken) {
+    tooltipTitle = 'Pending';
+    icon = <PendingOutlined color='action' />;
+  } else if (!summary) {
+    tooltipTitle = 'No results yet';
+    icon = <CircleOutlined color='disabled' />;
+  } else {
+    tooltipTitle = summary;
+    icon = <CheckCircleOutlined color={SUMMARY_INDICATOR_COLOURS[summary]} />;
+  }
+  return (
+    <Tooltip placement='top' title={tooltipTitle}>
+      {icon}
+    </Tooltip>
+  );
+}
+
 export {
   getUpd,
   blockEvent,
@@ -97,5 +134,8 @@ export {
   cleanupPaginationParams,
   cleanupTaskKindParams,
   isPositiveInt,
-  getOptions
+  getOptions,
+  getBaseAndExt,
+  wAmount,
+  getSolutionResultIndicator
 };

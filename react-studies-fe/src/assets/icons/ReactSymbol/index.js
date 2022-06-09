@@ -1,4 +1,4 @@
-import { ReactComponent } from './React.svg';
+import { ReactComponent } from './ReactSymbol.svg';
 import SvgIcon from '@mui/material/SvgIcon';
 import { forwardRef } from 'react';
 

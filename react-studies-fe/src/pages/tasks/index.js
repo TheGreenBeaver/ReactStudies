@@ -1,3 +1,4 @@
+import EditTask from './EditTask';
 import SingleTask from './SingleTask';
 import CreateTask from './CreateTask';
 import TaskList from './TaskList';
@@ -5,6 +6,11 @@ import AppRoute from '../config/AppRoute';
 import links from './links';
 
 const routes = [
+  new AppRoute(links.editTask, EditTask, {
+    isVerified: true,
+    isAuthorized: true,
+    isTeacher: true
+  }),
   new AppRoute(links.singleTask, SingleTask, {
     isVerified: true,
     isAuthorized: true

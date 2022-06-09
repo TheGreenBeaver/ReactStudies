@@ -75,7 +75,7 @@ async function paginate(
     : await scope.findAll(options);
   const count = allResults.length;
   if ((page - 1) * pageSize >= count && count > 0) {
-    throw new StatusError(httpStatus.NOT_FOUND);
+    throw new StatusError(httpStatus.BAD_REQUEST);
   }
   const results = allResults.slice((page - 1) * pageSize, page * pageSize);
   return {

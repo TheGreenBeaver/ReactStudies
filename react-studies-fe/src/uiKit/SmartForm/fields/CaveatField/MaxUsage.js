@@ -53,7 +53,7 @@ function MaxUsage({ name, recommended, label }) {
 
   return (
     <Box>
-      {label && <InputLabel sx={{ mb: 0.5 }}>{label}</InputLabel>}
+      {label && <InputLabel>{label}</InputLabel>}
       <FormControlLabel
         control={<Checkbox onChange={toggleEnteringPercentage} checked={enteringPercentage} />}
         label='Fail if used too widely'

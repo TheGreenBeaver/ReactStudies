@@ -6,7 +6,8 @@ function useUserState() {
     isAuthorized,
     isFetched: !!userData,
     isVerified: !!userData?.isVerified,
-    isTeacher: !!userData?.isTeacher
+    isTeacher: !!userData?.isTeacher,
+    hasUnprocessedSolutions: !!userData?.solutions.length
   };
 }
 

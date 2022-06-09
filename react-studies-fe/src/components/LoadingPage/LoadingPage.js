@@ -4,9 +4,9 @@ import { bool } from 'prop-types';
 
 
 function LoadingPage({ fullScreen }) {
-  const props = fullScreen ? { height: '100vh' } : { flex: 1 };
+  const props = fullScreen ? { height: '100vh', width: '100vw' } : { flex: 1, width: '100%' };
   return (
-    <Layout.Center width='100vw' {...props}>
+    <Layout.Center {...props}>
       <Preloader size={100} />
     </Layout.Center>
   );

@@ -7,7 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import { DEFAULT_PAGINATED_DATA } from '../../../util/constants';
 import withCache from '../../../hofs/withCache';
 import useDeferredFunction from '../../../hooks/useDeferredFunction';
-import { TextField } from '@mui/material';
+import TextField from '@mui/material/TextField';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useFetch from '../../../hooks/useFetch';
 
@@ -64,9 +64,13 @@ function UsersAutocompleteField({ name, label, isTeacher }) {
     }
   }, [textValue]);
 
+  const renderInput = useCallback(
+    params => <TextField {...params} margin='normal' size='small' label={label} />, [label]
+  );
+
   return (
     <Autocomplete
-      renderInput={params => <TextField {...params} margin='normal' size='small' label={label} />}
+      renderInput={renderInput}
       options={data.results}
       filterOptions={allOptions => allOptions}
       getOptionLabel={user => `${user.firstName} ${user.lastName}`}

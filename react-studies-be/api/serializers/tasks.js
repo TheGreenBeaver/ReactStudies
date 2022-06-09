@@ -27,11 +27,20 @@ module.exports = {
 
     if (!isEmpty(serialized.layoutTask)) {
       serialized.layoutTask.sampleImage = composeMediaPath(serialized.layoutTask.sampleImage);
+      serialized.solutions = serialized.solutions.map(solution => ({
+        ...solution.dataValues,
+        result: solution.layoutResults?.[0]
+      }));
     } else {
       delete serialized.layoutTask;
     }
 
-    if (isEmpty(serialized.reactTask)) {
+    if (!isEmpty(serialized.reactTask)) {
+      serialized.solutions = serialized.solutions.map(solution => ({
+        ...solution.dataValues,
+        result: solution.reactResults?.[0]
+      }));
+    } else {
       delete serialized.reactTask;
     }
 

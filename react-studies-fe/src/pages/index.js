@@ -1,3 +1,4 @@
+import solutionsRoutes from './solutions';
 import tasksRoutes from './tasks';
 import authRoutes from './auth';
 import { Switch, Route, Redirect } from 'react-router-dom';
@@ -5,6 +6,7 @@ import { useUserState } from '../store/selectors';
 import { getDefaultPath } from './config/links';
 
 const routes = [
+  ...solutionsRoutes,
   ...tasksRoutes,
   ...authRoutes,
 ];

@@ -30,7 +30,14 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     tableName: 'layout_task',
     modelName: 'LayoutTask',
-    timestamps: false
+    timestamps: false,
+    hooks: {
+      afterUpdate: async (instance, options) => {
+        const basicTask = await instance.getBasicTask();
+        basicTask.updatedAt = new Date();
+        await basicTask.save();
+      }
+    }
   });
   return LayoutTask;
 };

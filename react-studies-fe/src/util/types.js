@@ -1,5 +1,5 @@
 import { arrayOf, instanceOf, node, number, oneOfType, shape, string, func, oneOf } from 'prop-types';
-import { ELEMENT_FIELDS, TASK_KINDS } from './constants';
+import { ELEMENT_FIELDS, ELEMENT_RULE_KINDS, TASK_KINDS } from './constants';
 
 
 const Option = shape({
@@ -13,7 +13,8 @@ const StyleProp = oneOfType([string, number]);
 
 const FetchedFile = shape({
   location: string.isRequired,
-  mime: string.isRequired
+  mime: string.isRequired,
+  id: number.isRequired
 });
 
 const SomeFile = oneOfType([FetchedFile, instanceOf(File)]);
@@ -22,7 +23,14 @@ const Ratio = shape({ w: number.isRequired, h: number.isRequired });
 
 const MultiField = oneOfType([string, arrayOf(string)]);
 
-const ElementData = shape({ [ELEMENT_FIELDS.tag]: string, [ELEMENT_FIELDS.content]: arrayOf(string) });
+
+const ELEMENT_SHAPE = { [ELEMENT_FIELDS.tag]: string, [ELEMENT_FIELDS.content]: arrayOf(string) };
+const ElementData = shape(ELEMENT_SHAPE);
+const ElementRule = shape({
+  ...ELEMENT_SHAPE,
+  id: number.isRequired,
+  kind: oneOf([...Object.values(ELEMENT_RULE_KINDS)])
+});
 
 const ElementFields = arrayOf(oneOf([...Object.values(ELEMENT_FIELDS)]));
 
@@ -44,5 +52,6 @@ export {
   ElementData,
   ElementFields,
   Prefixes,
-  TaskKind
+  TaskKind,
+  ElementRule
 };

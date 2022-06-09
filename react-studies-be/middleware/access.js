@@ -1,5 +1,5 @@
 const { extractToken, authorize } = require('../util/user-identity');
-const { AccessError } = require('../util/custom-errors');
+const { AccessError, StatusError } = require('../util/custom-errors');
 const httpStatus = require('http-status');
 
 
@@ -20,6 +20,9 @@ function isAuthorizedProvider(shouldBeAuthorized) {
       }
       next();
     } catch (e) {
+      if (e instanceof StatusError && shouldBeAuthorized === false) {
+        return next();
+      }
       next(e);
     }
   }

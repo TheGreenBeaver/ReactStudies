@@ -13,7 +13,7 @@ function extractPureText(node) {
       textParts.push(child.textContent);
     }
   });
-  return textParts.join('').replace(/\s+/g, ' ').trim();
+  return textParts.join('').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 const ANY = '__any_tag__';
@@ -24,7 +24,7 @@ function composeAllowedFor(allowedForAsArray) {
     const tag = providedTag || ANY;
     if (content) {
       content.forEach(textBlock => {
-        set(rule, [tag, textBlock], true);
+        set(rule, [tag, textBlock.toLowerCase()], true);
       });
     } else {
       set(rule, tag, true);
@@ -115,7 +115,7 @@ function getAbsPosAddition(propertiesBlock) {
 }
 
 function getRawSizingAddition(propertiesBlock) {
-  return Object.values(propertiesBlock).filter(propertyValue => /\)|\d\s*px/.test(propertyValue)).length;
+  return Object.values(propertiesBlock).filter(propertyValue => /(\)|[1-9]|(?<!\s|^|\n)0)\s*px/.test(propertyValue)).length;
 }
 
 /**
@@ -171,7 +171,8 @@ it('task', () => {
       if (!content) {
         usedTags[tag] = false;
       } else {
-        content.forEach(textBlock => {
+        content.forEach(rawTextBlock => {
+          const textBlock = rawTextBlock.toLowerCase();
           if (!tagsUsedForTextBlocks[textBlock]) {
             tagsUsedForTextBlocks[textBlock] = { allowed: [], actual: [] };
           }
@@ -183,19 +184,17 @@ it('task', () => {
     const indexFile = Cypress.env('indexFile')
     const indexPath = indexFile ? `/${indexFile}.html` : '';
     cy.visit(`http://localhost:5000${indexPath}`);
+    cy.wait(5000);
     cy.matchImageSnapshot({
       capture: 'fullPage',
       scale: true,
       overwrite: true,
       clip: { x: left, y: 0, width: right - left, height: bottom }
-    });
+    }).as('snapshotStats');
 
     cy.window().then(win => {
       cy.document().then(doc => {
         const allCssRules = extractAllCssRules(doc, win);
-        totalPropertiesAmount += allCssRules
-          .map(getProperties)
-          .reduce((result, properties) => result + Object.keys(properties).length, 0);
         cy.get('body').then((body) => {
           body.contents().map(function () {
             const nodes = [this, ...extractChildren(this)];
@@ -213,7 +212,11 @@ it('task', () => {
 
               const allCssPropertiesForNode = getMatchingCssRules(node, allCssRules).map(getProperties);
               const allStylePropertiesForNode = getProperties(node);
+
               totalPropertiesAmount += Object.keys(allStylePropertiesForNode).length;
+              totalPropertiesAmount += allCssPropertiesForNode.reduce(
+                (result, properties) => result + Object.keys(properties).length, 0
+              );
 
               if (
                 !get(absPosAllowedFor, [tagName, pureText]) &&
@@ -245,11 +248,14 @@ it('task', () => {
           const properlyTaggedTextBlocks =
             Object
               .values(tagsUsedForTextBlocks)
-              .filter(({ actual, allowed }) => actual.every(tag => allowed.includes(tag)))
+              .filter(({ actual, allowed }) =>
+                actual.every(tag => allowed.includes(tag)) &&
+                allowed.every(tag => actual.includes(tag))
+              )
               .length /
             Object.keys(tagsUsedForTextBlocks).length * 100;
-          const absPosUsage = absPosPropertiesAmount / totalPropertiesAmount;
-          const rawSizingUsage = rawSizingPropertiesAmount / totalPropertiesAmount;
+          const absPosUsage = absPosPropertiesAmount / totalPropertiesAmount * 100;
+          const rawSizingUsage = rawSizingPropertiesAmount / totalPropertiesAmount * 100;
 
           const report = {
             detail: {
@@ -266,7 +272,12 @@ it('task', () => {
               rawSizingUsage
             }
           };
-          cy.writeFile('report.json', JSON.stringify(report, null, '  '));
+          cy.get('@snapshotStats').then(snapshotStats => {
+            if (snapshotStats?.diffRatio) {
+              report.summary.diffPercentage = snapshotStats.diffRatio * 100;
+            }
+            cy.writeFile('report.json', JSON.stringify(report, null, '  '));
+          });
         });
       });
     });

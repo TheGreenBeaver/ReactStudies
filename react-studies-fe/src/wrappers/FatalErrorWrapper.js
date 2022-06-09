@@ -9,7 +9,7 @@ function FatalErrorWrapper({ children }) {
   if (fatalError) {
     // TODO: Fatal Error Page
     return (
-      <Layout.Center>
+      <Layout.Center minHeight='100vh'>
         <Typography variant='h1'>ERROR: {fatalError.response.status}</Typography>
       </Layout.Center>
     );

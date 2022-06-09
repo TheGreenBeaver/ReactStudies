@@ -64,6 +64,14 @@ function pascalCase(str) {
   return startCase(str).replace(/ /g, '');
 }
 
+function getBase64(text) {
+  return Buffer.from(text).toString('base64');
+}
+
+function isDirectory(pathToEntity) {
+  return pathToEntity.endsWith(path.sep);
+}
+
 module.exports = {
   listUsableFiles,
   baseNoExt,
@@ -72,5 +80,7 @@ module.exports = {
   getFilesRecursively,
   composeMediaPath,
   standardizePath,
-  pascalCase
+  pascalCase,
+  getBase64,
+  isDirectory
 };

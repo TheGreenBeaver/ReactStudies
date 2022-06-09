@@ -128,7 +128,7 @@ class Validators {
     Object.keys(singleElementSpec).forEach(field => {
       singleElementSpec[field] = requiredElementFields.includes(field)
         ? this.#requiredSchema(singleElementSpec[field], true)
-        : singleElementSpec[field].optional();
+        : singleElementSpec[field].canSkip();
     });
     return array().of(
       object(singleElementSpec).test(

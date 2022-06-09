@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material';
+import createTheme from '@mui/material/styles/createTheme';
 import { COLOUR_MODES } from '../util/constants';
 
 function getTheme(mode) {
@@ -21,7 +21,24 @@ function getTheme(mode) {
     components: {
       MuiTypography: {
         styleOverrides: {
-          h6: { fontWeight: 400 }
+          h6: { fontWeight: 400, marginBottom: 4 }
+        }
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            marginBottom: 4,
+          }
+        }
+      },
+      MuiTabPanel: {
+        styleOverrides: {
+          root: {
+            '&[hidden]': {
+              padding: 0,
+              flex: 0
+            }
+          }
         }
       }
     }

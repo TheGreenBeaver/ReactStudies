@@ -8,7 +8,7 @@ import startCase from 'lodash/startCase';
 import PasswordField from './PasswordField';
 import CheckboxField from './CheckboxField';
 import Button from '@mui/material/Button';
-import { TOKEN_FIELDS } from '../../../util/constants';
+import { TOKEN_FIELDS, TOKEN_INFO } from '../../../util/constants';
 import { useFormikContext } from 'formik';
 import { useSelector } from 'react-redux';
 import SubmitButton from '../interactions/SubmitButton';
@@ -16,9 +16,8 @@ import { useEffect } from 'react';
 import isEmpty from 'lodash/isEmpty';
 import mapValues from 'lodash/mapValues';
 import useMountedState from '../../../hooks/useMountedState';
+import MuiLink from '@mui/material/Link';
 
-
-const infoLink = 'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token';
 
 function mapErrorsToTouched(errors) {
   return mapValues(errors, singleErr => {
@@ -33,7 +32,7 @@ function mapErrorsToTouched(errors) {
   });
 }
 
-function GitHubTokenField({ action, entity, ...buttonProps }) {
+function GitHubTokenField({ action, entity, buttonText, ...buttonProps }) {
   const [open, setOpen] = useMountedState(false);
   const { submitForm, values, validateForm, setTouched, isSubmitting, errors, submitCount } = useFormikContext();
   const { gitHubToken } = useSelector(state => state.account.userData);
@@ -72,7 +71,7 @@ function GitHubTokenField({ action, entity, ...buttonProps }) {
         <DialogContent>
           <DialogContentText>
             Please provide your{' '}
-            <a href={infoLink} target='_blank' rel='noopener noreferrer'>GitHub Personal Access Token</a>{' '}
+            <MuiLink href={TOKEN_INFO} target='_blank' rel='noopener noreferrer'>GitHub Personal Access Token</MuiLink>{' '}
             so that we can {action} repository for this {entity}
           </DialogContentText>
           <PasswordField name={TOKEN_FIELDS.gitHubToken} label='Token' autoComplete='false' />
@@ -80,13 +79,13 @@ function GitHubTokenField({ action, entity, ...buttonProps }) {
         </DialogContent>
         <DialogActions>
           <Button variant='outlined' disabled={isSubmitting} onClick={onClose}>Cancel</Button>
-          <SubmitButton type='submit' disabled={!tokenValue}>
+          <SubmitButton type='submit' disabled={!tokenValue} onClick={submitForm}>
             Submit
           </SubmitButton>
         </DialogActions>
       </Dialog>
       <SubmitButton {...buttonProps} onClick={onSubmitAttempt}>
-        Create
+        {buttonText}
       </SubmitButton>
     </>
   );
@@ -95,6 +94,11 @@ function GitHubTokenField({ action, entity, ...buttonProps }) {
 GitHubTokenField.propTypes = {
   action: string.isRequired,
   entity: string.isRequired,
+  buttonText: string
+};
+
+GitHubTokenField.defaultProps = {
+  buttonText: 'Create',
 };
 
 export default GitHubTokenField;

@@ -1,5 +1,5 @@
 import { node } from 'prop-types';
-import { ThemeProvider } from '@mui/material';
+import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import useColourMode from './ColourMode';
 import { useMemo } from 'react';
 import getTheme from '../theme';

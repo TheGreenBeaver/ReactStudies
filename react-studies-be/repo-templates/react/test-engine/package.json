@@ -3,8 +3,8 @@
   "packageManager": "yarn@3.2.0",
   "scripts": {
     "start": "react-scripts start",
-    "runtest": "cypress run",
-    "runtest:dev": "cypress run --config-file cypress.dev.json"
+    "test": "cypress run",
+    "test:dev": "cypress run --config-file cypress.dev.json"
   },
   "dependencies": {
     "cypress": "^9.6.1",

@@ -1,11 +1,10 @@
-import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema } from 'yup';
+import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema, StringSchema } from 'yup';
 import startCase from 'lodash/startCase';
-import { humanizeFileSize, serializeFileSize } from './misc';
+import { humanizeFileSize, serializeFileSize, wAmount } from './misc';
 import isEqual from 'lodash/isEqual';
-import { CAVEAT_FIELDS, ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY } from './constants';
+import { CAVEAT_FIELDS, ELEMENT_FIELDS } from './constants';
 import uniq from 'lodash/uniq';
 
-// TODO: Update to match BE
 
 setLocale({
   mixed: {
@@ -16,7 +15,7 @@ setLocale({
     max: ({ path, max }) => `${startCase(path)} must not exceed ${max} characters`
   },
   array: {
-    min: ({ path, min }) => `At least ${min} ${startCase(path)}${min === 1 ? '' : 's'} must be provided`
+    min: ({ path, min }) => `At least ${wAmount(min, startCase(path))} must be provided`
   }
 });
 
@@ -34,6 +33,10 @@ addMethod(BaseSchema, 'uniqList', function uniqList(entryTitle, comparator = isE
   );
 });
 
+addMethod(BaseSchema, 'canSkip', function canSkip() {
+  return this.nullable().optional();
+});
+
 class Validators {
   static #getAcceptPattern(acceptToken) {
     return new RegExp(acceptToken.replace(/\*/g, '[a-zA-Z-]+'));
@@ -43,8 +46,10 @@ class Validators {
     return accept.split(',').some(token => this.#getAcceptPattern(token).test(mime));
   }
 
-  static #requiredSchema(schema) {
-    return schema instanceof ArraySchema ? schema.min(1) : schema.required();
+  static #requiredSchema(schema, ultra) {
+    return schema instanceof ArraySchema
+      ? schema.min(1)[ultra ? 'required' : 'optional']()
+      : schema.required();
   }
 
   static standardText(max) {
@@ -81,7 +86,7 @@ class Validators {
   }
 
   static elementList(requiredElementFields = []) {
-    const singleElementSchema = {
+    const singleElementSpec = {
       [ELEMENT_FIELDS.tag]: string().max(20).test('isValidTag', '${tag} is not a valid tag', (value, { createError }) => {
         if (!value) {
           return true;
@@ -95,12 +100,12 @@ class Validators {
       }),
       [ELEMENT_FIELDS.content]: string().required('Text blocks must not be empty').uniqList('Text block')
     };
-    requiredElementFields.forEach(field => {
-      if (!Array.isArray(ELEMENT_FIELDS_EMPTY[field])) {
-        singleElementSchema[field] = singleElementSchema[field].required(`${startCase(field)} is required`);
-      }
+    Object.keys(singleElementSpec).forEach(field => {
+      singleElementSpec[field] = requiredElementFields.includes(field)
+        ? this.#requiredSchema(singleElementSpec[field], true)
+        : singleElementSpec[field].canSkip();
     });
-    return array().of(object(singleElementSchema));
+    return array().of(object(singleElementSpec));
   }
 
   static numeric(min, max, nullable) {
@@ -123,19 +128,23 @@ class Validators {
 
   static caveat(min = 1, max = 99) {
     return object({
-      [CAVEAT_FIELDS.maxUsage]: this.numeric(min, max, true).label('Threshold').optional(),
-      [CAVEAT_FIELDS.allowedFor]: this.#requiredSchema(this.elementList().label('rule')).nullable().optional()
-    }).nullable().optional();
+      [CAVEAT_FIELDS.maxUsage]: this.numeric(min, max, true).label('Threshold').canSkip(),
+      [CAVEAT_FIELDS.allowedFor]: this.#requiredSchema(this.elementList().label('rule')).canSkip()
+    }).noUnknown().canSkip();
   }
 
   static gitHubToken() {
     return string().matches(/ghp_\w{36}/, 'Not a valid Personal Access Token');
   }
 
+  static #isBool(v) {
+    return typeof v === 'boolean';
+  }
+
   static #allowedTokensForTypes = {
     string: ['max', 'min', 'nullable', 'email'],
     number: ['max', 'min', 'nullable', 'int'],
-    date: ['utc', 'nullable'],
+    date: ['format', 'nullable', 'allowPast', 'allowFuture'],
     bool: ['nullable'],
     array: ['max', 'min', 'of', 'nullable'],
     enum: ['values', 'nullable']
@@ -143,15 +152,14 @@ class Validators {
   static #validationsForTokens = {
     max: Number.isInteger,
     min: Number.isInteger,
-    int: v => typeof v === 'boolean',
-    utc: v => typeof v === 'boolean',
+    nullable: this.#isBool,
+    email: this.#isBool,
+    int: this.#isBool,
+    format: v => typeof v === 'string',
+    allowPast: this.#isBool,
+    allowFuture: this.#isBool,
     of: v => typeof v === 'object',
-    nullable: v => typeof v === 'boolean',
-    email: v => typeof v === 'boolean',
-    values: v =>
-      Array.isArray(v) &&
-      v.every(opt => typeof opt === 'string') &&
-      uniq(v).length === v.length
+    values: v => Array.isArray(v) && uniq(v).length === v.length
   };
 
   static #unpackTemplateConfig(config) {
@@ -176,9 +184,21 @@ class Validators {
       if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
         return `Token "${tokenName}" for type "${type}" must have non-negative value (got ${tokenDef})`;
       }
+      if (rest.email) {
+        if (tokenName === 'max') {
+          return '"max" for emails is always 100';
+        }
+        if (tokenName === 'min') {
+          return '"min" for emails is always 15';
+        }
+      }
       if (tokenName === 'of') {
         return this.#unpackTemplateConfig(tokenDef);
       }
+    }
+
+    if (type === 'enum' && !rest.values) {
+      return '"values" token is required for type "enum"';
     }
 
     return null;
@@ -196,7 +216,7 @@ class Validators {
   }
 }
 
-addMethod(BaseSchema, 'dump', function dump() {
+addMethod(StringSchema, 'dump', function dump() {
   return this.test('isDump', 'Validation error', (value, testContext) => {
     if (!value) {
       return true;
@@ -210,6 +230,7 @@ addMethod(BaseSchema, 'dump', function dump() {
           return createError({ message });
         }
       }
+      return true;
     } catch {
       return createError({ message: 'Not a valid JSON' });
     }
