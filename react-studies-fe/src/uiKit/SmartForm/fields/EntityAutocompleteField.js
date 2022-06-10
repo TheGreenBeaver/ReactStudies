@@ -1,7 +1,7 @@
 import { string, func, object, instanceOf } from 'prop-types';
 import usePromise from '../../../hooks/usePromise';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useField } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Autocomplete from '@mui/material/Autocomplete';
 import { DEFAULT_PAGINATED_DATA } from '../../../util/constants';
 import withCache from '../../../hofs/withCache';
@@ -27,6 +27,7 @@ function EntityAutocompleteField({ name, label, getOptionLabel, extraParams, ser
     initialData: DEFAULT_PAGINATED_DATA, getData
   });
 
+  const { isSubmitting } = useFormikContext();
   const [{ value },, { setValue }] = useField(name);
   const [textValue, setTextValue] = useState('');
   const [fullValue, setFullValue] = useState(null);
@@ -79,7 +80,7 @@ function EntityAutocompleteField({ name, label, getOptionLabel, extraParams, ser
       inputValue={textValue}
       loading={isProcessing}
       value={fullValue}
-      disabled={isFetchingSingleEntity}
+      disabled={isSubmitting || isFetchingSingleEntity}
       ListboxProps={scrollBoxProps}
       freeSolo
       renderOption={renderOption}

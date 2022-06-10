@@ -84,7 +84,7 @@ class SolutionsRouter extends SmartRouter {
           req.app.locals.wsServer,
           result,
           solution,
-          result.unprocessedReportLocation
+          result.getDataValue('unprocessedReportLocation')
         );
       }
     }

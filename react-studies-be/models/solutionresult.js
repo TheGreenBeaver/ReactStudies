@@ -26,7 +26,10 @@ module.exports = (sequelize, DataTypes) => {
   SolutionResult.init({
     unprocessedReportLocation: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
+      get() {
+        return !!this.getDataValue('unprocessedReportLocation')
+      }
     },
     runId: {
       type: DataTypes.INTEGER,

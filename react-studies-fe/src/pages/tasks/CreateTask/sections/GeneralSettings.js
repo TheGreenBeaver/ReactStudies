@@ -9,6 +9,9 @@ import fieldAccepts from '../fieldAccepts';
 import { useFormikContext } from 'formik';
 import CheckboxField from '../../../../uiKit/SmartForm/fields/CheckboxField';
 import { getOptions } from '../../../../util/misc';
+import Typography from '@mui/material/Typography';
+import InputLabel from '@mui/material/InputLabel';
+import HelpBadge from '../../../../uiKit/HelpBadge';
 
 
 const taskKindOptions = getOptions(TASK_KIND_DEFINITIONS);
@@ -28,11 +31,20 @@ function GeneralSettings() {
         />
       </Grid>
       <Grid item xs={12}>
-        <CheckboxField label='Track updates from GitHub' name={fieldNames.trackUpdates} />
+        <CheckboxField
+          label={
+            <HelpBadge helpText='Changes you make to ./attachments and README will be reflected here'>
+              <Typography>Track updates from GitHub</Typography>
+            </HelpBadge>
+          }
+          name={fieldNames.trackUpdates}
+        />
       </Grid>
       <Grid item xs={12}>
+        <HelpBadge helpText='This will be placed in README.md'>
+          <InputLabel>Extra notes</InputLabel>
+        </HelpBadge>
         <MarkdownField
-          label='Extra notes'
           name={fieldNames.description}
           localFiles={values[fieldNames.attachments]}
           localFilesRefs={values[fieldNames.attachmentNames]}
@@ -45,7 +57,12 @@ function GeneralSettings() {
           multiple
           width='100%'
           height='140px'
-          label={['Attachments', 'Reference names']}
+          label={[
+            <HelpBadge helpText='These will be stored in the repo at ./attachments under the reference names you set'>
+              <InputLabel>Attachments</InputLabel>
+            </HelpBadge>,
+            'Reference names'
+          ]}
         />
       </Grid>
     </Grid>

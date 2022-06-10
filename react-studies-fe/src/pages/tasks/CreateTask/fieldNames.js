@@ -13,4 +13,14 @@ export default {
   mustUse: 'mustUse',
   absPos: 'absPos',
   rawSizing: 'rawSizing',
+
+  // react - main
+  authTemplate: 'authTemplate',
+  entityListTemplate: 'entityListTemplate',
+  singleEntityTemplate: 'singleEntityTemplate',
+  // react - advanced
+  hasFuzzing: 'hasFuzzing',
+  textDump: 'textDump',
+  fileDump: 'fileDump',
+  dumpIsTemplate: 'dumpIsTemplate',
 };

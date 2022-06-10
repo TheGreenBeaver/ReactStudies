@@ -14,7 +14,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 
 
 function ElementsListField({ name, label, requiredElementFields, prefixes }) {
-  const { values, setFieldValue, errors, touched, setFieldTouched } = useEditableView();
+  const { values, setFieldValue, errors, touched, setFieldTouched, isSubmitting } = useEditableView();
   const value = get(values, name);
   const topLevelError = get(errors, name);
   const topLevelTouched = get(touched, name);
@@ -76,6 +76,7 @@ function ElementsListField({ name, label, requiredElementFields, prefixes }) {
       <Button
         variant='outlined'
         startIcon={<Add />}
+        disabled={isSubmitting}
         sx={{ mt: 1 }}
         onClick={addElement}
       >

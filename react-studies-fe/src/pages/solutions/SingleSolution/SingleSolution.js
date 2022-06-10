@@ -87,7 +87,7 @@ function SingleSolution({ resultsPage, pageSize }) {
                   secondary={
                     <>
                       Submitted at: {DateTime.fromISO(result.createdAt).toFormat('f')}
-                      {result.unprocessedReportLocation && <> &bull; <b>Report ready, need token to process it</b></>}
+                      {result.unprocessedReportLocation && <> &bull; <b>Report ready, need GitHub Token to process it</b></>}
                     </>
                   }
                 />

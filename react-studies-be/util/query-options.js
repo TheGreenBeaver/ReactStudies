@@ -28,7 +28,7 @@ const Solution_UnprocessedResults = {
     where: { unprocessedReportLocation: { [Op.not]: null } },
     model: SolutionResult,
     as: 'results',
-    attributes: ['summary', 'createdAt'],
+    ...Any_Dummy,
     required: true,
   }]
 };

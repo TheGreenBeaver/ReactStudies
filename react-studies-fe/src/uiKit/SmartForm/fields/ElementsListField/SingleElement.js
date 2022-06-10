@@ -6,14 +6,17 @@ import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
-import MultiText from './MultiText';
+import MultiTextField from '../MultiTextField';
 import { getUpd } from '../../../../util/misc';
 import { ElementData, ElementFields, Prefixes } from '../../../../util/types';
+import { useFormikContext } from 'formik';
 
 
 const elementFieldsList = Object.values(ELEMENT_FIELDS);
 
 function SingleElement({ value, onChange, requiredElementFields, prefixes, remove, getErrorProps, onBlur }) {
+  const { isSubmitting } = useFormikContext();
+
   function onRequire(elementField) {
     onChange(curr => ({ ...curr, [elementField]: ELEMENT_FIELDS_EMPTY[elementField] }));
   }
@@ -44,7 +47,12 @@ function SingleElement({ value, onChange, requiredElementFields, prefixes, remov
       columnGap={1}
       sx={{ '&:not(:last-of-type)': { mb: 2.25 }, ml: -0.75 }}
     >
-      <IconButton onClick={remove} color='error' sx={{ p: 0.5, height: 'fit-content', mt: 0.5 }}>
+      <IconButton
+        onClick={remove}
+        color='error'
+        sx={{ p: 0.5, height: 'fit-content', mt: 0.5 }}
+        disabled={isSubmitting}
+      >
         <DeleteOutlined />
       </IconButton>
       {
@@ -53,6 +61,7 @@ function SingleElement({ value, onChange, requiredElementFields, prefixes, remov
             {
               !requiredElementFields.includes(elementField) &&
               <Checkbox
+                disabled={isSubmitting}
                 sx={{ p: 0.5, mt: 0.5, height: 'fit-content' }}
                 onChange={e => e.target.checked ? onRequire(elementField) : onDecline(elementField)}
                 checked={hasField(elementField)}
@@ -61,7 +70,7 @@ function SingleElement({ value, onChange, requiredElementFields, prefixes, remov
             <Typography mt={1} whiteSpace='nowrap' color={hasField(elementField) ? 'text.primary' : 'text.disabled'}>
               {getPrefix(prefixes[elementField])}
             </Typography>
-            <MultiText
+            <MultiTextField
               getErrorProps={idxInField => getErrorProps(elementField, idxInField)}
               onBlur={subIdx => onBlur(elementField, subIdx)}
               disabled={!hasField(elementField)}

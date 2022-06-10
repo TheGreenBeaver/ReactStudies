@@ -41,7 +41,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     newPassword: {
       type: DataTypes.STRING(64),
-      allowNull: true
+      allowNull: true,
+      get() {
+        return !!this.getDataValue('newPassword');
+      }
     },
     isVerified: {
       type: DataTypes.BOOLEAN,

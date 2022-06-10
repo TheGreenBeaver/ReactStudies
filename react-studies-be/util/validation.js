@@ -174,6 +174,25 @@ class Validators {
       });
   }
 
+  static urlPathname() {
+    return string()
+      .max(2000, 'Path must not exceed 2000 characters')
+      .test('urlPathname', 'Not a valid path', (value, { createError }) => {
+        if (!value) {
+          return true;
+        }
+        if (!/^\/.*/.test(value)) {
+          return createError({ message: 'Path must start with /' });
+        }
+        try {
+          new URL(value, 'http://localhost');
+          return true;
+        } catch {
+          return false;
+        }
+      });
+  }
+
   static #isBool(v) {
     return typeof v === 'boolean';
   }
@@ -291,9 +310,9 @@ addMethod(StringSchema, 'dump', function dump() {
 
 addMethod(ObjectSchema, 'templateConfig', function templateConfig() {
   return this.shape({
-    endpoints: array().of(string().max(2000).required()).canSkip(),
-    routes: array().of(string().max(2000).required()).canSkip(),
-    special: string().max(2000).canSkip()
+    endpoints: array().of(Validators.urlPathname()).canSkip(),
+    routes: array().of(Validators.urlPathname()).canSkip(),
+    special: Validators.urlPathname().canSkip()
   }).noUnknown().canSkip().onlyKind(Task.TASK_KINDS.react);
 });
 

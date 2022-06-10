@@ -101,7 +101,7 @@ function generateShape(shape) {
         case 'string': {
           const generate = () => {
             const min = email ? 5 : (_min || 5);
-            const max = email ? 190 : (_max || 30);
+            const max = email ? 90 : (_max || 30);
             const length = generateRandomNum(min, max);
             const raw = generateRandomString(length);
             return email ? `${raw.toLowerCase()}@gmail.com` : raw;

@@ -4,15 +4,17 @@ import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Add from '@mui/icons-material/Add';
 import Clear from '@mui/icons-material/Clear';
-import useScrollbarCompensation from '../../../../hooks/useScrollbarCompensation';
+import useScrollbarCompensation from '../../../hooks/useScrollbarCompensation';
 import { useEffect } from 'react';
-import { MultiField } from '../../../../util/types';
-import useScrollToNewInput from '../../../../hooks/useScrollToNewInput';
-import { combineRefs } from '../../../../util/misc';
+import { MultiField, StyleProp } from '../../../util/types';
+import useScrollToNewInput from '../../../hooks/useScrollToNewInput';
+import { combineRefs } from '../../../util/misc';
+import { useFormikContext } from 'formik';
 
 
-function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
+function MultiTextField({ value, onChange, disabled, onBlur, getErrorProps, maxWidth }) {
   const isMulti = Array.isArray(value);
+  const { isSubmitting } = useFormikContext();
   const [mb, trackOverflow, multiBoxRef] = useScrollbarCompensation();
   const { newInputRef, onDelete, inputsWrapperRef } = useScrollToNewInput(value);
 
@@ -29,7 +31,7 @@ function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
           display='flex'
           columnGap={0.25}
           sx={{ overflowY: 'hidden', overflowX: 'auto', mb }}
-          maxWidth={400}
+          maxWidth={maxWidth}
           ref={combineRefs(multiBoxRef, inputsWrapperRef)}
         >
           {value.map((singleValue, idx) =>
@@ -37,7 +39,7 @@ function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
               {...getErrorProps(idx)}
               key={idx}
               value={singleValue}
-              disabled={disabled}
+              disabled={isSubmitting || disabled}
               onChange={e => onChange(curr => {
                 const updated = [...curr];
                 updated[idx] = e.target.value;
@@ -67,6 +69,7 @@ function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
         {
           !disabled &&
           <IconButton
+            disabled={isSubmitting}
             sx={{ p: 0.5, height: 'fit-content', mt: 0.5 }}
             size='small'
             onClick={() => onChange(curr => [...curr, ''])}
@@ -81,7 +84,7 @@ function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
   return (
     <TextField
       value={value}
-      disabled={disabled}
+      disabled={isSubmitting || disabled}
       {...getErrorProps()}
       onChange={e => onChange(e.target.value)}
       onBlur={() => onBlur()}
@@ -91,12 +94,17 @@ function MultiText({ value, onChange, disabled, onBlur, getErrorProps }) {
   );
 }
 
-MultiText.propTypes = {
+MultiTextField.propTypes = {
   value: MultiField,
   getErrorProps: func.isRequired,
   onBlur: func.isRequired,
   onChange: func.isRequired,
   disabled: bool,
+  maxWidth: StyleProp
 };
 
-export default MultiText;
+MultiTextField.defaultProps = {
+  maxWidth: 400,
+};
+
+export default MultiTextField;

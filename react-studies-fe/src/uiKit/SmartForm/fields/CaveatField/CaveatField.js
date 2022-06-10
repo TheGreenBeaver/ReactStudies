@@ -21,7 +21,7 @@ function CaveatField({
   recommended,
   ...wrapperProps
 }) {
-  const { values, setFieldValue } = useEditableView();
+  const { values, setFieldValue, isSubmitting } = useEditableView();
   const value = values[name];
   const shouldTrack = !!value;
   const enteringAllowedFor = !!value?.[CAVEAT_FIELDS.allowedFor];
@@ -66,12 +66,14 @@ function CaveatField({
       <FormControlLabel
         control={<Checkbox checked={shouldTrack} onChange={toggleShouldTrack} />}
         label={<Typography variant='h6' mb={0}>Common caveat{label ? `: ${label}` : ''}</Typography>}
+        disabled={isSubmitting}
       />
       <Collapse {...shouldTrackCollapseProps} orientation='vertical'>
         <MaxUsage name={`${name}.${CAVEAT_FIELDS.maxUsage}`} recommended={recommended} />
         <FormControlLabel
           control={<Checkbox checked={enteringAllowedFor} onChange={toggleEnteringAllowedFor} />}
           label='Allow usage for certain tags'
+          disabled={isSubmitting}
         />
         <Collapse {...enteringAllowedForCollapseProps} orientation='vertical'>
           <ElementsListField

@@ -1,4 +1,4 @@
-import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema, StringSchema } from 'yup';
+import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema, StringSchema, ObjectSchema } from 'yup';
 import startCase from 'lodash/startCase';
 import { humanizeFileSize, serializeFileSize, wAmount } from './misc';
 import isEqual from 'lodash/isEqual';
@@ -46,10 +46,10 @@ class Validators {
     return accept.split(',').some(token => this.#getAcceptPattern(token).test(mime));
   }
 
-  static #requiredSchema(schema, ultra) {
+  static #requiredSchema(schema, ultra, message) {
     return schema instanceof ArraySchema
       ? schema.min(1)[ultra ? 'required' : 'optional']()
-      : schema.required();
+      : schema.required(message);
   }
 
   static standardText(max) {
@@ -102,7 +102,7 @@ class Validators {
     };
     Object.keys(singleElementSpec).forEach(field => {
       singleElementSpec[field] = requiredElementFields.includes(field)
-        ? this.#requiredSchema(singleElementSpec[field], true)
+        ? this.#requiredSchema(singleElementSpec[field], true, `${startCase(field)}s must not be empty`)
         : singleElementSpec[field].canSkip();
     });
     return array().of(object(singleElementSpec));
@@ -214,6 +214,25 @@ class Validators {
 
     return null;
   }
+
+  static urlPathname() {
+    return string()
+      .max(2000, 'Path must not exceed 2000 characters')
+      .test('urlPathname', 'Not a valid path', (value, { createError }) => {
+        if (!value) {
+          return true;
+        }
+        if (!/^\/.*/.test(value)) {
+          return createError({ message: 'Path must start with /' });
+        }
+        try {
+          new URL(value, 'http://localhost');
+          return true;
+        } catch {
+          return false;
+        }
+      });
+  }
 }
 
 addMethod(StringSchema, 'dump', function dump() {
@@ -235,6 +254,14 @@ addMethod(StringSchema, 'dump', function dump() {
       return createError({ message: 'Not a valid JSON' });
     }
   });
+});
+
+addMethod(ObjectSchema, 'templateConfig', function templateConfig() {
+  return this.shape({
+    endpoints: array().of(Validators.urlPathname()).canSkip(),
+    routes: array().of(Validators.urlPathname()).canSkip(),
+    special: Validators.urlPathname().canSkip()
+  }).noUnknown().canSkip();
 });
 
 export default Validators;

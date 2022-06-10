@@ -8,13 +8,13 @@ import kebabCase from 'lodash/kebabCase';
 
 
 function SwitchingTextFieldComponent({ name, typographyProps, ...otherProps }, ref) {
-  const { isEditing, values, getFieldMeta, getFieldProps } = useEditableView();
+  const { isEditing, values, getFieldMeta, getFieldProps, isSubmitting } = useEditableView();
 
   if (!isEditing) {
     return <Typography ref={ref} {...typographyProps}>{values[name]}</Typography>;
   }
 
-  const { InputProps, ...textFieldProps } = otherProps;
+  const { InputProps, disabled, ...textFieldProps } = otherProps;
 
   const { multiple, checked, ...fieldProps } = getFieldProps(name);
   const { error, touched } = getFieldMeta(name);
@@ -24,6 +24,7 @@ function SwitchingTextFieldComponent({ name, typographyProps, ...otherProps }, r
     size: 'small',
     fullWidth: true,
     autoComplete: kebabCase(name),
+    disabled: isSubmitting || disabled,
     ...textFieldProps,
     InputProps: { ...InputProps, inputRef: ref },
     ...fieldProps,

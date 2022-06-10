@@ -194,7 +194,6 @@ function SingleTask() {
                 <Markdown
                   source={task.description}
                   {...attachmentsData}
-                  label='Description'
                 />
               </Box>
             )}

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { string, bool } from 'prop-types';
+import { string, bool, oneOfType, node, arrayOf } from 'prop-types';
 import useEditableView from '../../../../hooks/useEditableView';
 import Box from '@mui/material/Box';
 import Layout from '../../../Layout';
@@ -17,6 +17,10 @@ import FormHelperText from '@mui/material/FormHelperText';
 import useScrollToNewInput from '../../../../hooks/useScrollToNewInput';
 import InputAdornment from '@mui/material/InputAdornment';
 
+
+function getLabel(label) {
+  return typeof label === 'string' ? <InputLabel>{label}</InputLabel> : label;
+}
 
 function FileField({ label, height, ratio, width, name, multiple, accept }) {
   const {
@@ -211,7 +215,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
           refFieldName && !!fileFieldValue.length &&
           <Box mt={0.5} display='flex' alignItems='stretch' columnGap={1.5} width={width}>
             <Box width={height} minWidth={height} display='flex'>
-              {refFieldLabel && <InputLabel sx={{ mb: 0 }}>{refFieldLabel}:</InputLabel>}
+              {refFieldLabel && <InputLabel sx={{ mb: 0, mt: 1 }}>{refFieldLabel}:</InputLabel>}
             </Box>
             <Box
               display='flex'
@@ -257,7 +261,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
 
   return (
     <>
-      {fileFieldLabel && <InputLabel>{fileFieldLabel}</InputLabel>}
+      {fileFieldLabel && getLabel(fileFieldLabel)}
       {getContent()}
     </>
   );
@@ -266,7 +270,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
 FileField.propTypes = {
   name: MultiField.isRequired,
   accept: string.isRequired,
-  label: MultiField,
+  label: oneOfType([node, arrayOf(node)]),
   multiple: bool,
   width: StyleProp,
   height: StyleProp,

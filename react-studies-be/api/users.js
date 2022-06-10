@@ -9,6 +9,7 @@ const capitalize = require('lodash/capitalize');
 const { origin } = require('../util/env');
 const cloneDeep = require('lodash/cloneDeep');
 const { Op } = require('sequelize');
+const isEmpty = require('lodash/isEmpty');
 
 
 class UsersRouter extends SmartRouter {
@@ -43,10 +44,9 @@ class UsersRouter extends SmartRouter {
       if ('isTeacher' in query) {
         where.push({ is_teacher: query.isTeacher });
       }
-      if (where.length) {
+      if (!isEmpty(where)) {
         options.where = where;
       }
-
     }
 
     return options;

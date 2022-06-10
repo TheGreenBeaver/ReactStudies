@@ -2,7 +2,7 @@ import { SIZE_UNITS, FILE_TRIBES, DEFAULT_PAGE_SIZE, TASK_KINDS, SUMMARY_INDICAT
 import pick from 'lodash/pick';
 import last from 'lodash/last';
 import { CheckCircleOutlined, CircleOutlined, PendingOutlined } from '@mui/icons-material';
-import { Tooltip } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
 import isEmpty from 'lodash/isEmpty';
 
 

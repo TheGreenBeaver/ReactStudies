@@ -4,7 +4,6 @@ const multerMw = require('../middleware/multer');
 const httpStatus = require('http-status');
 const path = require('path');
 const { ROOT_DIR } = require('../settings');
-const { isAsync, asyncMap } = require('../util/misc');
 const { paginate } = require('../util/sql');
 
 
@@ -103,10 +102,6 @@ class SmartRouter {
     });
   }
 
-  getSerializer(handlerName) {
-    return this.getSettings('serializers', handlerName) || (v => v);
-  }
-
   /**
    *
    * @param {string} handlerName
@@ -152,26 +147,9 @@ class SmartRouter {
     stack.push(async (req, res, next) => {
       try {
         const options = this.getQueryOptions(name, req);
-        const { status, data, __paginated } = await handler(req, options, res, next);
+        const { status, data } = await handler(req, options, res, next);
         const theStatus = status || httpStatus.OK
-        if (!data) {
-          return res.status(theStatus).end();
-        }
-        const serializer = this.getSerializer(name);
-        let toSend;
-        if (__paginated) {
-          toSend = {
-            ...data,
-            results: isAsync(serializer) ? data.results.map(serializer) : await asyncMap(data.results, serializer)
-          };
-        } else if (Array.isArray(data)) {
-          toSend = isAsync(serializer)
-            ? data.map(serializer)
-            : await asyncMap(data, serializer);
-        } else {
-          toSend = isAsync(serializer) ? await serializer(data) : serializer(data);
-        }
-        return res.status(theStatus).json(toSend);
+        return data ? res.status(theStatus).json(data) : res.status(theStatus).end();
       } catch (e) {
         next(e);
       }

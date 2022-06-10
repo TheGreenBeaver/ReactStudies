@@ -26,14 +26,6 @@ function baseNoExt(fileName) {
   return path.basename(fileName, path.extname(fileName));
 }
 
-function isAsync(fn) {
-  return fn.constructor.name ==='AsyncFunction';
-}
-
-function asyncMap(arr, mapperFn) {
-  return Promise.all(arr.map(mapperFn));
-}
-
 async function getFilesRecursively(dir) {
   const children = await fs.promises.readdir(dir, { withFileTypes: true });
   const files = await Promise.all(children.map(child => {
@@ -75,8 +67,6 @@ function isDirectory(pathToEntity) {
 module.exports = {
   listUsableFiles,
   baseNoExt,
-  isAsync,
-  asyncMap,
   getFilesRecursively,
   composeMediaPath,
   standardizePath,

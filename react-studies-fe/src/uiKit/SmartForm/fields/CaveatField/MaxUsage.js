@@ -3,7 +3,6 @@ import useEditableView from '../../../../hooks/useEditableView';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import { getUpd } from '../../../../util/misc';
 import Typography from '@mui/material/Typography';
@@ -12,8 +11,8 @@ import Collapse from '@mui/material/Collapse';
 import useCollapse from '../../../../hooks/useCollapse';
 
 
-function MaxUsage({ name, recommended, label }) {
-  const { values, errors, touched, setFieldTouched, setFieldValue } = useEditableView();
+function MaxUsage({ name, recommended }) {
+  const { values, errors, touched, setFieldTouched, setFieldValue, isSubmitting } = useEditableView();
 
   const value = get(values, name);
   const error = get(errors, name);
@@ -53,10 +52,10 @@ function MaxUsage({ name, recommended, label }) {
 
   return (
     <Box>
-      {label && <InputLabel>{label}</InputLabel>}
       <FormControlLabel
         control={<Checkbox onChange={toggleEnteringPercentage} checked={enteringPercentage} />}
         label='Fail if used too widely'
+        disabled={isSubmitting}
       />
       <Collapse {...collapseProps} orientation='vertical'>
         <Box display='flex' columnGap={0.5}>
@@ -72,6 +71,7 @@ function MaxUsage({ name, recommended, label }) {
             error={!!(fieldTouched && error)}
             helperText={fieldTouched && error}
             InputProps={{ endAdornment: '%' }}
+            disabled={isSubmitting}
           />
         </Box>
       </Collapse>
@@ -82,7 +82,6 @@ function MaxUsage({ name, recommended, label }) {
 MaxUsage.propTypes = {
   name: string.isRequired,
   recommended: number,
-  label: string,
 };
 
 MaxUsage.defaultProps = {

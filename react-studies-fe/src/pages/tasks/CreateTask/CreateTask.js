@@ -3,7 +3,7 @@ import api from '../../../api';
 import { useHistory } from 'react-router-dom';
 import links from '../links';
 import Validators from '../../../util/validation';
-import { string } from 'yup';
+import { boolean, string, object } from 'yup';
 import { ELEMENT_FIELDS, SIZE_UNITS, TASK_KIND_DEFINITIONS, TASK_KINDS, TOKEN_FIELDS } from '../../../util/constants';
 import Typography from '@mui/material/Typography';
 import fieldNames from './fieldNames';
@@ -117,7 +117,15 @@ function CreateTask() {
           [fieldNames.sampleImage]: null,
           [fieldNames.mustUse]: [],
           [fieldNames.absPos]: null,
-          [fieldNames.rawSizing]: null
+          [fieldNames.rawSizing]: null,
+
+          [fieldNames.authTemplate]: null,
+          [fieldNames.entityListTemplate]: null,
+          [fieldNames.singleEntityTemplate]: null,
+          [fieldNames.hasFuzzing]: true,
+          [fieldNames.fileDump]: null,
+          [fieldNames.textDump]: '',
+          [fieldNames.dumpIsTemplate]: true
         }}
         validationSchema={{
           [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(),
@@ -142,7 +150,15 @@ function CreateTask() {
           }),
           [fieldNames.mustUse]: Validators.elementList([ELEMENT_FIELDS.tag]),
           [fieldNames.absPos]: Validators.caveat(),
-          [fieldNames.rawSizing]: Validators.caveat()
+          [fieldNames.rawSizing]: Validators.caveat(),
+
+          [fieldNames.authTemplate]: object({
+            hasVerification: boolean().required()
+          }).templateConfig(),
+          [fieldNames.entityListTemplate]: object({
+            hasSearch: boolean().required()
+          }).templateConfig(),
+          [fieldNames.singleEntityTemplate]: object().templateConfig(),
         }}
         onValidationFailed={errors => {
           const toExpand = sections.reduce((result, { coveredFields, name }) =>

@@ -42,7 +42,7 @@ import useColourMode from '../../contexts/ColourMode';
 
 const LOCAL_PREFIX = './attachments/'
 
-function Markdown({ isEditing, localFiles, localFilesRefs, source, setValue }) {
+function Markdown({ isEditing, localFiles, localFilesRefs, source, setValue, disabled }) {
   const { mode } = useColourMode();
 
   const transformImageUri = useCallback(uri => {
@@ -68,7 +68,7 @@ function Markdown({ isEditing, localFiles, localFilesRefs, source, setValue }) {
           value={source}
           height={500}
           toolbarsMode={['preview']}
-          onChange={(i, d, newValue) => setValue(newValue)}
+          onChange={(i, d, newValue) => !disabled && setValue(newValue)}
           options={{
             autoCloseBrackets: {
               override: true,
@@ -118,6 +118,7 @@ Markdown.propTypes = {
   isEditing: bool,
   source: string.isRequired,
   setValue: func,
+  disabled: bool
 };
 
 export default Markdown;

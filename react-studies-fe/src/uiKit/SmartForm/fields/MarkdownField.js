@@ -2,11 +2,10 @@ import { arrayOf, string } from 'prop-types';
 import { SomeFile } from '../../../util/types';
 import useEditableView from '../../../hooks/useEditableView';
 import Markdown from '../../Markdown';
-import InputLabel from '@mui/material/InputLabel';
 
 
-function MarkdownField({ name, label, localFiles, localFilesRefs }) {
-  const { setFieldValue, values, isEditing } = useEditableView();
+function MarkdownField({ name, localFiles, localFilesRefs }) {
+  const { setFieldValue, values, isEditing, isSubmitting } = useEditableView();
   const value = values[name];
 
   function setValue(val) {
@@ -14,22 +13,19 @@ function MarkdownField({ name, label, localFiles, localFilesRefs }) {
   }
 
   return (
-    <>
-      {!!label && <InputLabel>{label}</InputLabel>}
-      <Markdown
-        localFilesRefs={localFilesRefs}
-        localFiles={localFiles}
-        isEditing={isEditing}
-        source={value}
-        setValue={setValue}
-      />
-    </>
+    <Markdown
+      localFilesRefs={localFilesRefs}
+      localFiles={localFiles}
+      isEditing={isEditing}
+      source={value}
+      setValue={setValue}
+      disabled={isSubmitting}
+    />
   );
 }
 
 MarkdownField.propTypes = {
   name: string.isRequired,
-  label: string,
   localFiles: arrayOf(SomeFile),
   localFilesRefs: arrayOf(string),
 };

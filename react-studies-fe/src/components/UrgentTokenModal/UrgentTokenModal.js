@@ -22,13 +22,15 @@ import Warning from '@mui/icons-material/Warning';
 function UrgentTokenModal() {
   const dispatch = useDispatch();
   const open = useSelector(state => state.misc.urgentTokenModalOpen);
-  const awaitingSolutionsAmt = useSelector(state => state.account.userData.solutions.length);
+  const unprocessedResultsAmt = useSelector(state =>
+    state.account.userData.solutions.reduce((amt, { results }) => amt + results.length, 0)
+  );
 
   return (
     <Dialog open={open} onClose={() => {}} keepMounted={false}>
       <DialogTitle alignItems='center' display='flex' columnGap={1}>
         <Warning />
-        {wAmount(awaitingSolutionsAmt, 'unprocessed solution result')}
+        {wAmount(unprocessedResultsAmt, 'unprocessed solution result')}
       </DialogTitle>
       <SmartForm
         initialValues={{

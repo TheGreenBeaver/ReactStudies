@@ -23,7 +23,6 @@ const Ratio = shape({ w: number.isRequired, h: number.isRequired });
 
 const MultiField = oneOfType([string, arrayOf(string)]);
 
-
 const ELEMENT_SHAPE = { [ELEMENT_FIELDS.tag]: string, [ELEMENT_FIELDS.content]: arrayOf(string) };
 const ElementData = shape(ELEMENT_SHAPE);
 const ElementRule = shape({
