@@ -7,16 +7,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { arrayOf, string } from 'prop-types';
 import { ElementRule } from '../../../../util/types';
-import styled from '@mui/material/styles/styled';
 import Box from '@mui/material/Box';
+import Layout from '../../../../uiKit/Layout';
 
-
-const BlockBox = styled(Box)(({ theme }) => ({
-  padding: `${theme.spacing(0.25)} ${theme.spacing(0.5)}`,
-  borderRadius: '4px',
-  background: theme.palette.action.selected,
-  border: `1px solid ${theme.palette.divider}`,
-}));
 
 function ElementRulesTable({
   rules,
@@ -29,7 +22,7 @@ function ElementRulesTable({
     if (!tag) {
       return <i>{tagEmptyString}</i>;
     }
-    return <BlockBox component='code'>{`<${tag}>`}</BlockBox>;
+    return <Layout.Code component='code'>{`<${tag}>`}</Layout.Code>;
   }
 
   function getContentDisplay(content) {
@@ -39,7 +32,7 @@ function ElementRulesTable({
     return (
       <Box display='flex' columnGap={0.5} rowGap={0.25} flexWrap='wrap'>
         {content.map((block, idx) => (
-          <BlockBox component='span' key={idx}>{block}</BlockBox>
+          <Layout.Code component='span' key={idx}>{block}</Layout.Code>
         ))}
       </Box>
     )

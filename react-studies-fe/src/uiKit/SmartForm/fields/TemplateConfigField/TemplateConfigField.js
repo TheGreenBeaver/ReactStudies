@@ -74,7 +74,7 @@ function TemplateConfigField({ flags, templateName, getEndpointLabels, getRouteL
       />
       <Collapse orientation='vertical' {...hasThisTemplateCollapseProps}>
         <Typography my={0.5}>
-          You can leave the text fields empty - everything you skip will be filled by the students
+          You don't have to strictly define all the text fields - everything you skip will be filled in by the students
         </Typography>
         {Object.entries(flagValues).map(([flagName, flagValue]) => (
           <FormControlLabel

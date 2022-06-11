@@ -33,7 +33,7 @@ function GeneralSettings() {
       <Grid item xs={12}>
         <CheckboxField
           label={
-            <HelpBadge helpText='Changes you make to ./attachments and README will be reflected here'>
+            <HelpBadge helpText='Changes you manually make to ./attachments and README.md will be reflected here'>
               <Typography>Track updates from GitHub</Typography>
             </HelpBadge>
           }

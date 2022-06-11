@@ -33,10 +33,7 @@ module.exports = {
       }
       return fieldValue;
     });
-    req.body.dump =
-      req.body.textDump ||
-      (req.files.fileDump ? await fs.promises.readFile(req.files.fileDump[0].path) : null);
-    delete req.body.textDump;
+    req.body.dump = req.files.fileDump ? await fs.promises.readFile(req.files.fileDump[0].path, 'utf8') : null;
     delete req.files.fileDump;
   },
   list: req => {

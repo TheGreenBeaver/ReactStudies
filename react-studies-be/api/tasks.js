@@ -32,7 +32,11 @@ class TasksRouter extends SmartRouter {
       const uniquePrefix = now();
       cb(null, `${uniquePrefix}${path.extname(file.originalname)}`);
     };
-    const createFields = [{ name: 'attachments' }, { name: 'sampleImage', maxCount: 1 }]
+    const createFields = [
+      { name: 'attachments' },
+      { name: 'sampleImage', maxCount: 1 },
+      { name: 'fileDump', maxCount: 1 }
+    ];
 
     super(Task, __filename, {
       AccessRules: {
@@ -193,19 +197,23 @@ class TasksRouter extends SmartRouter {
         break;
 
       case Task.TASK_KINDS.react:
-        const pureFields = ['hasFuzzing', 'dump', 'dumpIsTemplate', 'dumpUploadMethod', 'dumpUploadUrl'];
+        const pureFields = ['hasFuzzing', 'dump', 'dumpIsTemplate', 'dumpUploadUrl', 'dumpUploadMethod'];
         const configFields = ['endpoints', 'routes', 'special']
+        const templateFields = Object.keys(TemplateConfig.TEMPLATE_KINDS);
         const values = pick(body, pureFields);
         const teacherTemplateConfigs = [];
-        const templateConfigs = omit(body, pureFields);
+        const templateConfigs = pick(body, templateFields);
         Object.entries(templateConfigs).forEach(([templateName, config]) => {
           const configValues = pick(config, configFields);
           values[`has${pascalCase(templateName)}`] = true;
           Object.assign(values, omit(config, configFields));
-          teacherTemplateConfigs.push({ ...configValues, kind: TemplateConfig.TEMPLATE_KINDS[templateName] });
+          teacherTemplateConfigs.push({
+            ...configValues,
+            kind: TemplateConfig.TEMPLATE_KINDS[templateName]
+          });
         });
         await basicTask.createReactTask(
-          { ...values, teacherTemplateConfigs },
+          { ...values, dumpUploadMethod: body.dumpUploadMethod || null, teacherTemplateConfigs },
           { include: [{ model: TemplateConfig, as: 'teacherTemplateConfigs' }] }
         );
 

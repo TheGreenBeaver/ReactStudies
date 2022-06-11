@@ -58,6 +58,10 @@ function ColourModeProvider({ children }) {
     }
   }, [prefersDarkMode, asInSystem]);
 
+  useEffect(() => {
+    document.body.style.setProperty('background-color', mode === COLOUR_MODES.dark ? '#121212' : 'white');
+  }, [mode]);
+
   function changeAsInSystem(upd) {
     setAsInSystem(curr => {
       const newAsInSystem = getUpd(upd, curr);

@@ -133,8 +133,9 @@ class Validators {
     }).noUnknown().canSkip();
   }
 
-  static gitHubToken() {
-    return string().matches(/ghp_\w{36}/, 'Not a valid Personal Access Token');
+  static gitHubToken(optional) {
+    const pattern = optional ? /|ghp_\w{36}/ : /ghp_\w{36}/;
+    return string().matches(pattern, 'Not a valid Personal Access Token');
   }
 
   static #isBool(v) {
@@ -262,6 +263,20 @@ addMethod(ObjectSchema, 'templateConfig', function templateConfig() {
     routes: array().of(Validators.urlPathname()).canSkip(),
     special: Validators.urlPathname().canSkip()
   }).noUnknown().canSkip();
+});
+
+addMethod(StringSchema, 'fullUrl', function fullUrl(message) {
+  return this.test('fullUrl', message, value => {
+    if (!value) {
+      return true;
+    }
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  })
 });
 
 export default Validators;

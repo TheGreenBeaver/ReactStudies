@@ -55,7 +55,7 @@ function SuggestSolution({
           })
         }
         validationSchema={{
-          [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(),
+          [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(true),
         }}
         doNotPopulate
       >

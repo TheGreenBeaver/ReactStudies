@@ -5,9 +5,9 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class TemplateConfig extends Model {
     static TEMPLATE_KINDS = {
-      auth: 'auth',
-      entityList: 'entity_list',
-      singleEntity: 'single_entity',
+      authTemplate: 'auth',
+      entityListTemplate: 'entity_list',
+      singleEntityTemplate: 'single_entity',
     };
 
     static associate({ Solution, ReactTask }) {

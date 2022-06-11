@@ -198,7 +198,7 @@ class Validators {
   }
 
   static #allowedTokensForTypes = {
-    string: ['max', 'min', 'nullable', 'email'],
+    string: ['max', 'min', 'nullable', 'email', 'unique'],
     number: ['max', 'min', 'nullable', 'int'],
     date: ['format', 'nullable', 'allowPast', 'allowFuture'],
     bool: ['nullable'],
@@ -215,7 +215,8 @@ class Validators {
     allowPast: this.#isBool,
     allowFuture: this.#isBool,
     of: v => typeof v === 'object',
-    values: v => Array.isArray(v) && uniq(v).length === v.length
+    values: v => Array.isArray(v) && uniq(v).length === v.length,
+    unique: this.#isBool
   };
 
   static #unpackTemplateConfig(config) {

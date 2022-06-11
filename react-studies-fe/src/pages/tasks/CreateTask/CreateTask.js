@@ -66,7 +66,16 @@ const sections = [
 
 const fieldsForKinds = {
   [TASK_KINDS.layout]: [fieldNames.sampleImage, fieldNames.mustUse, fieldNames.absPos, fieldNames.rawSizing],
-  [TASK_KINDS.react]: []
+  [TASK_KINDS.react]: [
+    fieldNames.authTemplate,
+    fieldNames.entityListTemplate,
+    fieldNames.singleEntityTemplate,
+    fieldNames.hasFuzzing,
+    fieldNames.fileDump,
+    fieldNames.dumpIsTemplate,
+    fieldNames.dumpUploadUrl,
+    fieldNames.dumpUploadMethod,
+  ],
 };
 
 function CreateTask() {
@@ -124,11 +133,12 @@ function CreateTask() {
           [fieldNames.singleEntityTemplate]: null,
           [fieldNames.hasFuzzing]: true,
           [fieldNames.fileDump]: null,
-          [fieldNames.textDump]: '',
-          [fieldNames.dumpIsTemplate]: true
+          [fieldNames.dumpIsTemplate]: null,
+          [fieldNames.dumpUploadUrl]: null,
+          [fieldNames.dumpUploadMethod]: null
         }}
         validationSchema={{
-          [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(),
+          [TOKEN_FIELDS.gitHubToken]: Validators.gitHubToken(true),
           [fieldNames.title]: Validators.standardText(30),
           [fieldNames.attachments]: Validators.file(
             fieldAccepts[fieldNames.attachments],
@@ -159,6 +169,8 @@ function CreateTask() {
             hasSearch: boolean().required()
           }).templateConfig(),
           [fieldNames.singleEntityTemplate]: object().templateConfig(),
+          [fieldNames.fileDump]: Validators.file(fieldAccepts[fieldNames.fileDump], [1, SIZE_UNITS.MB]),
+          [fieldNames.dumpUploadUrl]: string().fullUrl('Must be a full valid URL').canSkip()
         }}
         onValidationFailed={errors => {
           const toExpand = sections.reduce((result, { coveredFields, name }) =>

@@ -1,6 +1,8 @@
 import { generate as generatePassword } from 'generate-password';
 import moment from 'moment';
 import mapValues from 'lodash/mapValues';
+import set from 'lodash/set';
+import get from 'lodash/get';
 
 
 const MARKS = {
@@ -76,9 +78,10 @@ function clearStorages() {
   });
 }
 
+const usedStrings = {};
 const usedEmails = {};
-function generateShape(shape) {
-  function generateField(fieldConfig) {
+function generateShape(shape, path = []) {
+  function generateField(fieldConfig, fieldName) {
     const {
       type,
       max: _max,
@@ -90,12 +93,13 @@ function generateShape(shape) {
       allowFuture = true,
       format = 'YYYY-MM-DD:hh-mm-ss',
       values,
-      of: arrayOf
+      of: arrayOf,
+      unique
     } = fieldConfig;
 
     let val;
     if (typeof type === 'object') {
-      val = generateShape(type);
+      val = generateShape(type, [...path, fieldName]);
     } else {
       switch (type) {
         case 'string': {
@@ -107,13 +111,17 @@ function generateShape(shape) {
             return email ? `${raw.toLowerCase()}@gmail.com` : raw;
           };
 
-          if (!email) {
+          let tries = 0;
+          if (!email && !unique) {
             val = generate();
           } else {
             do {
+              if (++tries > 1) {
+                console.log(`Retying: ${tries}`);
+              }
               val = generate();
-            } while (usedEmails[val]);
-            usedEmails[val] = true;
+            } while (get(email ? usedEmails : usedStrings, [...path, fieldName, val]));
+            set(email ? usedEmails : usedStrings, [...path, fieldName, val], true);
           }
           break;
         }
@@ -147,7 +155,7 @@ function generateShape(shape) {
         }
         case 'array': {
           const length = generateRandomNum(_min || 1, _max || 60);
-          val = [...Array(length)].map(() => generateField(arrayOf))
+          val = [...Array(length)].map(() => generateField(arrayOf, fieldName))
           break;
         }
         case 'enum': {
@@ -160,8 +168,8 @@ function generateShape(shape) {
     return nullable ? generateRandomOption([val, null]) : val;
   }
 
-  return Object.values(shape).reduce((result, [fieldName, fieldConfig]) => ({
-    ...result, [fieldName]: generateField(fieldConfig)
+  return Object.entries(shape).reduce((result, [fieldName, fieldConfig]) => ({
+    ...result, [fieldName]: generateField(fieldConfig, fieldName)
   }), {});
 }
 
@@ -169,7 +177,7 @@ function uploadDump({ dump, dumpIsTemplate, upload: { url, method } }) {
   const data = dumpIsTemplate
     ? [...Array(generateRandomNum(100, 800))].map(() => generateShape(dump))
     : dump;
-  cy.request(method, url, data);
+  cy.request(method, url, data).its('body').as('identifiers');
   return data;
 }
 
@@ -401,10 +409,10 @@ it('task', () => {
   }
 
   const singleEntity = Cypress.env('singleEntity');
-
-
-
-
-
-
+  if (singleEntity) {
+    const {
+      routes,
+      endpoints,
+    } = singleEntity;
+  }
 });

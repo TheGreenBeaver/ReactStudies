@@ -20,7 +20,8 @@ export default {
   singleEntityTemplate: 'singleEntityTemplate',
   // react - advanced
   hasFuzzing: 'hasFuzzing',
-  textDump: 'textDump',
   fileDump: 'fileDump',
   dumpIsTemplate: 'dumpIsTemplate',
+  dumpUploadUrl: 'dumpUploadUrl',
+  dumpUploadMethod: 'dumpUploadMethod',
 };
