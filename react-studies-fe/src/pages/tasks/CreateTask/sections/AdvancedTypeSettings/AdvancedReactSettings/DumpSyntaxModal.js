@@ -30,7 +30,7 @@ const SYNTAX_RULES = [
       },
       {
         name: 'min',
-        value: 'Positive Integer',
+        value: 'Non-negative Integer',
         defaultValue: '15 if "email" is true',
         comment: 'Minimum length of the string'
       },
@@ -107,11 +107,7 @@ const SYNTAX_RULES = [
         comment:
           <>
             See{' '}
-            <MuiLink
-              href='https://momentjs.com/docs/#/displaying/format/'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
+            <MuiLink href='https://momentjs.com/docs/#/displaying/format/'>
               Moment.js formats documentation
             </MuiLink>
           </>
@@ -142,7 +138,7 @@ const SYNTAX_RULES = [
       },
       {
         name: 'min',
-        value: 'Positive Integer',
+        value: 'Non-negative Integer',
         defaultValue: '1',
         comment: 'Minimum size of the array'
       },
@@ -162,6 +158,13 @@ const SYNTAX_RULES = [
         value: 'Array of unique values',
         defaultValue: '-',
         comment: <>Enum values. <b>Required for type</b></>
+      },
+      {
+        name: 'unique',
+        value: 'Boolean',
+        defaultValue: 'false',
+        comment: 'Same logic as for strings. Not allowed at top level (only for nested arrays). Trims "max" of the ' +
+          'parent array to the length of "values"'
       }
     ]
   }

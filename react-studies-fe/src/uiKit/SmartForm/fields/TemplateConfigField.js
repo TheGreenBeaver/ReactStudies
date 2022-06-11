@@ -1,4 +1,4 @@
-import { objectOf, func, string, number } from 'prop-types';
+import { objectOf, func, string, number, arrayOf } from 'prop-types';
 import { useFormikContext } from 'formik';
 import React, { useMemo } from 'react';
 import mapValues from 'lodash/mapValues';
@@ -7,15 +7,17 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Collapse from '@mui/material/Collapse';
-import useCollapse from '../../../../hooks/useCollapse';
-import TextGroup from './TextGroup';
-import StandardTextField from '../StandardTextField';
+import useCollapse from '../../../hooks/useCollapse';
+import TextGroupField from './TextGroupField';
+import StandardTextField from './StandardTextField';
 import cloneDeep from 'lodash/cloneDeep';
 import set from 'lodash/set';
 import Grid from '@mui/material/Grid';
 
 
-function TemplateConfigField({ flags, templateName, getEndpointLabels, getRouteLabels, getSpecialLabel, templateLabel, max }) {
+function TemplateConfigField({
+  flags, templateName, getEndpointLabels, getRouteLabels, getSpecialLabel, templateLabel, max, routeHelpTexts
+}) {
   const { setFieldValue, getFieldProps, isSubmitting, setValues } = useFormikContext();
 
   const { value: templateValue } = getFieldProps(templateName);
@@ -115,8 +117,8 @@ function TemplateConfigField({ flags, templateName, getEndpointLabels, getRouteL
             label={flags[flagName]}
           />
         ))}
-        <TextGroup max={max} name={`${templateName}.endpoints`} labels={endpointLabels} />
-        <TextGroup max={max} name={`${templateName}.routes`} labels={routeLabels} />
+        <TextGroupField max={max} name={`${templateName}.endpoints`} labels={endpointLabels} />
+        <TextGroupField max={max} name={`${templateName}.routes`} labels={routeLabels} helpTexts={routeHelpTexts} />
         {!!specialLabel && (
           <Grid container spacing={2}>
             <Grid item xs={4}><StandardTextField name={`${templateName}.special`} label={specialLabel} /></Grid>
@@ -135,7 +137,8 @@ TemplateConfigField.propTypes = {
   getSpecialLabel: func.isRequired,
   templateName: string.isRequired,
   templateLabel: string.isRequired,
-  max: number.isRequired
+  max: number.isRequired,
+  routeHelpTexts: arrayOf(string)
 };
 
 TemplateConfigField.defaultProps = {

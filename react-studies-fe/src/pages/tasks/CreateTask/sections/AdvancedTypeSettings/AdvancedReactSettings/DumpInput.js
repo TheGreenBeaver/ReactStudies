@@ -98,13 +98,15 @@ function DumpInput() {
             width={200}
           />
 
-          <Box>
-            <StandardTextField margin='none' name={fieldNames.dumpUploadUrl} />
-            <StandardSelectField
-              name={fieldNames.dumpUploadMethod}
-              options={methodOptions}
-            />
-          </Box>
+          <HelpBadge helpText='The response must be an array with keys for generated database instances'>
+            <Box>
+              <StandardTextField margin='none' name={fieldNames.dumpUploadUrl} />
+              <StandardSelectField
+                name={fieldNames.dumpUploadMethod}
+                options={methodOptions}
+              />
+            </Box>
+          </HelpBadge>
         </Box>
       </Collapse>
     </Box>

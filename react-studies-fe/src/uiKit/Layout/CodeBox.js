@@ -7,7 +7,7 @@ const CodeBox = styled(Box)(({ theme, large }) => ({
   borderRadius: '4px',
   background: theme.palette.action.selected,
   border: `1px solid ${theme.palette.divider}`,
-  display: 'block',
+  display: large ? 'block' : 'inline-block',
   whiteSpace: 'pre-wrap',
   tabSize: theme.spacing(2),
   width: large ? '100%' : 'fit-content'

@@ -80,6 +80,7 @@ function clearStorages() {
 
 const usedStrings = {};
 const usedEmails = {};
+const usedEnumValues = {};
 function generateShape(shape, path = []) {
   function generateField(fieldConfig, fieldName) {
     const {
@@ -111,14 +112,10 @@ function generateShape(shape, path = []) {
             return email ? `${raw.toLowerCase()}@gmail.com` : raw;
           };
 
-          let tries = 0;
           if (!email && !unique) {
             val = generate();
           } else {
             do {
-              if (++tries > 1) {
-                console.log(`Retying: ${tries}`);
-              }
               val = generate();
             } while (get(email ? usedEmails : usedStrings, [...path, fieldName, val]));
             set(email ? usedEmails : usedStrings, [...path, fieldName, val], true);
@@ -159,7 +156,14 @@ function generateShape(shape, path = []) {
           break;
         }
         case 'enum': {
-          val = generateRandomOption(values);
+          if (unique) {
+            val = generateRandomOption(values);
+          } else {
+            do {
+              val = generateRandomOption(values);
+            } while (get(usedEnumValues, [...path, fieldName, val]));
+            set(usedEnumValues, [...path, fieldName, val], true);
+          }
           break;
         }
       }
@@ -249,7 +253,7 @@ it('task', () => {
     // Email verification
     if (hasVerification) {
       const [verificationAlias] = setupAliases(verificationEndpoint);
-      cy.origin('http://localhost:5050/last_email', () => {
+      cy.origin('http://localhost:5051/last_email', () => {
         cy.get('a').as('verificationLink');
       });
       cy.get('@verificationLink').then(verificationLink => {

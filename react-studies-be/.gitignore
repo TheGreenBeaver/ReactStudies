@@ -7,4 +7,5 @@ repo-templates/layout/src/*
 !repo-templates/layout/src/index.html
 
 repo-templates/react/app-frontend
-repo-templates/react/app-backend
+repo-templates/react/app-backend/*
+!repo-templates/react/app-backend/.github

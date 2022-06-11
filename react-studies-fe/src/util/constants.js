@@ -35,6 +35,17 @@ const ELEMENT_RULE_KINDS = {
   mustUse: 'must_use'
 };
 
+const TEMPLATE_KINDS = {
+  auth: 'auth',
+  entityList: 'entity_list',
+  singleEntity: 'single_entity',
+};
+const TEMPLATE_TITLES = {
+  [TEMPLATE_KINDS.auth]: 'Authorization & Authentication',
+  [TEMPLATE_KINDS.singleEntity]: 'Detailed view of a Single Entity',
+  [TEMPLATE_KINDS.entityList]: 'List of all Entities'
+};
+
 const ELEMENT_FIELDS = {
   tag: 'tag',
   content: 'content',
@@ -81,5 +92,6 @@ export {
   ELEMENT_FIELDS, ELEMENT_FIELDS_EMPTY, CAVEAT_FIELDS,
   TOKEN_FIELDS, TOKEN_INFO,
   STANDARD_RATIO, COLOUR_MODES, DEFAULT_PAGE_SIZE, DEFAULT_PAGINATED_DATA,
-  SUMMARY_OPTIONS, SUMMARY_INDICATOR_COLOURS
+  SUMMARY_OPTIONS, SUMMARY_INDICATOR_COLOURS,
+  TEMPLATE_KINDS, TEMPLATE_TITLES
 };

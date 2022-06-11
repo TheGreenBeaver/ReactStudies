@@ -197,39 +197,51 @@ class Validators {
     return typeof v === 'boolean';
   }
 
+  static #isNum(v) {
+    return typeof v === 'number';
+  }
+
   static #allowedTokensForTypes = {
-    string: ['max', 'min', 'nullable', 'email', 'unique'],
+    string: ['max', 'min', 'nullable', 'email','unique'],
     number: ['max', 'min', 'nullable', 'int'],
     date: ['format', 'nullable', 'allowPast', 'allowFuture'],
     bool: ['nullable'],
     array: ['max', 'min', 'of', 'nullable'],
-    enum: ['values', 'nullable']
+    enum: ['values', 'nullable', 'unique']
   };
   static #validationsForTokens = {
-    max: Number.isInteger,
-    min: Number.isInteger,
+    max: this.#isNum,
+    min: this.#isNum,
     nullable: this.#isBool,
     email: this.#isBool,
     int: this.#isBool,
     format: v => typeof v === 'string',
     allowPast: this.#isBool,
     allowFuture: this.#isBool,
+    unique: this.#isBool,
     of: v => typeof v === 'object',
-    values: v => Array.isArray(v) && uniq(v).length === v.length,
-    unique: this.#isBool
+    values: v => Array.isArray(v) && uniq(v).length === v.length
   };
 
-  static #unpackTemplateConfig(config) {
+  static #unpackTemplateConfig(config, parentArrayMax = null) {
     if (typeof config !== 'object') {
       return 'Config must be an object';
     }
     const { type, ...rest } = config;
     if (typeof type === 'object') {
-      return this.unpackTemplateDump(type);
+      return this.unpackTemplateDump(type, parentArrayMax);
     }
     if (!(type in this.#allowedTokensForTypes)) {
       return `"${type}" is not a valid type definition`;
     }
+
+    if (type === 'enum' && !rest.values) {
+      return '"values" token is required for type "enum"';
+    }
+    if (type === 'array' && !rest.of) {
+      return '"of" token is required for type "array"';
+    }
+
     const allowedTokens = this.#allowedTokensForTypes[type];
     for (const [tokenName, tokenDef] of Object.entries(rest)) {
       if (!allowedTokens.includes(tokenName)) {
@@ -239,31 +251,38 @@ class Validators {
         return `"${tokenDef}" is not a valid definition for token "${tokenName}"`;
       }
       if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
-        return `Token "${tokenName}" for type "${type}" must have non-negative value (got ${tokenDef})`;
+        return `Token "${tokenName}" for type "${type}" must have non-negative value`;
       }
       if (rest.email) {
-        if (tokenName === 'max') {
+        if (tokenName === 'max' && tokenDef !== 100) {
           return '"max" for emails is always 100';
         }
-        if (tokenName === 'min') {
+        if (tokenName === 'min' && tokenDef !== 15) {
           return '"min" for emails is always 15';
         }
       }
-      if (tokenName === 'of') {
-        return this.#unpackTemplateConfig(tokenDef);
+      if (tokenName === 'unique' && tokenDef && type === 'enum') {
+        if (parentArrayMax == null) {
+          return '"unique" = true is not allowed for top-level "enum" declarations';
+        }
+        if (parentArrayMax > rest.values.length) {
+          return '"max" for arrays containing unique enums can\'t exceed "values" length';
+        }
       }
-    }
-
-    if (type === 'enum' && !rest.values) {
-      return '"values" token is required for type "enum"';
+      if (tokenName === 'of') {
+        const inner = this.#unpackTemplateConfig(tokenDef, rest.max == null ? -1 : rest.max);
+        if (inner) {
+          return inner;
+        }
+      }
     }
 
     return null;
   }
 
-  static unpackTemplateDump(dump) {
+  static unpackTemplateDump(dump, parentArrayMax = null) {
     for (const config of Object.values(dump)) {
-      const configUnpackResult = this.#unpackTemplateConfig(config);
+      const configUnpackResult = this.#unpackTemplateConfig(config, parentArrayMax);
       if (configUnpackResult) {
         return configUnpackResult;
       }

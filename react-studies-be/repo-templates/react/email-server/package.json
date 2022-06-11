@@ -5,6 +5,8 @@
     "serve": "node index"
   },
   "dependencies": {
+    "express": "^4.18.1",
+    "mailparser": "^3.5.0",
     "smtp-server": "^3.11.0"
   }
 }

@@ -4,7 +4,13 @@ import { Link, useParams } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
-import { DEFAULT_PAGE_SIZE, DEFAULT_PAGINATED_DATA, TASK_KIND_ICONS, TASK_KINDS } from '../../../util/constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_PAGINATED_DATA,
+  TASK_KIND_ICONS,
+  TASK_KINDS,
+  TEMPLATE_KINDS,
+} from '../../../util/constants';
 import LoadingPage from '../../../components/LoadingPage';
 import React, { useCallback, useMemo, useState } from 'react';
 import List from '@mui/material/List';
@@ -32,42 +38,90 @@ import usePromise from '../../../hooks/usePromise';
 import withCache from '../../../hofs/withCache';
 import Layout from '../../../uiKit/Layout';
 import Preloader from '../../../uiKit/Preloader';
+import ReactTaskPreview from './ReactTaskPreview';
+import ConfigureReactSolution from './ConfigureReactSolution';
+import isEmpty from 'lodash/isEmpty';
+import configFields from './configFields';
 
 
-function taskNeedsStudentInput(task, taskKind) {
+function getListIsMissing(template, listName) {
+  return !template[listName]?.length || template[listName].some(entry => !entry);
+}
+
+function getMissingFields(task, taskKind) {
   switch (taskKind) {
     case TASK_KINDS.layout:
-      return false;
+      return [];
     case TASK_KINDS.react:
-      const needsDumpLogic = !!task.dump && (!task.dumpUploadUrl || !task.dumpUploadMethod);
-      const needsAuthLogic = !!task.authTemplate && (
-        !task.authTemplate.routes ||
-        !task.authTemplate.endpoints ||
-        task.authTemplate.hasVerification && task.authTemplate.endpoints.length !== 3 || !task.authTemplate.special
-      );
-      const needsListLogic = !!task.entityListTemplate && (
-        !task.entityListTemplate.endpoints ||
-        !task.entityListTemplate.routes ||
-        task.entityListTemplate.hasSearch && !task.entityListTemplate.special
-      );
-      const needsSingleLogic = !!task.singleEntityTemplate && (
-        !task.singleEntityTemplate.endpoints ||
-        !task.singleEntityTemplate.routes
-      );
-      return needsDumpLogic || needsAuthLogic || needsListLogic || needsSingleLogic;
+      const { reactTask } = task;
+      const missingFields = [];
+
+      if (!!reactTask.dump) {
+        if (!reactTask.dumpUploadUrl) {
+          missingFields.push(configFields.dumpUploadUrl);
+        }
+        if (!reactTask.dumpUploadMethod) {
+          missingFields.push(configFields.dumpUploadMethod);
+        }
+      }
+
+      const authTemplate = reactTask.teacherTemplateConfigs.find(cfg => cfg.kind === TEMPLATE_KINDS.auth);
+      if (!!authTemplate) {
+        if (getListIsMissing(authTemplate, 'routes')) {
+          missingFields.push(configFields.authRoutes);
+        }
+        if (getListIsMissing(authTemplate, 'endpoints')) {
+          missingFields.push(configFields.authEndpoints);
+        }
+        if (!authTemplate.special) {
+          missingFields.push(configFields.authSpecial)
+        }
+      }
+
+      const entityListTemplate = reactTask.teacherTemplateConfigs.find(cfg => cfg.kind === TEMPLATE_KINDS.entityList);
+      if (!!entityListTemplate) {
+        if (getListIsMissing(entityListTemplate, 'routes')) {
+          missingFields.push(configFields.entityListRoutes);
+        }
+        if (getListIsMissing(entityListTemplate, 'endpoints')) {
+          missingFields.push(configFields.entityListEndpoints);
+        }
+        if (reactTask.hasSearch && !entityListTemplate.special) {
+          missingFields.push(configFields.entityListSpecial);
+        }
+      }
+
+      const singleEntityTemplate = reactTask.teacherTemplateConfigs.find(cfg => cfg.kind === TEMPLATE_KINDS.singleEntity);
+      if (!!singleEntityTemplate) {
+        if (getListIsMissing(singleEntityTemplate, 'routes')) {
+          missingFields.push(configFields.singleEntityRoutes);
+        }
+        if (getListIsMissing(singleEntityTemplate, 'endpoints')) {
+          missingFields.push(configFields.singleEntityEndpoints);
+        }
+      }
+
+      return missingFields;
     default:
-      return false;
+      return null;
   }
 }
 
+const CONFIGURE_SOLUTION = {
+  [TASK_KINDS.react]: ConfigureReactSolution,
+  [TASK_KINDS.layout]: () => null
+};
+
 const TASK_PREVIEWS = {
   [TASK_KINDS.layout]: LayoutTaskPreview,
-  [TASK_KINDS.react]: () => 'REACT'
+  [TASK_KINDS.react]: ReactTaskPreview
 };
 
 const TASK_EXPLANATIONS = {
   [TASK_KINDS.layout]: 'Use HTML and a stylesheet language (CSS, SASS etc.) to create a layout matching the mockup.',
-  [TASK_KINDS.react]: 'Use JavaScript and React to create a fully functional Web Application integrated with a REST Backend.'
+  [TASK_KINDS.react]:
+    'Use JavaScript and React to create a fully functional Web Application integrated with a REST Backend. ' +
+    'The must-implement features are listed below.'
 };
 
 function getData(fresh, curr) {
@@ -147,6 +201,9 @@ function SingleTask() {
   }
 
   const Preview = TASK_PREVIEWS[taskKind];
+  const ConfigureSolution = CONFIGURE_SOLUTION[taskKind];
+  const missingFields = getMissingFields(task, taskKind)
+  const studentInputNeeded = !isEmpty(missingFields);
 
   return (
     <TabContext value={currentTab}>
@@ -168,7 +225,7 @@ function SingleTask() {
           <SuggestSolution
             isConfiguringSolution={isConfiguringSolution}
             taskId={task.id}
-            studentInputNeeded={taskNeedsStudentInput(task, taskKind)}
+            studentInputNeeded={studentInputNeeded}
             setIsConfiguringSolution={setIsConfiguringSolution}
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
@@ -185,7 +242,7 @@ function SingleTask() {
             <Typography>{TASK_EXPLANATIONS[taskKind]}</Typography>
             {isTeacher && (
               <Typography>
-                Link to repository: <MuiLink href={task.repoUrl} rel='noopener noreferrer' target='_blank'>{task.repoUrl}</MuiLink>
+                Link to repository: <MuiLink href={task.repoUrl}>{task.repoUrl}</MuiLink>
               </Typography>
             )}
             {!!task.description && (
@@ -237,7 +294,7 @@ function SingleTask() {
           sx={{ display: 'flex', flexDirection: 'column', flex: 1, px: 0, pb: 0 }}
           value={tabs.solution}
         >
-          Student Input
+          <ConfigureSolution task={task} missingFields={missingFields} />
         </TabPanel>
       )}
 

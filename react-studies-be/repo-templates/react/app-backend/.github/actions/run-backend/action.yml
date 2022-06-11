@@ -1,0 +1,7 @@
+name: run-backend
+description: Setup and run the backend
+runs:
+  using: composite
+  steps:
+    - run: echo "No run configuration for Backend specified"
+      shell: bash

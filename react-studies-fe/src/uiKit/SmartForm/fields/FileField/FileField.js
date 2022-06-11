@@ -85,7 +85,7 @@ function FileField({ label, height, ratio, width, name, multiple, accept }) {
   function getContent() {
     if (!multiple) {
       return (
-        <Box>
+        <Box width={width}>
           <UploadArea
             accept={accept}
             multiple={multiple}

@@ -1,6 +1,6 @@
 'use strict';
 const {
-  Model
+  Model, Op
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ReactTask extends Model {
@@ -9,7 +9,20 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: { allowNull: false, name: 'basic_task_id' },
         as: 'basicTask'
       });
-      this.hasMany(TemplateConfig, { foreignKey: 'task_id', as: 'teacherTemplateConfigs' });
+      this.hasMany(TemplateConfig, {
+        scope: {
+          solution_id: null
+        },
+        foreignKey: 'task_id',
+        as: 'teacherTemplateConfigs'
+      });
+      this.hasMany(TemplateConfig, {
+        scope: {
+          solution_id: { [Op.not]: null }
+        },
+        foreignKey: 'task_id',
+        as: 'studentTemplateConfigs'
+      })
     }
   }
   ReactTask.init({
@@ -19,29 +32,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
     },
 
-    hasAuthTemplate: {
-      allowNull: false,
-      defaultValue: true,
-      type: DataTypes.BOOLEAN,
-    },
     hasVerification: {
       allowNull: false,
       defaultValue: false,
       type: DataTypes.BOOLEAN,
     },
 
-    hasEntityListTemplate: {
-      allowNull: false,
-      defaultValue: false,
-      type: DataTypes.BOOLEAN,
-    },
     hasSearch: {
-      allowNull: false,
-      defaultValue: false,
-      type: DataTypes.BOOLEAN,
-    },
-
-    hasSingleEntityTemplate: {
       allowNull: false,
       defaultValue: false,
       type: DataTypes.BOOLEAN,

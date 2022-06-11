@@ -5,7 +5,7 @@ import { useFormikContext } from 'formik';
 import Preloader from '../../Preloader';
 
 
-function SubmitButton({ children, sx, disabled, startIcon, ...props }) {
+function SubmitButton({ children, disabled, startIcon, ...props }) {
   const { isSubmitting } = useFormikContext();
 
   return (

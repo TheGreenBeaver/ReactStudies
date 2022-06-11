@@ -12,13 +12,16 @@ function flattenBackendError(errorData) {
   });
 }
 
-function finishSubmit(req, formikHelpers) {
+function finishSubmit(req, formikHelpers, adjust) {
   formikHelpers.setSubmitting(true);
   return req
     .catch(e => {
       const errorsObj = e.response.data[GITHUB_ERR]
         ? { [NON_FIELD_ERR]: `GitHub error: ${values(e.response.data).filter(v => typeof v !== 'boolean').join('; ')}` }
         : flattenBackendError(e.response.data);
+      if (adjust) {
+        adjust(e.response.data, errorsObj);
+      }
       formikHelpers.setErrors(errorsObj);
       formikHelpers.setSubmitting(false);
     });

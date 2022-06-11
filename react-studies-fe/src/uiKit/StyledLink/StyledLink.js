@@ -8,6 +8,8 @@ function StyledLink({ to, children, ...otherProps }) {
     <StyleProvider
       component={Link}
       to={typeof to === 'string' ? to : to.path}
+      rel={null}
+      target={null}
       {...otherProps}
     >
       {children}

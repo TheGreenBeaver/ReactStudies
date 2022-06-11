@@ -8,7 +8,8 @@ const {
   SolutionResult,
   LayoutSolutionResult,
   ReactSolutionResult,
-  Task
+  Task,
+  TemplateConfig
 } = require('../models');
 const { Op } = require('sequelize');
 const omit = require('lodash/omit');
@@ -50,6 +51,11 @@ const AuthToken_Authorization = {
 
 const ElementRule_Default = {
   attributes: { exclude: ['task_id'] }
+};
+
+const ReactTask_Default = {
+  attributes: { exclude: ['id', 'basic_task_id'] },
+  include: [{ model: TemplateConfig, as: 'teacherTemplateConfigs', attributes: { exclude: ['solution_id'] } }]
 };
 
 const LayoutTask_Default = {
@@ -110,7 +116,7 @@ const Task_Default = {
   include: [
     { model: User, as: 'teacher', ...User_List },
     { model: LayoutTask, as: 'layoutTask', ...LayoutTask_Default },
-    { model: ReactTask, as: 'reactTask' },
+    { model: ReactTask, as: 'reactTask', ...ReactTask_Default },
     { model: TaskAttachment, as: 'attachments', ...TaskAttachment_Default },
   ]
 };

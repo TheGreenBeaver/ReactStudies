@@ -33,8 +33,11 @@ module.exports = {
       }
       return fieldValue;
     });
-    req.body.dump = req.files.fileDump ? await fs.promises.readFile(req.files.fileDump[0].path, 'utf8') : null;
-    delete req.files.fileDump;
+    if (req.files.fileDump) {
+      req.body.dump = await fs.promises.readFile(req.files.fileDump[0].path, 'utf8');
+      await fs.promises.rm(req.files.fileDump[0].path);
+      delete req.files.fileDump;
+    }
   },
   list: req => {
     paginationTransformer(req);

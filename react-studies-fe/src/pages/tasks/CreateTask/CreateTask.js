@@ -13,7 +13,7 @@ import AdvancedTypeSettings from './sections/AdvancedTypeSettings';
 import React, { useState } from 'react';
 import { getUpd } from '../../../util/misc';
 import fieldAccepts from './fieldAccepts';
-import { getFormData } from '../../../util/form';
+import { finishSubmit, getFormData } from '../../../util/form';
 import GitHubTokenField from '../../../uiKit/SmartForm/fields/GitHubTokenField';
 import { Form } from 'formik';
 import GeneralError from '../../../uiKit/SmartForm/interactions/GeneralError';
@@ -88,7 +88,7 @@ function CreateTask() {
     [SECTION_NAMES.advanced]: false
   });
 
-  async function onSubmit(values) {
+  async function onSubmit(values, formikHelpers) {
     const kind = values[fieldNames.kind];
     const fields = [
       ...fieldsForKinds[kind],
@@ -96,12 +96,17 @@ function CreateTask() {
       ...Object.values(TOKEN_FIELDS)
     ];
     const formData = getFormData(values, fields);
-    return api.tasks.create(formData).then(({ data }) => {
+
+    return finishSubmit(api.tasks.create(formData).then(({ data }) => {
       if (values[TOKEN_FIELDS.rememberToken]) {
         dispatch(updateUserData({ gitHubToken: values[TOKEN_FIELDS.gitHubToken] }));
       }
       showAlert('Task created, the repository will be ready soon', 'success');
       history.push(links.singleTask.compose(data.id));
+    }), formikHelpers, (errResponse, errorsObj) => {
+      if (errResponse.dump) {
+        errorsObj[fieldNames.fileDump] = errResponse.dump;
+      }
     });
   }
 
@@ -110,6 +115,7 @@ function CreateTask() {
       <Typography variant='h4' mb={2}>Create new task</Typography>
       <SmartForm
         onSubmit={onSubmit}
+        noSubmitLogic
         fast
         doNotPopulate
         initialValues={{
@@ -202,7 +208,7 @@ function CreateTask() {
               )
             }
             <Box display='flex' justifyContent='end' width='100%' mt={3}>
-              <GitHubTokenField entity='task' action='create' sx={{ width: '50%' }} />
+              <GitHubTokenField entity='task' action='create' sx={{ width: '25%' }} />
             </Box>
             <GeneralError />
           </Form>

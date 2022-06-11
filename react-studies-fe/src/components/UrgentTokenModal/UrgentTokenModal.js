@@ -54,7 +54,7 @@ function UrgentTokenModal() {
             <DialogContent>
               <DialogContentText>
                 Please provide your{' '}
-                <MuiLink href={TOKEN_INFO} target='_blank' rel='noopener noreferrer'>GitHub Personal Access Token</MuiLink>{' '}
+                <MuiLink href={TOKEN_INFO}>GitHub Personal Access Token</MuiLink>{' '}
                 so that we can download and process the results for your solutions
               </DialogContentText>
               <PasswordField name={TOKEN_FIELDS.gitHubToken} label='Token' autoComplete='false' />

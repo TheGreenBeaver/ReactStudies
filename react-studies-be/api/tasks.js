@@ -14,7 +14,7 @@ const sizeOf = require('image-size')
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const { uploadFiles } = require('../util/github');
-const { pascalCase, getBase64 } = require('../util/misc');
+const { getBase64 } = require('../util/misc');
 const { Task_List } = require('../util/query-options');
 
 
@@ -205,7 +205,6 @@ class TasksRouter extends SmartRouter {
         const templateConfigs = pick(body, templateFields);
         Object.entries(templateConfigs).forEach(([templateName, config]) => {
           const configValues = pick(config, configFields);
-          values[`has${pascalCase(templateName)}`] = true;
           Object.assign(values, omit(config, configFields));
           teacherTemplateConfigs.push({
             ...configValues,

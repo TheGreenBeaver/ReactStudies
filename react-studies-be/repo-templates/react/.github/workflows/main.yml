@@ -29,7 +29,7 @@ jobs:
         run: yarn serve
 
       - name: Run backend
-        uses: ./.github/actions/run-backend
+        uses: ./app-backend/.github/actions/run-backend
 
       - name: Install frontend dependencies
         working-directory: app-frontend

@@ -1,60 +1,34 @@
-const SMTPServer = require("smtp-server").SMTPServer;
-const server = new SMTPServer({
+const { SMTPServer } = require('smtp-server');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const { simpleParser } = require('mailparser');
+
+
+const LAST_EMAIL = path.join(__dirname, 'last-email');
+
+const emailServer = new SMTPServer({
+  // TODO: Email server
   allowInsecureAuth: true,
   authOptional: true,
 
-  onConnect: (session, callback) => {
-    console.log({
-      what: 'connect',
-      session
-    });
-    return callback();
-  },
-  onAuth: (auth, session, callback) => {
-    console.log({
-      what: 'auth',
-      auth, session
-    });
-    return callback();
-  },
-  onMailFrom: (address, session, callback) => {
-    console.log({
-      what: 'mailFrom',
-      address, session
-    })
-    return callback();
-  },
-  onRcptTo: (address, session, callback) => {
-    console.log({
-      what: 'rcptTo',
-      address, session
-    });
-    return callback();
-  },
-  onData: (stream, session, callback) => {
-    console.log({
-      what: 'data',
-      session
-    })
-    stream.pipe(process.stdout);
-    stream.on('end', callback);
-  },
-  onClose: (...args) => console.log({
-    what: 'close',
-    args
-  })
+  onConnect: (session, callback) => callback(),
+  onAuth: (auth, session, callback) => callback(),
+  onMailFrom: (address, session, callback) => callback(),
+  onRcptTo: (address, session, callback) => callback(),
+  onData: (stream, session, callback) => fs.mkdir(LAST_EMAIL, { recursive: true }, () =>
+    simpleParser(stream, {}, (_, parsed) =>
+      fs.writeFile(path.join(LAST_EMAIL, 'index.html'), parsed.html, callback),
+    )
+  )
 });
 
-server.on('error', err => {
-  console.log("Error %s", err.message);
-});
-
-process.on('SIGINT', () => server.close((...args) => console.log({
-  what: 'closed',
-  args
-})));
-
-server.listen(5050, (...args) => console.log({
-  what: 'listening',
-  args
+process.on('SIGINT', () => emailServer.close(() => {
+  console.log('SMTP server closed');
+  process.exit(0);
 }));
+emailServer.listen(5050, () => console.log('SMTP server is up'));
+
+const staticServer = express();
+staticServer.use('/last_email', express.static(LAST_EMAIL));
+staticServer.listen(5051, () => console.log('Static server is up'));

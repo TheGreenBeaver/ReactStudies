@@ -1,18 +1,18 @@
-import { node, string } from 'prop-types';
+import { node, object, string } from 'prop-types';
 import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
 import Badge from '@mui/material/Badge';
+import HelpOutline from '@mui/icons-material/HelpOutline'
 
 
-function HelpBadge({ children, helpText }) {
+function HelpBadge({ children, helpText, sx }) {
   return (
     <Badge
       badgeContent={
         <Tooltip placement='top-start' title={helpText}>
-          <Typography variant='body2' sx={{ cursor: 'help' }}>?</Typography>
+          <HelpOutline sx={{ cursor: 'help', fontSize: '1.5em', color: 'text.secondary' }} />
         </Tooltip>
       }
-      sx={{ '& .MuiBadge-badge': { pl: 3 }, display: 'block', width: 'fit-content' }}
+      sx={{ '& .MuiBadge-badge': { pl: 3, ...sx }, display: 'block', width: 'fit-content' }}
     >
       {children}
     </Badge>
@@ -21,7 +21,8 @@ function HelpBadge({ children, helpText }) {
 
 HelpBadge.propTypes = {
   children: node.isRequired,
-  helpText: string.isRequired
+  helpText: string.isRequired,
+  sx: object
 };
 
 export default HelpBadge;

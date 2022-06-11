@@ -15,3 +15,5 @@ test-engine/cypress/fixtures
 test-engine/cypress/screenshots
 test-engine/cypress.dev.json
 test-engine/reports
+
+email-server/last-email

@@ -40,6 +40,12 @@ function getTheme(mode) {
             }
           }
         }
+      },
+      MuiLink: {
+        defaultProps: {
+          rel: 'noopener noreferrer',
+          target: '_blank'
+        }
       }
     }
   });

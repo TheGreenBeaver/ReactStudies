@@ -1,8 +1,14 @@
 import TemplateConfigField from '../../../../../uiKit/SmartForm/fields/TemplateConfigField';
 import fieldNames from '../../fieldNames';
+import { useField } from 'formik';
 
 
 function MainReactSettings() {
+  const [{ value }] = useField(fieldNames.dumpIsTemplate);
+  const singleEntityHelpText = value == null
+    ? 'Exact route leading to some one entity that\'s sure to be in the database'
+    : 'Pattern containing {{:key}} placeholder to replace with one of the keys returned on dump upload';
+
   return (
     <>
       <TemplateConfigField
@@ -36,6 +42,7 @@ function MainReactSettings() {
         getEndpointLabels={() => 'API endpoints'}
         templateLabel='Single Entity'
         max={3}
+        routeHelpTexts={[singleEntityHelpText]}
       />
     </>
   );
