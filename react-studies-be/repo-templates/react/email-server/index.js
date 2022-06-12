@@ -8,7 +8,6 @@ const { simpleParser } = require('mailparser');
 const LAST_EMAIL = path.join(__dirname, 'last-email');
 
 const emailServer = new SMTPServer({
-  // TODO: Email server
   allowInsecureAuth: true,
   authOptional: true,
 

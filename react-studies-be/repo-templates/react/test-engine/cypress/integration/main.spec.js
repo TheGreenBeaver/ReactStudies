@@ -44,28 +44,12 @@ function extractChildren(node) {
   return children.flat();
 }
 
-function generateRandomNum(min, max, int = true) {
-  const raw = Math.random() * (max - min + 1) + min;
-  return int ? Math.floor(raw) : raw;
-}
-
-function generateRandomOption(options) {
-  const idx = generateRandomNum(0, options.length - 1);
-  return options[idx];
-}
-
-const letters = 'qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlLzZxXcCvVbBnNmM';
-function generateRandomString(length = 10) {
-  return [...Array(length)].map(() => {
-    const letterIdx = generateRandomNum(0, letters.length - 1)
-    return letters[letterIdx];
-  }).join('');
-}
-
 function setupAliases(...endpoints) {
   return endpoints.map(endpoint => {
-    const alias = `get${endpoint.replace(/\//g, '_')}`;
-    cy.intercept({ url: `**${endpoint}*` }).as(alias);
+    const [method, ...pathnameParts] = endpoint.split(' ');
+    const pathname = pathnameParts.join('');
+    const alias = `${method}_${pathname.replace(/\//g, '_')}`;
+    cy.intercept({ url: `**${pathname}*`, method }).as(alias);
     return `@${alias}`;
   });
 }
@@ -78,11 +62,58 @@ function clearStorages() {
   });
 }
 
+function getMinMax(providedMin, providedMax, defaultMin, defaultMax) {
+  const diff = defaultMax - defaultMin;
+  let min, max;
+
+  if (providedMin) {
+    min = providedMin;
+  } else {
+    min = providedMax == null ? defaultMin : providedMax - diff;
+  }
+
+  if (providedMax) {
+    max = providedMax;
+  } else {
+    max = providedMin == null ? defaultMax : providedMin + diff;
+  }
+
+  return [min, max];
+}
+
+function generateRandomNum(min, max, int = true) {
+  const raw = Math.random() * (max - min + 1) + min;
+  return int ? Math.floor(raw) : raw;
+}
+
+function generateRandomOption(options) {
+  const idx = generateRandomNum(0, options.length - 1);
+  return options[idx];
+}
+
+const allLetterSets = {
+  latin: 'qwertyuiopasdfghjklzxcvbnm',
+  numbers: '1234567890',
+  symbols: '!@#$%^&*()_+-=<>?/,.{}[]\\|"\';:`~!№',
+  spaces: '\n\t ',
+  nonLatin: 'йцукенгшщзхъфывапролджэячсмитьбю',
+};
+function generateRandomString(length = 10, letterSets, allowCapital) {
+  const lowercase = letterSets.map(setName => allLetterSets[setName]).join('');
+  const letters = allowCapital ? `${lowercase}${lowercase.toUpperCase()}` : lowercase;
+  return [...Array(length)].map(() => {
+    const letterIdx = generateRandomNum(0, letters.length - 1)
+    return letters[letterIdx];
+  }).join('');
+}
+
+const blocker = Symbol();
+
 const usedStrings = {};
 const usedEmails = {};
 const usedEnumValues = {};
-function generateShape(shape, path = []) {
-  function generateField(fieldConfig, fieldName) {
+function generateShape(shape, parentIdxForShape = null, path = []) {
+  function generateField(fieldConfig, fieldName, parentIdxForField = null) {
     const {
       type,
       max: _max,
@@ -95,20 +126,31 @@ function generateShape(shape, path = []) {
       format = 'YYYY-MM-DD:hh-mm-ss',
       values,
       of: arrayOf,
-      unique
+      unique,
+      letterSets: _letterSets,
+      allowCapital: _allowCapital
     } = fieldConfig;
 
     let val;
     if (typeof type === 'object') {
-      val = generateShape(type, [...path, fieldName]);
+      val = generateShape(type, parentIdxForField, [...path, ...fieldName]);
     } else {
       switch (type) {
         case 'string': {
           const generate = () => {
-            const min = email ? 5 : (_min || 5);
-            const max = email ? 90 : (_max || 30);
+            let min, max, letterSets, allowCapital;
+            if (email) {
+              min = 5;
+              max = 90;
+              letterSets = ['latin'];
+              allowCapital = false;
+            } else {
+              [min, max] = getMinMax(_min, _max, 3, 30);
+              letterSets = _letterSets || ['latin'];
+              allowCapital = _allowCapital;
+            }
             const length = generateRandomNum(min, max);
-            const raw = generateRandomString(length);
+            const raw = generateRandomString(length, letterSets, allowCapital);
             return email ? `${raw.toLowerCase()}@gmail.com` : raw;
           };
 
@@ -117,14 +159,13 @@ function generateShape(shape, path = []) {
           } else {
             do {
               val = generate();
-            } while (get(email ? usedEmails : usedStrings, [...path, fieldName, val]));
-            set(email ? usedEmails : usedStrings, [...path, fieldName, val], true);
+            } while (get(email ? usedEmails : usedStrings, [...path, ...fieldName, val]));
+            set(email ? usedEmails : usedStrings, [...path, ...fieldName, val], true);
           }
           break;
         }
         case 'number': {
-          const min = _min || -1000;
-          const max = _max || 1000;
+          const [min, max] = getMinMax(_min, _max, -1000, 1000);
           val = generateRandomNum(min, max, int);
           break;
         }
@@ -151,18 +192,31 @@ function generateShape(shape, path = []) {
           break;
         }
         case 'array': {
-          const length = generateRandomNum(_min || 1, _max || 60);
-          val = [...Array(length)].map(() => generateField(arrayOf, fieldName))
+          const [min, max] = getMinMax(_min, _max, 1, 60);
+          const length = generateRandomNum(min, max);
+          val = [];
+          for (const idx in [...Array(length)]) {
+            const newEntry = generateField(arrayOf, [parentIdxForShape, ...fieldName], +idx);
+            if (Array.isArray(newEntry) && newEntry[1] === blocker) {
+              val.push(newEntry[0]);
+              break;
+            } else {
+              val.push(newEntry);
+            }
+          }
           break;
         }
         case 'enum': {
-          if (unique) {
+          if (!unique) {
             val = generateRandomOption(values);
           } else {
             do {
               val = generateRandomOption(values);
-            } while (get(usedEnumValues, [...path, fieldName, val]));
-            set(usedEnumValues, [...path, fieldName, val], true);
+            } while (get(usedEnumValues, [...path, ...fieldName, val]));
+            set(usedEnumValues, [...path, ...fieldName, val], true);
+            if (parentIdxForField === values.length - 1) {
+              val = [val, blocker];
+            }
           }
           break;
         }
@@ -173,16 +227,75 @@ function generateShape(shape, path = []) {
   }
 
   return Object.entries(shape).reduce((result, [fieldName, fieldConfig]) => ({
-    ...result, [fieldName]: generateField(fieldConfig, fieldName)
+    ...result, [fieldName]: generateField(fieldConfig, [fieldName], parentIdxForShape)
   }), {});
 }
 
 function uploadDump({ dump, dumpIsTemplate, upload: { url, method } }) {
   const data = dumpIsTemplate
-    ? [...Array(generateRandomNum(100, 800))].map(() => generateShape(dump))
+    ? [...Array(generateRandomNum(100, 800))].map((_, idx) => generateShape(dump, idx))
     : dump;
-  cy.request(method, url, data).its('body').as('identifiers');
+  cy.request(method, url, data).its('body').as('dumpKeys');
   return data;
+}
+
+function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
+  /**
+   *
+   * @type {Array<Node>}
+   */
+  const allElements = [];
+  body.contents().map(function () {
+    allElements.push(this, ...extractChildren(this));
+  });
+
+  const initialMarks = mapValues(MARKS, () => 0);
+  const report = {
+    endpoints: { summary: { totalFields: 0, ...initialMarks } },
+  };
+
+  const getMark = inspectedData => value => {
+    report[inspectedData].summary.totalFields++;
+
+    const pattern = new RegExp(`(\\s|^)${value}(\\s|$)`);
+    const momentValue = moment(value);
+    for (const { textContent } of allElements) {
+      if (textContent === value) {
+        report[inspectedData].summary[MARKS.foundExactly]++;
+        return MARKS.foundExactly;
+      }
+      const momentTextContent = moment(textContent);
+      if (
+        pattern.test(textContent) ||
+        (
+          momentValue.isValid() &&
+          momentTextContent.isValid() &&
+          ['second', 'minute', 'hour', 'day'].some(granularity =>
+            momentTextContent.isSame(momentValue, granularity),
+          )
+        )
+      ) {
+        report[inspectedData].summary[MARKS.roughMatch]++;
+        return MARKS.roughMatch;
+      }
+    }
+
+    report[inspectedData].summary[MARKS.notFound]++;
+    return MARKS.notFound;
+  };
+
+  report.endpoints.detail = interceptions.reduce((result, { request, response }) => {
+    const dataCoverage = markData(response.body, getMark('endpoints'));
+    const key = new URL(request.url).pathname;
+    return { ...result, [key]: dataCoverage };
+  }, {});
+
+  if (dumpChunk) {
+    report.dump = { summary: { totalFields: 0, ...initialMarks } };
+    report.dump.detail = markData(dumpChunk, getMark('dump'));
+  }
+
+  cy.writeFile(`reports/${fileName}.json`, JSON.stringify(report, null, '  '));
 }
 
 it('task', () => {
@@ -192,13 +305,10 @@ it('task', () => {
     const {
       hasVerification,
 
-      routes: [_signUpRoute, _logInRoute],
+      routes: [signUpRoute, logInRoute],
       endpoints: [signUpEndpoint, logInEndpoint, verificationEndpoint],
-      special: _authOnlyRoute
+      special: authOnlyRoute
     } = auth;
-    const signUpRoute = _signUpRoute || '/';
-    const logInRoute = _logInRoute.route || '/';
-    const authOnlyRoute = _authOnlyRoute || '/';
 
     // API
     const [signUpAlias, logInAlias] = setupAliases(signUpEndpoint, logInEndpoint);
@@ -334,78 +444,38 @@ it('task', () => {
 
       routes,
       endpoints,
-      special: listEndpoint
+      special: searchEndpoint
     } = entityList;
-    const [_entityListRoute] = routes;
-    const entityListRoute = _entityListRoute || '/';
+    const [entityListRoute] = routes;
 
     // API
-    const aliases = setupAliases(listEndpoint, ...endpoints);
+    const entityListAliases = setupAliases(...endpoints);
 
     // Visit EntityList
     cy.visit(entityListRoute);
 
-    cy.wait(aliases).then(interceptions => {
+    cy.wait(entityListAliases).then(interceptions => {
       cy.get('body').then(body => {
-        /**
-         *
-         * @type {Array<Node>}
-         */
-        const allElements = []
-        body.contents().map(function () {
-          allElements.push(this, ...extractChildren(this));
-        });
+        collectDataCoverage(interceptions, uploadedDump, 'entityList', body);
 
-        const initialMarks = mapValues(MARKS, () => 0)
-        const report = {
-          endpoints: { summary: { totalFields: 0, ...initialMarks } }
-        };
-
-        const getMark = inspectedData => value => {
-          report[inspectedData].summary.totalFields++;
-
-          const pattern = new RegExp(`(\\s|^)${value}(\\s|$)`);
-          const momentValue = moment(value);
-          for (const { textContent } of allElements) {
-            if (textContent === value) {
-              report[inspectedData].summary[MARKS.foundExactly]++;
-              return MARKS.foundExactly;
+        if (hasSearch) {
+          const [searchEndpointAlias] = setupAliases(searchEndpoint);
+          cy.get('input[data-search-input]').then(searchInput => {
+            cy.wrap(searchInput).type(generateRandomString(8), { delay: 20 });
+            cy.get(`${searchEndpointAlias}.all`).should('have.length.below', 2);
+            const submitSearch = body.find('[data-submit-search]');
+            if (submitSearch) {
+              cy.wrap(submitSearch).click();
             }
-            const momentTextContent = moment(textContent);
-            if (
-              pattern.test(textContent) ||
-              (
-                momentValue.isValid() &&
-                momentTextContent.isValid() &&
-                ['second', 'minute', 'hour', 'day'].some(granularity =>
-                  momentTextContent.isSame(momentValue, granularity)
-                )
-              )
-            ) {
-              report[inspectedData].summary[MARKS.roughMatch]++;
-              return MARKS.roughMatch;
-            }
-          }
-
-          report[inspectedData].summary[MARKS.notFound]++;
-          return MARKS.notFound;
-        };
-
-        report.endpoints.detail = interceptions.reduce((result, { request, response }) => {
-          const dataCoverage = markData(response.body, getMark('endpoints'));
-          const key = new URL(request.url).pathname;
-          return { ...result, [key]: dataCoverage };
-        }, {});
-
-        if (uploadedDump) {
-          report.dump = { summary: { totalFields: 0, ...initialMarks } };
-          report.dump.detail = markData(uploadedDump, getMark('dump'));
+            cy.wait(searchEndpointAlias);
+            cy.wait(5000);
+            cy.get(`${searchEndpointAlias}.all`).should('have.length.below', 3);
+          });
+        } else {
+          cy.wait(5000);
         }
 
-        cy.writeFile('reports/entityList.json', JSON.stringify(report, null, '  '));
-
-        cy.wait(10000);
-        aliases.forEach(alias => {
+        entityListAliases.forEach(alias => {
           cy.get(`${alias}.all`).should('have.length', 1);
         });
       })
@@ -418,5 +488,31 @@ it('task', () => {
       routes,
       endpoints,
     } = singleEntity;
+    const [rawSingleEntityRoute] = routes;
+    const singleEntityAliases = setupAliases(...endpoints);
+
+    if (dumpConfig) {
+      cy.get('@dumpKeys').then(dumpKeys => {
+        const idx = generateRandomNum(0, dumpKeys.length);
+        const key = dumpKeys(idx);
+        const singleEntityRoute = rawSingleEntityRoute.replace('{key}', key.toString());
+
+        cy.visit(singleEntityRoute);
+
+        cy.wait(singleEntityAliases).then(interceptions => {
+          cy.get('body').then(body => {
+            collectDataCoverage(interceptions, uploadedDump[idx], 'singleEntity', body);
+          });
+        });
+      });
+    } else {
+      cy.visit(rawSingleEntityRoute);
+
+      cy.wait(singleEntityAliases).then(interceptions => {
+        cy.get('body').then(body => {
+          collectDataCoverage(interceptions, null, 'singleEntity', body);
+        });
+      });
+    }
   }
 });

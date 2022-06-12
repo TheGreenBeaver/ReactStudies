@@ -45,7 +45,13 @@ function TextGroupField({ labels, name, max, getDisabled, helpTexts }) {
 
   return (
     <Box>
-      <InputLabel sx={{ mt: 1 }}>{labels}</InputLabel>
+      {helpTexts ? (
+        <HelpBadge helpText={helpTexts}>
+          <InputLabel sx={{ mt: 1 }}>{labels}</InputLabel>
+        </HelpBadge>
+      ) : (
+        <InputLabel sx={{ mt: 1 }}>{labels}</InputLabel>
+      )}
       <MultiTextField
         maxWidth='100%'
         onChange={upd => setValue(getUpd(upd, value))}

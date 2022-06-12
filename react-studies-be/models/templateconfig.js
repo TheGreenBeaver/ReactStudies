@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         as: 'solution'
       });
       this.belongsTo(ReactTask, {
-        foreignKey: { allowNull: false, name: 'task_id' },
+        foreignKey: { allowNull: true, name: 'task_id' },
         as: 'task'
       });
     }

@@ -7,7 +7,7 @@ function MainReactSettings() {
   const [{ value }] = useField(fieldNames.dumpIsTemplate);
   const singleEntityHelpText = value == null
     ? 'Exact route leading to some one entity that\'s sure to be in the database'
-    : 'Pattern containing {{:key}} placeholder to replace with one of the keys returned on dump upload';
+    : 'Pattern containing {key} placeholder to replace with one of the keys returned on dump upload';
 
   return (
     <>

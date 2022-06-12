@@ -32,24 +32,24 @@ const retrieveResult = withCache(api.solutionResults.retrieve);
 const INSTRUCTIONS = {
   [TASK_KINDS.layout]: [
     <>
-      Put your work in the <Layout.Code>./src</Layout.Code> directory. Any changes within it pushed to
+      Put your work in the <Layout.Code>./src</Layout.Code> directory. Any changes within it pushed to{' '}
       <Layout.Code>main</Layout.Code> branch will trigger the test workflow.
     </>,
     <>
-      If you need to use files from <Layout.Code>./attachments</Layout.Code>, you'll need to copy them to
+      If you need to use files from <Layout.Code>./attachments</Layout.Code>, you'll need to copy them to{' '}
       <Layout.Code>./src</Layout.Code> first and access from there - otherwise the static server won't find them.
     </>,
     <>
-      You can run the tests locally. For that, install
-      <MuiLink href='https://nodejs.org/en/download/releases/'>Node.js v.16.13.1</MuiLink> and
+      You can run the tests locally. For that, install{' '}
+      <MuiLink href='https://nodejs.org/en/download/releases/'>Node.js v.16.13.1</MuiLink> and{' '}
       <MuiLink href='https://yarnpkg.com/getting-started/migration#step-by-step'>Yarn v.3.2.0</MuiLink>,
-      then run <Layout.Code component='code'>yarn install</Layout.Code> and
+      then run <Layout.Code component='code'>yarn install</Layout.Code> and{' '}
       <Layout.Code component='code'>yarn test</Layout.Code> in the project root.
     </>
   ],
   [TASK_KINDS.react]: [
     <>
-      Put your work in the <Layout.Code>./app-frontend</Layout.Code> and <Layout.Code>./app-backend</Layout.Code>
+      Put your work in the <Layout.Code>./app-frontend</Layout.Code> and <Layout.Code>./app-backend</Layout.Code>{' '}
       directories. Any changes within these pushed to <Layout.Code>main</Layout.Code> branch will
       trigger the test workflow.
     </>,

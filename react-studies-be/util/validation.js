@@ -174,25 +174,6 @@ class Validators {
       });
   }
 
-  static urlPathname() {
-    return string()
-      .max(2000, 'Path must not exceed 2000 characters')
-      .test('urlPathname', 'Not a valid path', (value, { createError }) => {
-        if (!value) {
-          return true;
-        }
-        if (!/^\/.*/.test(value)) {
-          return createError({ message: 'Path must start with /' });
-        }
-        try {
-          new URL(value, 'http://localhost');
-          return true;
-        } catch {
-          return false;
-        }
-      });
-  }
-
   static #isBool(v) {
     return typeof v === 'boolean';
   }
@@ -201,8 +182,12 @@ class Validators {
     return typeof v === 'number';
   }
 
+  static #isUniqArray(v) {
+    return Array.isArray(v) && uniq(v).length === v.length;
+  }
+
   static #allowedTokensForTypes = {
-    string: ['max', 'min', 'nullable', 'email','unique'],
+    string: ['max', 'min', 'nullable', 'email', 'unique', 'letterSets', 'allowCapital'],
     number: ['max', 'min', 'nullable', 'int'],
     date: ['format', 'nullable', 'allowPast', 'allowFuture'],
     bool: ['nullable'],
@@ -220,7 +205,11 @@ class Validators {
     allowFuture: this.#isBool,
     unique: this.#isBool,
     of: v => typeof v === 'object',
-    values: v => Array.isArray(v) && uniq(v).length === v.length
+    values: this.#isUniqArray,
+    letterSets: v =>
+      this.#isUniqArray(v) &&
+      v.every(e => ['latin', 'numbers', 'symbols', 'spaces', 'nonLatin'].includes(e)),
+    allowCapital: this.#isBool,
   };
 
   static #unpackTemplateConfig(config, parentArrayMax = null) {
@@ -249,6 +238,9 @@ class Validators {
       }
       if (!this.#validationsForTokens[tokenName](tokenDef)) {
         return `"${tokenDef}" is not a valid definition for token "${tokenName}"`;
+      }
+      if (tokenName === 'max' && rest.min != null && rest.min > tokenDef) {
+        return '"max" must not be lower than "min"';
       }
       if (['max', 'min'].includes(tokenName) && type !== 'number' && tokenDef < 0) {
         return `Token "${tokenName}" for type "${type}" must have non-negative value`;
@@ -328,12 +320,45 @@ addMethod(StringSchema, 'dump', function dump() {
   });
 });
 
-addMethod(ObjectSchema, 'templateConfig', function templateConfig() {
+addMethod(StringSchema, 'navRoute', function navRoute() {
+  return this
+    .test('navRoute', 'Not a valid route', (value, { createError }) => {
+      if (!Validators.isUrl(value, true)) {
+        return false;
+      }
+      return value.startsWith('/') ? true : createError({ message: 'Route must start with /' });
+    });
+});
+
+addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
+  return this
+    .test('relativeUrl', 'Not a valid relative URL path', (value, { createError }) => {
+      const [method, ...pathnameParts] = value.split(' ');
+      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase)) {
+        return createError({ message: `${method} is not a valid HTTP method` });
+      }
+      const pathname = pathnameParts.join('');
+      if (!Validators.isUrl(pathname, true)) {
+        return createError({ message: `${pathname} is not a valid URL pathname` });
+      }
+      return /^\/.*/.test(pathname) ? true : createError({ message: 'Relative URL must start with /' });
+    });
+});
+
+addMethod(StringSchema, 'absoluteUrl', function absoluteUrl() {
+  return this.test('absoluteUrl', 'Not a valid absolute URL path', value => Validators.isUrl(value));
+});
+
+addMethod(ObjectSchema, 'templateConfig', function templateConfig(specialIsRoute) {
   return this.shape({
-    endpoints: array().of(Validators.urlPathname()).canSkip(),
-    routes: array().of(Validators.urlPathname()).canSkip(),
-    special: Validators.urlPathname().canSkip()
+    endpoints: array().of(string().relativeUrl()).canSkip(),
+    routes: array().of(string().navRoute()).canSkip(),
+    special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
   }).noUnknown().canSkip().onlyKind(Task.TASK_KINDS.react);
+});
+
+addMethod(StringSchema, 'keyPattern', function keyPattern() {
+  return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
 });
 
 module.exports = Validators;

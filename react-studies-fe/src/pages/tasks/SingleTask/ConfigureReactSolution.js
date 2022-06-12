@@ -68,15 +68,15 @@ function ConfigureReactSolution({ task: { id, reactTask }, missingFields }) {
   const validationSchema = useMemo(() => missingFields.reduce((schema, fieldName) => {
     let fieldSchema;
     if (fieldName === configFields.dumpUploadUrl) {
-      fieldSchema = yupString().fullUrl().required();
+      fieldSchema = yupString().absoluteUrl().required();
     } else if (fieldName.endsWith('Routes')) {
-      const baseSchema = yupString().urlPathname().required('Route is required');
+      const baseSchema = yupString().navRoute().required('Route is required');
       const entrySchema = reactTask.dump && fieldName.startsWith('singleEntity') ? baseSchema.keyPattern() : baseSchema;
       fieldSchema = array().of(entrySchema);
     } else if (fieldName.endsWith('Endpoints')) {
-      fieldSchema = array().of(yupString().urlPathname().required('Endpoints must not be empty')).min(1);
+      fieldSchema = array().of(yupString().relativeUrl().required('Endpoints must not be empty')).min(1);
     } else if (fieldName.endsWith('Special')) {
-      fieldSchema = yupString().urlPathname().required();
+      fieldSchema = yupString()[fieldName.startsWith('auth') ? 'relativeUrl' : 'navRoute']().required();
     }
     return fieldSchema ? { ...schema, [fieldName]: fieldSchema } : schema;
   }, {}), [missingFields]);
@@ -148,7 +148,7 @@ function ConfigureReactSolution({ task: { id, reactTask }, missingFields }) {
                 let helpTexts;
                 if (!isEndpoints && templateKind === TEMPLATE_KINDS.singleEntity) {
                   helpTexts = reactTask.dump
-                    ? ['Pattern containing {{:key}} placeholder to replace with one of the keys returned on dump upload']
+                    ? ['Pattern containing {key} placeholder to replace with one of the keys returned on dump upload']
                     : ['Exact route leading to some one entity that\'s sure to be in the database'];
                 }
                 return (

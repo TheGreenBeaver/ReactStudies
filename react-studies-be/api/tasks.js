@@ -219,7 +219,8 @@ class TasksRouter extends SmartRouter {
         uploadFiles(octokit, repo.name, {
           dirs: [{
             dir: path.join(REPO_TEMPLATES_DIR, 'react'),
-            ignore: filePath => /(app-backend|app-frontend)\/.*$/.test(filePath)
+            ignore: filePath => /(app-backend|app-frontend)\/.*$/.test(filePath),
+            keep: filePath => filePath.endsWith('app-backend/.github/actions/run-backend/action.yml')
           }]
         }).then(() => wsServer.sendToUser(
           user,

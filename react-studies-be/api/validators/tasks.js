@@ -53,7 +53,7 @@ module.exports = {
       dump: string().dump().canSkip().onlyKind(Task.TASK_KINDS.react),
       dumpIsTemplate: boolean().canSkip().onlyKind(Task.TASK_KINDS.react),
       dumpUploadMethod: Validators.enumOf(['post', 'put', 'patch', '']).canSkip().onlyKind(Task.TASK_KINDS.react),
-      dumpUploadUrl: string().url().canSkip().onlyKind(Task.TASK_KINDS.react),
+      dumpUploadUrl: string().absoluteUrl().canSkip().onlyKind(Task.TASK_KINDS.react),
 
       authTemplate: object({
         hasVerification: boolean().required()

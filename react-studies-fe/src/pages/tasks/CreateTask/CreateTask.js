@@ -170,13 +170,13 @@ function CreateTask() {
 
           [fieldNames.authTemplate]: object({
             hasVerification: boolean().required()
-          }).templateConfig(),
+          }).templateConfig(true),
           [fieldNames.entityListTemplate]: object({
             hasSearch: boolean().required()
           }).templateConfig(),
           [fieldNames.singleEntityTemplate]: object().templateConfig(),
           [fieldNames.fileDump]: Validators.file(fieldAccepts[fieldNames.fileDump], [1, SIZE_UNITS.MB]),
-          [fieldNames.dumpUploadUrl]: string().fullUrl('Must be a full valid URL').canSkip()
+          [fieldNames.dumpUploadUrl]: string().absoluteUrl().canSkip()
         }}
         onValidationFailed={errors => {
           const toExpand = sections.reduce((result, { coveredFields, name }) =>

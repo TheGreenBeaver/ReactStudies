@@ -15,6 +15,8 @@ import set from 'lodash/set';
 import Grid from '@mui/material/Grid';
 
 
+const endpointsHelp = 'Method and pathname, e.g. GET /api/users';
+
 function TemplateConfigField({
   flags, templateName, getEndpointLabels, getRouteLabels, getSpecialLabel, templateLabel, max, routeHelpTexts
 }) {
@@ -117,7 +119,12 @@ function TemplateConfigField({
             label={flags[flagName]}
           />
         ))}
-        <TextGroupField max={max} name={`${templateName}.endpoints`} labels={endpointLabels} />
+        <TextGroupField
+          max={max}
+          name={`${templateName}.endpoints`}
+          labels={endpointLabels}
+          helpTexts={Array.isArray(endpointLabels) ? endpointLabels.map(() => endpointsHelp) : endpointsHelp}
+        />
         <TextGroupField max={max} name={`${templateName}.routes`} labels={routeLabels} helpTexts={routeHelpTexts} />
         {!!specialLabel && (
           <Grid container spacing={2}>
