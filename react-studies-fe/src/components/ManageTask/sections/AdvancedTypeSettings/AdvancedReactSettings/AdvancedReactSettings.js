@@ -1,4 +1,4 @@
-import CheckboxField from '../../../../../../uiKit/SmartForm/fields/CheckboxField';
+import CheckboxField from '../../../../../uiKit/SmartForm/fields/CheckboxField';
 import fieldNames from '../../../fieldNames';
 import { useFormikContext } from 'formik';
 import DumpInput from './DumpInput';

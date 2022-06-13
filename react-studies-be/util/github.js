@@ -179,8 +179,8 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
   }
 
   return wsServer.sendToUser(solution.student, wsServer.Actions.workflowResultsReady, {
-    solution: pick(solution, ['id']),
-    result: pick(solutionResult, ['summary', 'updatedAt']),
+    solution: pick(solution, ['id', 'task_id']),
+    result: pick(solutionResult, ['summary', 'createdAt', 'runId', 'id']),
   });
 }
 

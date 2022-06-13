@@ -2,6 +2,7 @@ const SmartRouter = require('./_smart-router');
 const { User, sequelize } = require('../models');
 const { getB36, generateToken, parseB36, checkToken, TOKEN_STATUS, hash } = require('../util/encrypt');
 const sendMail = require('../mail');
+const { verify } = require('../mail/templates');
 const { authenticate } = require('../util/user-identity');
 const httpStatus = require('http-status');
 const { NON_FIELD_ERR } = require('../settings');
@@ -59,7 +60,7 @@ class UsersRouter extends SmartRouter {
 
     const verificationToken = generateToken(newUser, this.#CRYPTO_FIELDS);
     const link = `${origin}/confirm/verify/${getB36(newUser.id)}/${verificationToken}`;
-    await sendMail(link, newUser.email);
+    await sendMail({ html: verify(link), subject: 'Frontend Studies: account verification' }, newUser.email);
 
     return authenticate({ email: newUser.email, password: req.body.password }, options);
   }

@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     runId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: true
     },
     summary: {

@@ -13,8 +13,8 @@ const StyleProp = oneOfType([string, number]);
 
 const FetchedFile = shape({
   location: string.isRequired,
-  mime: string.isRequired,
-  id: number.isRequired
+  mime: string,
+  id: number
 });
 
 const SomeFile = oneOfType([FetchedFile, instanceOf(File)]);

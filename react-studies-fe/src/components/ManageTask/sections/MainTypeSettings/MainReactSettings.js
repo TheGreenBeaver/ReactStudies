@@ -1,4 +1,4 @@
-import TemplateConfigField from '../../../../../uiKit/SmartForm/fields/TemplateConfigField';
+import TemplateConfigField from '../../../../uiKit/SmartForm/fields/TemplateConfigField';
 import fieldNames from '../../fieldNames';
 import { useField } from 'formik';
 

@@ -19,7 +19,7 @@ function TextGroupField({ labels, name, max, getDisabled, helpTexts }) {
         {value.map((_, idx) => (
           <Grid item key={idx} xs={12 / max}>
             {helpTexts?.[idx] ? (
-              <HelpBadge helpText={helpTexts?.[idx]} sx={{ top: theme => theme.spacing(1.5) }}>
+              <HelpBadge wide helpText={helpTexts?.[idx]} sx={{ top: theme => theme.spacing(1.5) }}>
                 <StandardTextField
                   sx={{ flex: 1 }}
                   label={labels[idx]}
@@ -47,7 +47,7 @@ function TextGroupField({ labels, name, max, getDisabled, helpTexts }) {
     <Box>
       {helpTexts ? (
         <HelpBadge helpText={helpTexts}>
-          <InputLabel sx={{ mt: 1 }}>{labels}</InputLabel>
+          <InputLabel sx={{ mt: 1, width: 'fit-content' }}>{labels}</InputLabel>
         </HelpBadge>
       ) : (
         <InputLabel sx={{ mt: 1 }}>{labels}</InputLabel>

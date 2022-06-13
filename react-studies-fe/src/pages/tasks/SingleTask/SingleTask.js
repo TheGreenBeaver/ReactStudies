@@ -152,7 +152,10 @@ function SingleTask() {
   );
 
   const [freshResults, setFreshResults] = useState([]);
-  useWsAction(WsWithQueue.Actions.workflowResultsReady, ({ solution, result }) =>
+  useWsAction(WsWithQueue.Actions.workflowResultsReady, ({ solution, result }) => {
+    if (solution.task_id !== id) {
+      return;
+    }
     setFreshResults(curr => {
       const newData = [...curr];
       const idx = newData.findIndex(entry => entry.id === solution.id);
@@ -162,8 +165,8 @@ function SingleTask() {
         newData.push({ ...solution, results: [result], student: { id: currentUserId } })
       }
       return newData;
-    })
-  );
+    });
+  });
 
   const allSolutions = useMemo(() => {
     const solutionsList = [...solutionsData.results];
@@ -213,14 +216,16 @@ function SingleTask() {
         </Box>
 
         {isTeacher ? (
-          <Button
-            component={Link}
-            to={links.tasks.editTask.compose(id)}
-            startIcon={<Edit />}
-            variant='outlined'
-          >
-            Edit
-          </Button>
+          task.teacher.id === currentUserId && (
+            <Button
+              component={Link}
+              to={links.tasks.editTask.compose(id)}
+              startIcon={<Edit />}
+              variant='outlined'
+            >
+              Edit
+            </Button>
+          )
         ) : (
           <SuggestSolution
             isConfiguringSolution={isConfiguringSolution}

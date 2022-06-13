@@ -12,7 +12,7 @@ module.exports = {
   },
   create: async req => {
     const { taskId } = req.body;
-    if (typeof taskId === 'number') {
+    if (Number.isInteger(taskId)) {
       req.body.task = await Task.findByPk(taskId, { ...Task_Default, rejectOnEmpty: false});
     }
     delete req.body.taskId;

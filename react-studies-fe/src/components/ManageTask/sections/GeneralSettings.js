@@ -1,22 +1,23 @@
 import Grid from '@mui/material/Grid';
-import StandardTextField from '../../../../uiKit/SmartForm/fields/StandardTextField';
+import StandardTextField from '../../../uiKit/SmartForm/fields/StandardTextField';
 import fieldNames from '../fieldNames';
-import StandardSelectField from '../../../../uiKit/SmartForm/fields/StandardSelectField';
-import MarkdownField from '../../../../uiKit/SmartForm/fields/MarkdownField';
-import { TASK_KIND_DEFINITIONS } from '../../../../util/constants';
-import FileField from '../../../../uiKit/SmartForm/fields/FileField';
+import StandardSelectField from '../../../uiKit/SmartForm/fields/StandardSelectField';
+import MarkdownField from '../../../uiKit/SmartForm/fields/MarkdownField';
+import { TASK_KIND_DEFINITIONS } from '../../../util/constants';
+import FileField from '../../../uiKit/SmartForm/fields/FileField';
 import fieldAccepts from '../fieldAccepts';
 import { useFormikContext } from 'formik';
-import CheckboxField from '../../../../uiKit/SmartForm/fields/CheckboxField';
-import { getOptions } from '../../../../util/misc';
+import CheckboxField from '../../../uiKit/SmartForm/fields/CheckboxField';
+import { getOptions } from '../../../util/misc';
 import Typography from '@mui/material/Typography';
 import InputLabel from '@mui/material/InputLabel';
-import HelpBadge from '../../../../uiKit/HelpBadge';
+import HelpBadge from '../../../uiKit/HelpBadge';
+import { bool } from 'prop-types';
 
 
 const taskKindOptions = getOptions(TASK_KIND_DEFINITIONS);
 
-function GeneralSettings() {
+function GeneralSettings({ canChangeKind }) {
   const { values } = useFormikContext();
   return (
     <Grid container spacing={{ xs: 2, md: 3 }}>
@@ -28,6 +29,7 @@ function GeneralSettings() {
           name={fieldNames.kind}
           options={taskKindOptions}
           label='Task type'
+          disabled={!canChangeKind}
         />
       </Grid>
       <Grid item xs={12}>
@@ -68,5 +70,9 @@ function GeneralSettings() {
     </Grid>
   );
 }
+
+GeneralSettings.propTypes = {
+  canChangeKind: bool,
+};
 
 export default GeneralSettings;

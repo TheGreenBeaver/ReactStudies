@@ -20,7 +20,7 @@ const { Task_List } = require('../util/query-options');
 
 class TasksRouter extends SmartRouter {
   constructor() {
-    const createDestination = (req, file, cb) => {
+    const multerDestination = (req, file, cb) => {
       const { fieldname } = file;
       const timestamp = multerMw.multerUtils.useSingleTs(req);
       const dir = path.join(MEDIA_DIR, 'tasks', `task-${timestamp}`, fieldname);
@@ -28,15 +28,16 @@ class TasksRouter extends SmartRouter {
         cb(null, dir);
       });
     };
-    const createFilename = (req, file, cb) => {
+    const multerFilename = (req, file, cb) => {
       const uniquePrefix = now();
       cb(null, `${uniquePrefix}${path.extname(file.originalname)}`);
     };
-    const createFields = [
+    const multerFields = [
       { name: 'attachments' },
       { name: 'sampleImage', maxCount: 1 },
       { name: 'fileDump', maxCount: 1 }
     ];
+    const multerLogic = [multerFields, multerDestination, { fieldType: multerMw.FIELD_TYPES.fields, filename: multerFilename }];
 
     super(Task, __filename, {
       AccessRules: {
@@ -45,7 +46,8 @@ class TasksRouter extends SmartRouter {
       },
       DefaultAccessRules: { isAuthorized: true, isVerified: true, isTeacher: true },
       MulterLogic: {
-        create: [createFields, createDestination, { fieldType: multerMw.FIELD_TYPES.fields, filename: createFilename }]
+        create: multerLogic,
+        update: multerLogic
       }
     });
   }
@@ -231,6 +233,94 @@ class TasksRouter extends SmartRouter {
     }
 
     return { status: httpStatus.CREATED, data: basicTask };
+  }
+
+  async handleUpdate(req, options, res, next) {
+    const { body, user, app, files } = req;
+
+    const {
+      rememberToken,
+      gitHubToken,
+      title,
+      description,
+      task
+    } = body;
+
+    const { attachmentsToCreate, sampleImage } = files;
+
+    if (rememberToken && gitHubToken) {
+      user.gitHubToken = gitHubToken;
+      await user.save();
+    }
+
+    const { locals: { wsServer } } = app;
+
+    const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: user.gitHubToken });
+    const [owner, repo] = task.repoUrl.split('/').slice(-2);
+
+    if (title !== task.title) {
+      const { data: renamedRepo } = await octokit.rest.repos.update({ owner, repo, name: title });
+      task.repoUrl = renamedRepo.html_url;
+    }
+
+    const repoFileUpdates = [];
+    if (description !== task.description) {
+      repoFileUpdates.push(
+        octokit.rest.repos.getContent({ owner, repo, path: 'README.md' }).then(({ data: readme }) =>
+          octokit.rest.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path: 'README.md',
+            content: getBase64(description),
+            message: 'Reflecting updates', sha: readme.sha
+          })
+        )
+      );
+    }
+
+    if (attachmentsToCreate?.length) {
+
+    }
+
+    if (sampleImage?.length) {
+      const currentExt = path.extname(task.layoutTask.getDataValue('sampleImage'));
+      const sampleImageContent = await fs.promises.readFile(sampleImage[0].path, 'base64');
+
+      repoFileUpdates.push(octokit.rest.repos.getContent({ owner, repo, path: `tech/sample${currentExt}` })
+        .then(({ data: oldSampleImg }) => Promise.all([
+          octokit.rest.repos.delete({
+            owner,
+            repo,
+            path: `tech/sample${currentExt}`,
+            message: 'Reflecting updates', sha: oldSampleImg.sha,
+          }),
+          octokit.rest.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path: `tech/sample${path.extname(sampleImage[0].path)}`,
+            message: 'Reflecting updates',
+            content: sampleImageContent,
+          }),
+        ]))
+      );
+
+      repoFileUpdates.push(octokit.rest.repos.getContent({ owner, repo, path: `tech/sample.html` }).then(({ data: oldSampleHtml }) =>
+        octokit.rest.repos.createOrUpdateFileContents({
+          owner,
+          repo,
+          path: 'tech/sample.html',
+          message: 'Reflecting updates',
+          sha: oldSampleHtml.sha,
+          content: getBase64(TasksRouter.#getSampleHtml(path.extname(sampleImage[0].path)))
+        })
+      ));
+    }
+
+    Promise.all(repoFileUpdates).then(() => wsServer.sendToUser(user, wsServer.Actions.taskRepositoryPopulated, task));
+
+    task.set(pick(body, ['title', 'description', 'trackUpdates']));
+    await task.save();
+    return { data: task };
   }
 }
 

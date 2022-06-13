@@ -1,8 +1,8 @@
-import ElementsListField from '../../../../../uiKit/SmartForm/fields/ElementsListField';
+import ElementsListField from '../../../../uiKit/SmartForm/fields/ElementsListField';
 import fieldNames from '../../fieldNames';
-import { ELEMENT_FIELDS } from '../../../../../util/constants';
+import { ELEMENT_FIELDS } from '../../../../util/constants';
 import Typography from '@mui/material/Typography';
-import CaveatField from '../../../../../uiKit/SmartForm/fields/CaveatField';
+import CaveatField from '../../../../uiKit/SmartForm/fields/CaveatField';
 
 
 function AdvancedLayoutSettings() {

@@ -1,6 +1,7 @@
-const { SolutionResult_List } = require('../../util/query-options');
+const { SolutionResult_List, SolutionResult_Default } = require('../../util/query-options');
 
 
 module.exports = {
-  list: SolutionResult_List
+  list: SolutionResult_List,
+  retrieve: SolutionResult_Default
 };

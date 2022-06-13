@@ -1,6 +1,6 @@
 import MainLayoutSettings from './MainLayoutSettings';
 import MainReactSettings from './MainReactSettings';
-import { TASK_KINDS } from '../../../../../util/constants';
+import { TASK_KINDS } from '../../../../util/constants';
 import { useField } from 'formik';
 import fieldNames from '../../fieldNames';
 

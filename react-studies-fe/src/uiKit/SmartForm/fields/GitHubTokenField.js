@@ -85,7 +85,7 @@ function GitHubTokenField({ action, entity, buttonText, ...buttonProps }) {
         </DialogActions>
       </Dialog>
       <SubmitButton {...buttonProps} onClick={onSubmitAttempt}>
-        {buttonText}
+        {buttonText || action}
       </SubmitButton>
     </>
   );
@@ -95,10 +95,6 @@ GitHubTokenField.propTypes = {
   action: string.isRequired,
   entity: string.isRequired,
   buttonText: string
-};
-
-GitHubTokenField.defaultProps = {
-  buttonText: 'Create',
 };
 
 export default GitHubTokenField;

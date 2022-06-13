@@ -109,7 +109,7 @@ function getTaskKind(task) {
   return task ? Object.values(TASK_KINDS).find(taskKind => !isEmpty(task[`${taskKind}Task`])) : null;
 }
 
-function getSolutionResultIndicator(result) {
+function getSolutionResultIndicator(result, onlyIcon) {
   let icon;
   let tooltipTitle;
   if (!result?.summary) {
@@ -122,6 +122,11 @@ function getSolutionResultIndicator(result) {
     tooltipTitle = result.summary;
     icon = <CheckCircleOutlined color={SUMMARY_INDICATOR_COLOURS[result.summary]} />;
   }
+
+  if (onlyIcon) {
+    return icon;
+  }
+
   return (
     <Tooltip placement='top' title={tooltipTitle}>
       {icon}

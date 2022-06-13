@@ -1,6 +1,7 @@
 const mapValues = require('lodash/mapValues');
 const fs = require('fs');
 const { paginationTransformer, boolTransformer } = require('../../util/transformers');
+const { Task_Default } = require('../../util/query-options');
 
 
 module.exports = {
@@ -49,6 +50,30 @@ module.exports = {
     if ('mini' in req.query) {
       req.query.mini = boolTransformer(req.query.mini);
     }
+  },
+  update: async req => {
+    const { user, params } = req;
+    if (Number.isInteger(+params.id)) {
+      const allTasks = await user.getTasks({ where: { id: +params.id }, ...Task_Default, rejectOnEmpty: false });
+      req.body.task = allTasks?.[0];
+      req.body.kind = req.body.task?.kind;
+    }
+    req.body = mapValues(req.body, (fieldValue, fieldName) => {
+      if (['absPos', 'rawSizing',].includes(fieldName)) {
+        return JSON.parse(fieldValue);
+      }
+      if (['mustUse', 'oldAttachmentNames'].includes(fieldName)) {
+        const adjusted = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
+        return adjusted.map(el => JSON.parse(el));
+      }
+      if ([
+        'rememberToken',
+        'trackUpdates',
+      ].includes(fieldName)) {
+        return boolTransformer(fieldValue);
+      }
+      return fieldValue;
+    });
   }
 };
 

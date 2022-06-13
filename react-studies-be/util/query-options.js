@@ -82,6 +82,13 @@ const SolutionResult_List = {
   ],
   order: [['createdAt', 'DESC']]
 };
+const SolutionResult_Default = {
+  attributes: ['id', 'summary', 'unprocessedReportLocation', 'runId', 'createdAt'],
+  include: [
+    { model: LayoutSolutionResult, as: 'layoutResult' },
+    { model: ReactSolutionResult, as: 'reactResult' }
+  ],
+};
 
 const Solution_List = {
   attributes: ['id', 'updatedAt'],
@@ -140,5 +147,6 @@ module.exports = {
   Task_Default,
   Task_List,
 
-  SolutionResult_List
+  SolutionResult_List,
+  SolutionResult_Default
 };

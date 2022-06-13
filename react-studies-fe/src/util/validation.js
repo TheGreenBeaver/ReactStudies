@@ -66,7 +66,7 @@ class Validators {
 
     const singleFileSchema = mixed()
       .test('singleFile', 'Validation error', (value, { path, createError }) => {
-        if (!value || isEqual(Object.keys(value), ['location', 'mime', 'id'])) {
+        if (!value || 'location' in value) {
           return true;
         }
         if (!(value instanceof File)) {
@@ -298,8 +298,11 @@ addMethod(StringSchema, 'navRoute', function navRoute() {
 addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
   return this
     .test('relativeUrl', 'Not a valid relative URL path', (value, { createError }) => {
+      if (!value) {
+        return true;
+      }
       const [method, ...pathnameParts] = value.split(' ');
-      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase)) {
+      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase())) {
         return createError({ message: `${method} is not a valid HTTP method` });
       }
       const pathname = pathnameParts.join('');
@@ -319,7 +322,7 @@ addMethod(ObjectSchema, 'templateConfig', function templateConfig(specialIsRoute
     endpoints: array().of(string().relativeUrl()).canSkip(),
     routes: array().of(string().navRoute()).canSkip(),
     special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
-  }).noUnknown().canSkip().onlyKind(Task.TASK_KINDS.react);
+  }).noUnknown().canSkip();
 });
 
 addMethod(StringSchema, 'keyPattern', function keyPattern() {

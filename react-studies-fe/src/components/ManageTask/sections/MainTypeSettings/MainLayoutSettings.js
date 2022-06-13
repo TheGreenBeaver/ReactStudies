@@ -1,4 +1,4 @@
-import FileField from '../../../../../uiKit/SmartForm/fields/FileField';
+import FileField from '../../../../uiKit/SmartForm/fields/FileField';
 import fieldNames from '../../fieldNames';
 import fieldAccepts from '../../fieldAccepts';
 

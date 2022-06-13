@@ -1,4 +1,4 @@
-import { TASK_KINDS } from '../../../../../util/constants';
+import { TASK_KINDS } from '../../../../util/constants';
 import AdvancedLayoutSettings from './AdvancedLayoutSettings';
 import AdvancedReactSettings from './AdvancedReactSettings';
 import { useField } from 'formik';

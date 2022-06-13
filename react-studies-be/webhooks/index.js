@@ -17,7 +17,7 @@ function apply(app) {
   const { wsServer } = app.locals;
 
   webhooks.on('workflow_run.completed', async ({ payload }) => {
-    const { workflow_run , repository, workflow } = payload;
+    const { workflow_run, repository } = payload;
     const solution = await Solution.findOne({
       where: { repoId: repository.id },
       include: [{

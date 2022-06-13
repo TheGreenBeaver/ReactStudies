@@ -29,18 +29,27 @@ class SolutionsRouter extends SmartRouter {
 
   getQueryOptions(handlerName, req) {
     const options = cloneDeep(super.getQueryOptions(handlerName, req));
-    if (handlerName === 'list') {
-      const where = {};
-      if ('taskId' in req.query) {
-        where['$task.id$'] = req.query.taskId;
+    switch (handlerName) {
+      case 'list': {
+        const where = {};
+        if ('taskId' in req.query) {
+          where['$task.id$'] = req.query.taskId;
+        }
+        if (!req.user.isTeacher) {
+          where['$student.id$'] = req.user.id;
+        }
+        if (!isEmpty(where)) {
+          options.where = where;
+        }
+        break;
       }
-      if (!req.user.isTeacher) {
-        where['$student.id$'] = req.user.id;
-      }
-      if (!isEmpty(where)) {
-        options.where = where;
+      case 'retrieve': {
+        if (!req.user.isTeacher) {
+          options.where = { ['$student.id$']: req.user.id };
+        }
       }
     }
+
     return options;
   }
 
@@ -48,7 +57,7 @@ class SolutionsRouter extends SmartRouter {
     const { user, body } = req;
     const { gitHubToken, rememberToken } = body;
 
-    if (rememberToken) {
+    if (rememberToken && gitHubToken) {
       user.gitHubToken = gitHubToken;
       await user.save();
     }
@@ -209,6 +218,13 @@ class SolutionsRouter extends SmartRouter {
     );
 
     return { data: solution, status: httpStatus.CREATED };
+  }
+
+  async handleRetrieve(req, options, res, next) {
+    const data = await this.Model.findOne({
+      rejectOnEmpty: true, ...options, where: { ...options.where, id: req.params.id }
+    });
+    return { data };
   }
 }
 

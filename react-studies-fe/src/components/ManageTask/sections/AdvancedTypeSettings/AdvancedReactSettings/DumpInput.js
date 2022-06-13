@@ -1,20 +1,20 @@
-import HelpBadge from '../../../../../../uiKit/HelpBadge';
+import HelpBadge from '../../../../../uiKit/HelpBadge';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
 import fieldNames from '../../../fieldNames';
 import WarningAmber from '@mui/icons-material/WarningAmber';
-import FileField from '../../../../../../uiKit/SmartForm/fields/FileField';
+import FileField from '../../../../../uiKit/SmartForm/fields/FileField';
 import fieldAccepts from '../../../fieldAccepts';
-import StandardTextField from '../../../../../../uiKit/SmartForm/fields/StandardTextField';
-import StandardSelectField from '../../../../../../uiKit/SmartForm/fields/StandardSelectField';
+import StandardTextField from '../../../../../uiKit/SmartForm/fields/StandardTextField';
+import StandardSelectField from '../../../../../uiKit/SmartForm/fields/StandardSelectField';
 import DumpSyntaxModal from './DumpSyntaxModal';
 import { useFormikContext } from 'formik';
-import useCollapse from '../../../../../../hooks/useCollapse';
+import useCollapse from '../../../../../hooks/useCollapse';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Collapse from '@mui/material/Collapse';
-import { getOptions } from '../../../../../../util/misc';
+import { getOptions } from '../../../../../util/misc';
 
 
 const METHODS = {

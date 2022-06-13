@@ -1,4 +1,4 @@
-import Layout from '../../../../../../uiKit/Layout';
+import Layout from '../../../../../uiKit/Layout';
 import MuiLink from '@mui/material/Link';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
