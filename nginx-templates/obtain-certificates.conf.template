@@ -1,0 +1,10 @@
+server {
+  listen ${EXTERNAL_HTTP_PORT};
+  listen [::]:${EXTERNAL_HTTP_PORT};
+  server_name ${SRV_NAME};
+
+  location /.well-known/acme-challenge {
+    allow all;
+    root ${NGINX_ROOT}${NGINX_ACME};
+  }
+}

@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  frontend-studies-database:
+    container_name: frontend-studies-database
+    image: postgres
+    restart: always
+    volumes:
+      - ${VOL_ROOT}${VOL_DATABASE}:/var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+  frontend-studies-application:
+    container_name: frontend-studies-application
+    build:
+      context: ./app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - APP_ROOT
+      - APP_FRONTEND
+      - APP_BACKEND
+      - NGINX_ROOT
+      - NGINX_FRONTEND
+    links:
+      - frontend-studies-database
+    depends_on:
+      - frontend-studies-database
+    volumes:
+      - ${VOL_ROOT}${VOL_MEDIA}:${APP_ROOT}${APP_BACKEND}/media
+      - ${VOL_ROOT}${VOL_TMP}:${APP_ROOT}${APP_BACKEND}/tmp-files
+      - ${VOL_ROOT}${VOL_FRONTEND}:${APP_ROOT}${APP_FRONTEND}
+  frontend-studies-proxy:
+    container_name: frontend-studies-proxy
+    expose:
+      - "${EXTERNAL_HTTP_PORT}"
+      - "${EXTERNAL_HTTPS_PORT}"
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ${VOL_ROOT}${VOL_MEDIA}:${NGINX_ROOT}${NGINX_MEDIA}:ro
+      - ${VOL_ROOT}${VOL_FRONTEND}:${NGINX_ROOT}${NGINX_FRONTEND}:ro
+      - ${VOL_ROOT}${VOL_CERT}:${NGINX_ROOT}${NGINX_CERT}:ro
+      - ${VOL_ROOT}${VOL_ACME}:${NGINX_ROOT}${NGINX_ACME}
+      - ${VOL_ROOT}${VOL_TEMPLATES}:/etc/nginx/templates
+    ports:
+      - "${EXTERNAL_HTTP_PORT}:${EXTERNAL_HTTP_PORT}"
+      - "${EXTERNAL_HTTPS_PORT}:${EXTERNAL_HTTPS_PORT}"
+  frontend-studies-certbot:
+    container_name: frontend-studies-certbot
+    image: certbot/certbot:latest
+    env_file:
+      - .env
+    command: certonly --webroot --webroot-path="${WEBROOT_PATH}" --email="$EMAIL_USER" --agree-tos --no-eff-email -d "$SRV_NAME"
+    volumes:
+      - ${VOL_ROOT}${VOL_ACME}:${WEBROOT_PATH}
+      - ${VOL_ROOT}${VOL_CERT}:/etc/letsencrypt
+    depends_on:
+      - frontend-studies-proxy
