@@ -1,6 +1,6 @@
 const mapValues = require('lodash/mapValues');
 const fs = require('fs');
-const { paginationTransformer, boolTransformer } = require('../../util/transformers');
+const { paginationTransformer, boolTransformer, flagTransformer } = require('../../util/transformers');
 const { Task_Default } = require('../../util/query-options');
 
 
@@ -35,6 +35,7 @@ module.exports = {
       return fieldValue;
     });
     if (req.files.fileDump) {
+      // TODO: Text Dump
       req.body.dump = await fs.promises.readFile(req.files.fileDump[0].path, 'utf8');
       await fs.promises.rm(req.files.fileDump[0].path);
       delete req.files.fileDump;
@@ -47,9 +48,7 @@ module.exports = {
     }
   },
   retrieve: req => {
-    if ('mini' in req.query) {
-      req.query.mini = boolTransformer(req.query.mini);
-    }
+    flagTransformer(req, 'mini');
   },
   update: async req => {
     const { user, params } = req;
@@ -58,6 +57,7 @@ module.exports = {
       req.body.task = allTasks?.[0];
       req.body.kind = req.body.task?.kind;
     }
+    // TODO: Remaining fields (probably some common func for create / update)
     req.body = mapValues(req.body, (fieldValue, fieldName) => {
       if (['absPos', 'rawSizing',].includes(fieldName)) {
         return JSON.parse(fieldValue);

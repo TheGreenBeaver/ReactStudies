@@ -3,6 +3,7 @@ const {
   Model
 } = require('sequelize');
 const { composeMediaPath } = require('../util/misc');
+const { getUpdateReflectorHook } = require('../util/sql');
 module.exports = (sequelize, DataTypes) => {
   class LayoutSolutionResult extends Model {
     static associate({ SolutionResult }) {
@@ -33,7 +34,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     tableName: 'layout_solution_result',
     modelName: 'LayoutSolutionResult',
-    timestamps: false
+    timestamps: false,
+    hooks: { afterUpdate: getUpdateReflectorHook('Result') }
   });
   return LayoutSolutionResult;
 };

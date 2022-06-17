@@ -2,6 +2,7 @@
 const {
   Model, Op
 } = require('sequelize');
+const { getUpdateReflectorHook } = require('../util/sql');
 module.exports = (sequelize, DataTypes) => {
   class ReactTask extends Model {
     static associate({ Task, TemplateConfig }) {
@@ -67,13 +68,7 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'react_task',
     timestamps: false,
     modelName: 'ReactTask',
-    hooks: {
-      afterUpdate: async instance => {
-        const basicTask = await instance.getBasicTask();
-        basicTask.updatedAt = new Date();
-        await basicTask.save();
-      }
-    }
+    hooks: { afterUpdate: getUpdateReflectorHook('Task') }
   });
   return ReactTask;
 };

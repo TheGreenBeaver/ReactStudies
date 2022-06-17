@@ -10,10 +10,34 @@ function getTemplate(task, kind) {
   return task.reactTask.teacherTemplateConfigs.find(cfg => cfg.kind === kind);
 }
 
+function hasDump(task) {
+  return task.kind === Task.TASK_KINDS.react && !!task.reactTask.dump;
+}
+
+function matchingTeacherCfg(schema, templateKind, templateField) {
+  return schema.test(
+    'matchingTeacherCfg',
+    'Must fill in the empty fields and keep the predefined ones',
+    (value, { options: { context: { body: { task } } } }) => {
+      const template = getTemplate(task, templateKind);
+      const teacherValues = template[templateField];
+      return !teacherValues || value.every((entry, idx) => !teacherValues[idx] || value === teacherValues[idx]);
+    });
+}
+
+function needsStudentCfg(task, templateKind, templateField) {
+  const template = getTemplate(task, templateKind);
+  return !!template && (
+    !template[templateField] ||
+    template[templateField].some(entry => !entry) ||
+    !template[templateField].filter(Boolean).length
+  );
+}
+
 module.exports = {
   list: {
     query: object({
-      taskId: Validators.entityId().canSkip(),
+      taskId: Validators.entityId().optional(),
     }).withPagination(),
     body: Validators.ensureEmpty()
   },
@@ -25,37 +49,39 @@ module.exports = {
         value => !!value && value instanceof Task,
       ).label('taskId'),
       gitHubToken: Validators.gitHubToken().canSkip(),
-      rememberToken: boolean().canSkip(),
+      rememberToken: boolean().optional(),
 
       dumpUploadUrl: string().when('task', {
-        is: task => task.kind === Task.TASK_KINDS.react && !task.reactTask.dumpUploadUrl,
+        is: task => hasDump(task) && !task.reactTask.dumpUploadUrl,
         then: schema => schema.absoluteUrl().required(),
         otherwise: () => Validators.ensureEmpty()
       }),
       dumpUploadMethod: string().when('task', {
-        is: task => task.kind === Task.TASK_KINDS.react && !task.reactTask.dumpUploadMethod,
+        is: task => hasDump(task) && !task.reactTask.dumpUploadMethod,
         then: schema => schema.oneOf(['post', 'patch', 'put']).required(),
         otherwise: () => Validators.ensureEmpty()
       }),
 
       authRoutes: array().when('task', {
-        is: task => {
-          const authTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.authTemplate);
-          return !!authTemplate?.routes.some(route => !route);
-        },
-        then: schema => schema.of(string().navRoute().required()).length(2).required(),
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.authTemplate, 'routes'),
+        then: schema => matchingTeacherCfg(
+          schema.of(string().navRoute().required()).length(2).required(),
+          TemplateConfig.TEMPLATE_KINDS.authTemplate,
+          'routes'
+        ),
         otherwise: () => Validators.ensureEmpty()
       }),
       authEndpoints: array().when('task', {
-        is: task => {
-          const authTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.authTemplate);
-          return !!authTemplate?.endpoints.some(ep => !ep);
-        },
-        then: schema => schema.of(string().relativeUrl().required()).required().when('task', {
-          is: task => !!task.reactTask?.hasVerification,
-          then: arraySchema => arraySchema.length(3),
-          otherwise: arraySchema => arraySchema.length(2)
-        }),
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.authTemplate, 'endpoints'),
+        then: schema => matchingTeacherCfg(
+          schema.of(string().relativeUrl().required()).required().when('task', {
+            is: task => !!task.reactTask?.hasVerification,
+            then: arraySchema => arraySchema.length(3),
+            otherwise: arraySchema => arraySchema.length(2)
+          }),
+          TemplateConfig.TEMPLATE_KINDS.authTemplate,
+          'endpoints'
+        ),
         otherwise: () => Validators.ensureEmpty()
       }),
       authSpecial: string().when('task', {
@@ -68,18 +94,12 @@ module.exports = {
       }),
 
       entityListRoutes: array().when('task', {
-        is: task => {
-          const listTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.entityListTemplate);
-          return !!listTemplate?.routes.some(route => !route);
-        },
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.entityListTemplate, 'routes'),
         then: schema => schema.of(string().navRoute().required()).length(1).required(),
         otherwise: () => Validators.ensureEmpty()
       }),
       entityListEndpoints: array().when('task', {
-        is: task => {
-          const listTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.entityListTemplate);
-          return !!listTemplate && !listTemplate.endpoints?.filter(Boolean).length;
-        },
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.entityListTemplate, 'endpoints'),
         then: schema => schema.of(string().relativeUrl().required()).min(1).required(),
         otherwise: () => Validators.ensureEmpty()
       }),
@@ -93,18 +113,18 @@ module.exports = {
       }),
 
       singleEntityRoutes: array().when('task', {
-        is: task => {
-          const singleTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.singleEntityTemplate);
-          return !!singleTemplate?.routes.some(route => !route);
-        },
-        then: schema => schema.of(string().navRoute().required()).length(1).required(),
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.singleEntityTemplate, 'routes'),
+        then: schema => schema.of(
+          string().required().when('task', {
+            is: task => !!task.dump,
+            then: entrySchema => entrySchema.keyPattern(),
+            otherwise: entrySchema => entrySchema.navRoute()
+          })
+        ).length(1).required(),
         otherwise: () => Validators.ensureEmpty()
       }),
       singleEntityEndpoints: array().when('task', {
-        is: task => {
-          const singleTemplate = getTemplate(task, TemplateConfig.TEMPLATE_KINDS.singleEntityTemplate);
-          return !!singleTemplate && !singleTemplate.endpoints?.filter(Boolean).length;
-        },
+        is: task => needsStudentCfg(task, TemplateConfig.TEMPLATE_KINDS.singleEntityTemplate, 'endpoints'),
         then: schema => schema.of(string().relativeUrl().required()).min(1).required(),
         otherwise: () => Validators.ensureEmpty()
       })

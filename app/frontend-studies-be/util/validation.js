@@ -38,6 +38,14 @@ addMethod(BaseSchema, 'canSkip', function canSkip() {
   return this.nullable().optional();
 });
 
+addMethod(ObjectSchema, 'someField', function someConstraint(label = 'constraint') {
+  return this.test(
+    'someField',
+    `At least one ${label} must be specified`,
+      value => Object.values(value).some(field => !isEmpty(field))
+  );
+});
+
 class Validators {
   static #getAcceptPattern(acceptToken) {
     return new RegExp(acceptToken.replace(/\*/g, '[a-zA-Z-]+'));
@@ -130,18 +138,13 @@ class Validators {
         ? this.#requiredSchema(singleElementSpec[field], true)
         : singleElementSpec[field].canSkip();
     });
-    return array().of(
-      object(singleElementSpec).test(
-        'oneConstraint', 'At least one constraint must be specified',
-        value => Object.values(value).some(Boolean),
-      )
-    );
+    return array().of(object(singleElementSpec).someField());
   }
 
   static numeric(min, max, nullable) {
     return mixed().test('numeric', 'Validation error', (value, { createError }) => {
       if (value == null) {
-        return nullable || createError({ message: '${path} must not be empty' })
+        return !!nullable || createError({ message: '${path} must not be empty' })
       }
       if (value === '') {
         return createError({ message: '${path} must not be empty' });
@@ -160,17 +163,14 @@ class Validators {
     return object({
       maxUsage: this.numeric(min, max, true).label('Threshold').canSkip(),
       allowedFor: this.#requiredSchema(this.elementList().label('rule')).canSkip()
-    }).noUnknown().canSkip();
+    }).noUnknown().optional();
   }
 
   static gitHubToken() {
     return mixed()
-      .test('token', 'Validation error', (value, context) => {
+      .test('token', 'Not a valid Personal Access Token', (value, context) => {
         const token = value || context.options.context.user.gitHubToken;
-        if (!token) {
-          return context.createError({ message: 'No token found' });
-        }
-        return /^ghp_\w{36}$/.test(token) ? true : context.createError({ message: 'Not a valid Personal Access Token' });
+        return token ? /^ghp_\w{36}$/.test(token) : context.createError({ message: 'No token found' });
       });
   }
 
@@ -180,6 +180,10 @@ class Validators {
 
   static #isNum(v) {
     return typeof v === 'number';
+  }
+
+  static #isObj(v) {
+    return v?.constructor?.name === 'Object';
   }
 
   static #isUniqArray(v) {
@@ -204,11 +208,12 @@ class Validators {
     allowPast: this.#isBool,
     allowFuture: this.#isBool,
     unique: this.#isBool,
-    of: v => typeof v === 'object',
-    values: this.#isUniqArray,
+    of: this.#isObj,
+    values: v => this.#isUniqArray(v) && v.length > 1,
     letterSets: v =>
       this.#isUniqArray(v) &&
-      v.every(e => ['latin', 'numbers', 'symbols', 'spaces', 'nonLatin'].includes(e)),
+      v.length > 0 &&
+      v.every(s => ['latin', 'numbers', 'symbols', 'spaces', 'nonLatin'].includes(s)),
     allowCapital: this.#isBool,
   };
 
@@ -282,6 +287,22 @@ class Validators {
 
     return null;
   }
+
+  static isUrl(value, relative) {
+    if (!value) {
+      return true;
+    }
+    try {
+      const args = [value];
+      if (relative) {
+        args.push('http://localhost')
+      }
+      new URL(...args);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 addMethod(BaseSchema, 'onlyKind', function onlyKind(kind) {
@@ -326,7 +347,7 @@ addMethod(StringSchema, 'navRoute', function navRoute() {
       if (!Validators.isUrl(value, true)) {
         return false;
       }
-      return value.startsWith('/') ? true : createError({ message: 'Route must start with /' });
+      return value.startsWith('/') || createError({ message: 'Route must start with /' });
     });
 });
 
@@ -334,14 +355,14 @@ addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
   return this
     .test('relativeUrl', 'Not a valid relative URL path', (value, { createError }) => {
       const [method, ...pathnameParts] = value.split(' ');
-      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase)) {
+      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase())) {
         return createError({ message: `${method} is not a valid HTTP method` });
       }
-      const pathname = pathnameParts.join('');
+      const pathname = pathnameParts.join(' ');
       if (!Validators.isUrl(pathname, true)) {
         return createError({ message: `${pathname} is not a valid URL pathname` });
       }
-      return /^\/.*/.test(pathname) ? true : createError({ message: 'Relative URL must start with /' });
+      return value.startsWith('/') || createError({ message: 'Relative URL must start with /' });
     });
 });
 
@@ -349,16 +370,27 @@ addMethod(StringSchema, 'absoluteUrl', function absoluteUrl() {
   return this.test('absoluteUrl', 'Not a valid absolute URL path', value => Validators.isUrl(value));
 });
 
-addMethod(ObjectSchema, 'templateConfig', function templateConfig(specialIsRoute) {
-  return this.shape({
-    endpoints: array().of(string().relativeUrl()).canSkip(),
-    routes: array().of(string().navRoute()).canSkip(),
-    special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
-  }).noUnknown().canSkip().onlyKind(Task.TASK_KINDS.react);
-});
-
 addMethod(StringSchema, 'keyPattern', function keyPattern() {
   return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
+});
+
+addMethod(ObjectSchema, 'templateConfig', function templateConfig(
+  adjustEndpoints = endpointsSchema => endpointsSchema.min(1),
+  routesCount = 1,
+  specialIsRoute = false
+) {
+  const endpointsBase = array().of(string().relativeUrl()).canSkip();
+  return this.shape({
+    endpoints: adjustEndpoints(endpointsBase),
+    routes: array().of(
+      string().when('$body', {
+        is: body => !!body.dump,
+        then: schema => schema.keyPattern(),
+        otherwise: schema => schema.navRoute()
+      })
+    ).canSkip().length(routesCount),
+    special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
+  }).noUnknown().optional().onlyKind(Task.TASK_KINDS.react);
 });
 
 module.exports = Validators;

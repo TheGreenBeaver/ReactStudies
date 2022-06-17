@@ -5,6 +5,7 @@ const { ValidationError: YupValidationError } = require('yup');
 const allModels = require('../models');
 const { isDev } = require('../util/env');
 const set = require('lodash/set');
+const groupBy = require('lodash/groupBy');
 const { NON_FIELD_ERR, GITHUB_ERR } = require('../settings');
 
 
@@ -50,13 +51,7 @@ function handleYupValidationError(err, req, res, next) {
 }
 
 function getValidationErrJson(validationResult) {
-  return validationResult.errors.reduce((acc, err) => {
-    if (!acc[err.path]) {
-      acc[err.path] = [];
-    }
-    acc[err.path].push(err.message);
-    return acc;
-  }, {});
+  return groupBy(validationResult.errors, 'path');
 }
 
 function handleSqlValidationError(err, req, res, next) {

@@ -219,13 +219,6 @@ class SolutionsRouter extends SmartRouter {
 
     return { data: solution, status: httpStatus.CREATED };
   }
-
-  async handleRetrieve(req, options, res, next) {
-    const data = await this.Model.findOne({
-      rejectOnEmpty: true, ...options, where: { ...options.where, id: req.params.id }
-    });
-    return { data };
-  }
 }
 
 const solutionsRouter = new SolutionsRouter();

@@ -17,4 +17,10 @@ function boolTransformer(value) {
   }
 }
 
-module.exports = { paginationTransformer, boolTransformer };
+function flagTransformer(req, flag) {
+  if (flag in req.query) {
+    req.query[flag] = boolTransformer(req.query[flag]);
+  }
+}
+
+module.exports = { paginationTransformer, boolTransformer, flagTransformer };

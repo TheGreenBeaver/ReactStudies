@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const { getUpdateReflectorHook } = require('../util/sql');
 module.exports = (sequelize, DataTypes) => {
   class ReactSolutionResult extends Model {
     static associate({ SolutionResult }) {
@@ -28,7 +29,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     tableName: 'react_solution_result',
     modelName: 'ReactSolutionResult',
-    timestamps: false
+    timestamps: false,
+    hooks: { afterUpdate: getUpdateReflectorHook('Result') }
   });
   return ReactSolutionResult;
 };

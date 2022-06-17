@@ -278,6 +278,7 @@ class TasksRouter extends SmartRouter {
       );
     }
 
+    // TODO: attachments and other fields
     if (attachmentsToCreate?.length) {
 
     }

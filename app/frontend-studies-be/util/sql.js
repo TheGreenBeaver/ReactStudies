@@ -82,11 +82,18 @@ async function paginate(
     data: {
       results, count,
       next: page * pageSize < count ? page + 1 : null, prev: (page - 1) || null,
-    },
-    __paginated: true
+    }
   };
 }
 
+function getUpdateReflectorHook(instanceName) {
+  return async instance => {
+    const basicInstance = await instance[`getBasic${instanceName}`]();
+    basicInstance.updatedAt = new Date();
+    await basicInstance.save();
+  }
+}
+
 module.exports = {
-  getFkOperations, underscores, getUniqueOperations, paginate
+  getFkOperations, underscores, getUniqueOperations, paginate, getUpdateReflectorHook
 };

@@ -116,7 +116,6 @@ class SmartRouter {
    * @typedef {Object} HandlerResult
    * @property {any=} data
    * @property {number=} status
-   * @property {boolean=} __paginated
    */
   /**
    *
@@ -169,7 +168,11 @@ class SmartRouter {
    * @return {Promise<{ data: any, status?: number }> | { data: any, status?: number }}
    */
   async handleRetrieve(req, options, res, next) {
-    const data = await this.Model.findByPk(+req.params.id, { rejectOnEmpty: true, ...options });
+    const data = 'where' in options
+      ? await this.Model.findOne({
+        rejectOnEmpty: true, ...options, where: { ...options.where, id: +req.params.id }
+      })
+      : await this.Model.findByPk(+req.params.id, { rejectOnEmpty: true, ...options });
     return { data };
   }
 

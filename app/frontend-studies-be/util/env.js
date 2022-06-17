@@ -18,7 +18,7 @@ function getEnv() {
 const isDev = getEnv() === ENVS.dev;
 
 function getPort() {
-  return parseInt(getVar('PORT', '8000'));
+  return parseInt(getVar('INTERNAL_PORT', '8000'));
 }
 
 const port = getPort();

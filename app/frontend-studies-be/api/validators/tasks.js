@@ -35,25 +35,31 @@ module.exports = {
         ),
       trackUpdates: boolean().required(),
 
-      gitHubToken: Validators.gitHubToken().canSkip(),
+      gitHubToken: Validators.gitHubToken().optional(),
       rememberToken: boolean().optional(),
 
       // Layout
-      mustUse: Validators.elementList(['tag']).onlyKind(Task.TASK_KINDS.layout),
+      mustUse: Validators.elementList(['tag']).optional().onlyKind(Task.TASK_KINDS.layout),
       absPos: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
       rawSizing: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
 
       // React
       hasFuzzing: boolean().required().onlyKind(Task.TASK_KINDS.react),
 
-      dump: string().dump().canSkip().onlyKind(Task.TASK_KINDS.react),
-      dumpIsTemplate: boolean().canSkip().onlyKind(Task.TASK_KINDS.react),
-      dumpUploadMethod: Validators.enumOf(['post', 'put', 'patch', '']).canSkip().onlyKind(Task.TASK_KINDS.react),
-      dumpUploadUrl: string().absoluteUrl().canSkip().onlyKind(Task.TASK_KINDS.react),
+      dump: string().dump().optional().onlyKind(Task.TASK_KINDS.react),
+      dumpIsTemplate: boolean().optional().onlyKind(Task.TASK_KINDS.react),
+      dumpUploadMethod: Validators.enumOf(['post', 'put', 'patch', '']).optional().onlyKind(Task.TASK_KINDS.react),
+      dumpUploadUrl: string().absoluteUrl().optional().onlyKind(Task.TASK_KINDS.react),
 
       authTemplate: object({
         hasVerification: boolean().required()
-      }).templateConfig(),
+      }).templateConfig(
+        endpointsSchema => endpointsSchema.when('$body', {
+          is: body => body.authTemplate.hasVerification,
+          then: s => s.length(3),
+          otherwise: s => s.length(2)
+        }), 2, true
+      ),
       entityListTemplate: object({
         hasSearch: boolean().required()
       }).templateConfig(),
@@ -79,9 +85,10 @@ module.exports = {
       ).label('taskId'),
       kind: string().canSkip(),
 
-      title: Validators.standardText(39),
+      title: string().max(39).optional(),
       description: string().optional(),
-      attachmentsToDelete: array().of(Validators.entityId()).canSkip(),
+      attachmentsToDelete: array().of(Validators.entityId()).optional(),
+      // TODO: Remaining fields (probably some common func for create / update)
       newAttachmentNames: string().max(30).matches(
         /^[-.\w _\d]+$/,
         'Allowed characters are latin letters, spaces, dots, underscores, hyphens and numbers',
