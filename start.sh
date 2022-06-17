@@ -1,15 +1,22 @@
 #!/bin/bash
 
+echo "Start"
+
 mkdir -p volumes-mnt/proxy/templates
-# Set http-only config for nginx
+echo "Prepared a directory for templates"
+
 cat nginx-templates/obtain-certificates.conf.template > volumes-mnt/proxy/templates/default.conf.template
+echo "Set http-only config for nginx"
+
 # Obtain certificates
 docker-compose up -d
+echo "Initial docker-compose up done"
 
-# Change nginx config to the one that works with https
 cat nginx-templates/main.conf.template > volumes-mnt/proxy/templates/default.conf.template
-# Restart container with nginx
+echo "Changed nginx config to the one that works with https"
+
 docker-compose kill -s SIGHUP frontend-studies-proxy
+echo "Restarted container with nginx"
 
 # Save current crontab to temp file
 crontab -l > cron.temp
@@ -19,3 +26,4 @@ echo "0 0 */1 * * docker-compose run frontend-studies-certbot renew && docker-co
 crontab cron.temp
 # Remove temp file
 rm cron.temp
+echo "Set cron to update certificates every month"
