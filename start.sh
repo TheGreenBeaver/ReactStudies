@@ -9,19 +9,19 @@ cat nginx-templates/obtain-certificates.conf.template > volumes-mnt/proxy/templa
 echo "Set http-only config for nginx"
 
 # Obtain certificates
-docker-compose up -d
-echo "Initial docker-compose up done"
+docker compose up -d
+echo "Initial docker compose up done"
 
 cat nginx-templates/main.conf.template > volumes-mnt/proxy/templates/default.conf.template
 echo "Changed nginx config to the one that works with https"
 
-docker-compose kill -s SIGHUP frontend-studies-proxy
+docker compose kill -s SIGHUP frontend-studies-proxy
 echo "Restarted container with nginx"
 
 # Save current crontab to temp file
 crontab -l > cron.temp
 # Add cron job for renewal
-echo "0 0 */1 * * docker-compose run frontend-studies-certbot renew && docker-compose kill -s SIGHUP frontend-studies-proxy > /dev/null" >> cron.temp
+echo "0 0 */1 * * docker compose run frontend-studies-certbot renew && docker compose kill -s SIGHUP frontend-studies-proxy > /dev/null" >> cron.temp
 # Set new crontab
 crontab cron.temp
 # Remove temp file
