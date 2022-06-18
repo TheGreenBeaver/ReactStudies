@@ -13,15 +13,15 @@ services:
       - "5432:5432"
   frontend-studies-application:
     container_name: frontend-studies-application
-    build:
-      context: ./app
-    restart: unless-stopped
     env_file:
       - .env
-    environment:
-      - APP_ROOT
-      - APP_FRONTEND
-      - APP_BACKEND
+    build:
+      context: ./app
+      args:
+        - APP_ROOT
+        - APP_FRONTEND
+        - APP_BACKEND
+    restart: unless-stopped
     links:
       - frontend-studies-database
     depends_on:
