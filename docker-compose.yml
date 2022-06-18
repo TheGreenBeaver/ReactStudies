@@ -34,6 +34,7 @@ services:
       - ${VOL_ROOT}${VOL_FRONTEND}:${APP_ROOT}${APP_FRONTEND}
   frontend-studies-proxy:
     container_name: frontend-studies-proxy
+    image: nginx:latest
     expose:
       - "${EXTERNAL_HTTP_PORT}"
       - "${EXTERNAL_HTTPS_PORT}"
