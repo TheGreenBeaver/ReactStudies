@@ -48,6 +48,8 @@ services:
     ports:
       - "${EXTERNAL_HTTP_PORT}:${EXTERNAL_HTTP_PORT}"
       - "${EXTERNAL_HTTPS_PORT}:${EXTERNAL_HTTPS_PORT}"
+    depends_on:
+      - frontend-studies-application
   frontend-studies-certbot:
     container_name: frontend-studies-certbot
     image: certbot/certbot:latest
