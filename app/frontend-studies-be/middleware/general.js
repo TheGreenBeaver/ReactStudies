@@ -1,5 +1,4 @@
 const morgan = require('morgan');
-const cors = require('cors');
 const { isDev } = require('../util/env');
 const express = require('express');
 const helmet = require('helmet');
@@ -26,6 +25,7 @@ function apply(app) {
   ];
 
   if (isDev) {
+    const cors = require('cors');
     stack.push(cors({ origin: FE_HOSTS }));
     app.use(MEDIA_PATH, express.static(MEDIA_DIR))
   }

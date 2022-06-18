@@ -55,10 +55,11 @@ class Validators {
     return accept.split(',').some(token => this.#getAcceptPattern(token).test(mime));
   }
 
-  static #requiredSchema(schema, ultra) {
+  static #requiredSchema(schema, ultra, message) {
+    const arrArgs = ultra ? [message] : [];
     return schema instanceof ArraySchema
-      ? schema.min(1)[ultra ? 'required' : 'optional']()
-      : schema.required();
+      ? schema.min(1)[ultra ? 'required' : 'optional'](...arrArgs)
+      : schema.required(message);
   }
 
   static strictObject(spec) {
@@ -135,7 +136,7 @@ class Validators {
     };
     Object.keys(singleElementSpec).forEach(field => {
       singleElementSpec[field] = requiredElementFields.includes(field)
-        ? this.#requiredSchema(singleElementSpec[field], true)
+        ? this.#requiredSchema(singleElementSpec[field], true, `${startCase(field)}s must not be empty`)
         : singleElementSpec[field].canSkip();
     });
     return array().of(object(singleElementSpec).someField());
@@ -354,6 +355,9 @@ addMethod(StringSchema, 'navRoute', function navRoute() {
 addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
   return this
     .test('relativeUrl', 'Not a valid relative URL path', (value, { createError }) => {
+      if (!value) {
+        return true;
+      }
       const [method, ...pathnameParts] = value.split(' ');
       if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase())) {
         return createError({ message: `${method} is not a valid HTTP method` });
@@ -362,7 +366,7 @@ addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
       if (!Validators.isUrl(pathname, true)) {
         return createError({ message: `${pathname} is not a valid URL pathname` });
       }
-      return value.startsWith('/') || createError({ message: 'Relative URL must start with /' });
+      return pathname.startsWith('/') || createError({ message: 'Pathname must start with /' });
     });
 });
 
@@ -374,21 +378,17 @@ addMethod(StringSchema, 'keyPattern', function keyPattern() {
   return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
 });
 
-addMethod(ObjectSchema, 'templateConfig', function templateConfig(
+addMethod(ObjectSchema, 'templateConfig', function templateConfig({
   adjustEndpoints = endpointsSchema => endpointsSchema.min(1),
   routesCount = 1,
-  specialIsRoute = false
-) {
+  specialIsRoute = false,
+  adjustRoute = routeSchema => routeSchema.navRoute()
+} = {}) {
   const endpointsBase = array().of(string().relativeUrl()).canSkip();
+  const routeBase = string();
   return this.shape({
     endpoints: adjustEndpoints(endpointsBase),
-    routes: array().of(
-      string().when('$body', {
-        is: body => !!body.dump,
-        then: schema => schema.keyPattern(),
-        otherwise: schema => schema.navRoute()
-      })
-    ).canSkip().length(routesCount),
+    routes: array().of(adjustRoute(routeBase)).canSkip().length(routesCount),
     special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
   }).noUnknown().optional().onlyKind(Task.TASK_KINDS.react);
 });

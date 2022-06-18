@@ -22,8 +22,6 @@ services:
       - APP_ROOT
       - APP_FRONTEND
       - APP_BACKEND
-      - NGINX_ROOT
-      - NGINX_FRONTEND
     links:
       - frontend-studies-database
     depends_on:

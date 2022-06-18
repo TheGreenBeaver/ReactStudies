@@ -3,8 +3,12 @@
   "video": false,
   "baseUrl": "http://localhost:3000",
   "experimentalSessionAndOrigin": true,
-  "reporter": "json",
+  "reporter": "mochawesome",
   "reporterOptions": {
-    "output": "reports/main.json"
+    "reportDir": "reports",
+    "reportFilename": "main",
+    "overwrite": true,
+    "html": false,
+    "json": true
   }
 }

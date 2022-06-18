@@ -3,7 +3,7 @@ const { getFilesRecursively, standardizePath } = require('./misc');
 const fs = require('fs');
 const path = require('path');
 const partition = require('lodash/partition');
-const { GITHUB_USER_AGENT, MEDIA_DIR } = require('../settings');
+const { GITHUB_USER_AGENT, MEDIA_DIR, TEMP_DIR } = require('../settings');
 const now = require('lodash/now');
 const unzip = require('./unzip');
 const { SolutionResult, Task } = require('../models');
@@ -93,7 +93,7 @@ async function uploadFiles(octokit, repo, {
   }
 }
 
-async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, solutionResult, solution, tempDest) {
+async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, solutionResult, solution) {
   const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: gitHubToken });
   const taskKind = solution.task.kind;
 
@@ -104,6 +104,8 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
     artifact_id: artifacts[0].id,
     archive_format: 'zip'
   });
+
+  const tempDest = path.join(TEMP_DIR, `${now()}.zip`);
   await fs.promises.writeFile(tempDest, Buffer.from(reportsArchive));
   const dest = path.join(MEDIA_DIR, 'solution-results', taskKind, now().toString());
   await new Promise((resolve, reject) => unzip(tempDest, dest, e => e ? reject(e) : resolve()));
@@ -168,7 +170,7 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
         solutionResult.summary = SolutionResult.SUMMARY.good;
       }
 
-      solutionResult.unprocessedReportLocation = null;
+      solutionResult.isProcessed = true;
       await solutionResult.save();
       await solutionResult.createLayoutResult(values);
       break;

@@ -63,19 +63,18 @@ function clearStorages() {
 }
 
 function getMinMax(providedMin, providedMax, defaultMin, defaultMax) {
-  const diff = defaultMax - defaultMin;
   let min, max;
 
   if (providedMin) {
     min = providedMin;
   } else {
-    min = providedMax == null ? defaultMin : providedMax - diff;
+    min = providedMax == null ? defaultMin : Math.min(defaultMin, providedMax);
   }
 
   if (providedMax) {
     max = providedMax;
   } else {
-    max = providedMin == null ? defaultMax : providedMin + diff;
+    max = providedMin == null ? defaultMax : Math.max(defaultMax, providedMin);
   }
 
   return [min, max];
@@ -98,7 +97,7 @@ const allLetterSets = {
   spaces: '\n\t ',
   nonLatin: 'йцукенгшщзхъфывапролджэячсмитьбю',
 };
-function generateRandomString(length = 10, letterSets, allowCapital) {
+function generateRandomString(length = 10, letterSets = ['latin'], allowCapital = false) {
   const lowercase = letterSets.map(setName => allLetterSets[setName]).join('');
   const letters = allowCapital ? `${lowercase}${lowercase.toUpperCase()}` : lowercase;
   return [...Array(length)].map(() => {
@@ -240,6 +239,7 @@ function uploadDump({ dump, dumpIsTemplate, upload: { url, method } }) {
 }
 
 function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
+  cy.wait(3000);
   /**
    *
    * @type {Array<Node>}
@@ -298,6 +298,17 @@ function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
   cy.writeFile(`reports/${fileName}.json`, JSON.stringify(report, null, '  '));
 }
 
+const MESSAGES = {
+  authOnlyAllowed: 'Expected auth-only route to be accessible for an authorized user',
+  authOnlyForbidden: 'Expected auth-only route not to be accessible for a non-authorized user',
+  clientError: endpoint => `Expected a client error status code when requesting ${endpoint} with invalid data`,
+  success: endpoint => `Expected a success status code when requesting ${endpoint} with valid data`,
+  credentialsSaved: 'Expected credentials to be saved in browser (sessionStorage, localStorage or cookies)',
+  endpointCalls: exception => `Expected each of the endpoints to be called once${exception 
+    ? `(${exception.count} at most for ${exception.name})` : ''}`,
+  tooOften: name => `Expected ${name} endpoint not to be called too often`
+};
+
 it('task', () => {
   // Sign Up + Log In behaviour
   const auth = Cypress.env('auth');
@@ -318,12 +329,12 @@ it('task', () => {
 
     // Prepare for persistent authentication check
     const initialLocalStorageSize = localStorage.length;
-    const initialSessionStorageSize = sessionStorage.size;
+    const initialSessionStorageSize = sessionStorage.length;
     cy.getCookies().as('initialCookies');
 
     // Ensure it does not allow visiting auth-only pages
     cy.visit(authOnlyRoute);
-    cy.comparePathname('not.eq', authOnlyRoute);
+    cy.comparePathname(false, authOnlyRoute, MESSAGES.authOnlyForbidden);
 
     // Return to SignUp in case it's not the default route
     cy.visit(signUpRoute);
@@ -377,7 +388,7 @@ it('task', () => {
 
     // Ensure it STILL does not allow visiting auth-only pages
     cy.visit(authOnlyRoute);
-    cy.comparePathname('not.eq', authOnlyRoute);
+    cy.comparePathname(false, authOnlyRoute, MESSAGES.authOnlyForbidden);
 
     // Visit LogIn
     cy.visit(logInRoute);
@@ -393,8 +404,9 @@ it('task', () => {
     cy.wait(logInAlias)
       .its('response')
       .its('statusCode')
-      .should('be.gte', 400)
-      .should('be.lt', 500);
+      .should(statusCode => {
+        expect(statusCode, MESSAGES.clientError('Log In')).to.be.gte(400).and.lt(500);
+      });
 
     // Fix inputs and submit again
     cy.get('input[data-field]').each(inp => {
@@ -406,12 +418,13 @@ it('task', () => {
     cy.wait(logInAlias)
       .its('response')
       .its('statusCode')
-      .should('be.gte', 200)
-      .should('be.lt', 300);
+      .should(statusCode => {
+        expect(statusCode, MESSAGES.success('Log In')).to.be.gte(200).and.lt(300);
+      });
 
     // Check access
     cy.visit(authOnlyRoute);
-    cy.comparePathname('eq', authOnlyRoute);
+    cy.comparePathname(true, authOnlyRoute, MESSAGES.authOnlyAllowed);
 
     // Check persistent authentication
     const newLocalStorageSize = localStorage.length;
@@ -421,13 +434,15 @@ it('task', () => {
         const cookiesChanged = newCookies.length !== initialCookies.length;
         const localStorageChanged = newLocalStorageSize !== initialLocalStorageSize;
         const sessionStorageChanged = newSessionStorageSize !== initialSessionStorageSize;
-        cy.wrap(cookiesChanged || localStorageChanged || sessionStorageChanged).should('be.true');
+        cy.wrap(cookiesChanged || localStorageChanged || sessionStorageChanged).should(credentialsSaved => {
+          expect(credentialsSaved, MESSAGES.credentialsSaved).to.be.true;
+        });
       });
     });
 
     // Ensure that persistent authentication is actually used
     cy.reload();
-    cy.comparePathname('eq', authOnlyRoute);
+    cy.comparePathname(true, authOnlyRoute, MESSAGES.authOnlyAllowed);
   }
 
   let uploadedDump;
@@ -462,23 +477,30 @@ it('task', () => {
           const [searchEndpointAlias] = setupAliases(searchEndpoint);
           cy.get('input[data-search-input]').then(searchInput => {
             cy.wrap(searchInput).type(generateRandomString(8), { delay: 20 });
-            cy.get(`${searchEndpointAlias}.all`).should('have.length.below', 2);
+            cy.get(`${searchEndpointAlias}.all`).should(calls => {
+              expect(calls, MESSAGES.tooOften('Search')).to.have.length.below(2);
+            });
             const submitSearch = body.find('[data-submit-search]');
             if (submitSearch) {
               cy.wrap(submitSearch).click();
             }
             cy.wait(searchEndpointAlias);
             cy.wait(5000);
-            cy.get(`${searchEndpointAlias}.all`).should('have.length.below', 3);
+            cy.get(`${searchEndpointAlias}.all`).should(calls => {
+              expect(calls, MESSAGES.tooOften('Search')).to.have.length.below(3);
+            });
           });
         } else {
           cy.wait(5000);
         }
 
+        const exception = hasSearch ? { name: 'Search', count: 2 } : null;
         entityListAliases.forEach(alias => {
-          cy.get(`${alias}.all`).should('have.length', 1);
+          cy.get(`${alias}.all`).should(calls => {
+            expect(calls, MESSAGES.endpointCalls(exception)).to.have.length.below(3);
+          });
         });
-      })
+      });
     });
   }
 

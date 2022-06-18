@@ -8,7 +8,6 @@ const pick = require('lodash/pick');
 const cloneDeep = require('lodash/cloneDeep');
 const { downloadArtifacts, uploadFiles } = require('../util/github');
 const { User_Private, Any_Dummy } = require('../util/query-options');
-const { Op } = require('sequelize');
 const isEmpty = require('lodash/isEmpty');
 const startCase = require('lodash/startCase');
 const camelCase = require('lodash/camelCase');
@@ -66,8 +65,8 @@ class SolutionsRouter extends SmartRouter {
       include: [{
         model: SolutionResult,
         as: 'results',
-        where: { unprocessedReportLocation: { [Op.not]: null } },
-        attributes: ['unprocessedReportLocation', 'runId'],
+        where: { isProcessed: false },
+        attributes: ['isProcessed', 'runId'],
         required: true
       }, {
         model: User, as: 'student', ...User_Private
@@ -95,8 +94,7 @@ class SolutionsRouter extends SmartRouter {
           result.runId,
           req.app.locals.wsServer,
           result,
-          solution,
-          result.getDataValue('unprocessedReportLocation')
+          solution
         );
       }
     }

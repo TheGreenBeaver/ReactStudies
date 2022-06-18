@@ -25,19 +25,19 @@ const SYNTAX_RULES = [
       {
         name: 'max',
         value: 'Positive Integer',
-        defaultValue: '100 if "email" is true',
+        defaultValue: '3',
         comment: 'Maximum length of the string'
       },
       {
         name: 'min',
         value: 'Non-negative Integer',
-        defaultValue: '15 if "email" is true',
+        defaultValue: '30',
         comment: 'Minimum length of the string'
       },
       {
         name: 'unique',
         value: 'Boolean',
-        defaultValue: 'true if "email" is true',
+        defaultValue: 'false',
         comment:
           <>
             <p>Value will be unique across the nearest Array-like. Here are two examples:</p>
@@ -67,10 +67,26 @@ const SYNTAX_RULES = [
           </>,
       },
       {
+        name: 'letterSets',
+        value: 'A subset of ["latin", "numbers", "symbols", "spaces", "nonLatin"]',
+        defaultValue: '["latin"]',
+        comment: 'The character sets to use when generating strings. ' +
+          '"symbols" stands for all the various brackets, punctuation and math operators, ' +
+          '"spaces" is for whitespaces, tabs and newlines, ' +
+          '"nonLatin" includes cyrillic letters'
+      },
+      {
+        name: 'allowCapital',
+        value: 'Boolean',
+        defaultValue: 'false',
+        comment: 'Should capital letters be used'
+      },
+      {
         name: 'email',
         value: 'Boolean',
         defaultValue: 'false',
-        comment: 'Should the string be an email. Fixes "max" = 100, "min" = 15, "unique" = true'
+        comment: 'Should the string be an email. ' +
+          'Fixes "max" = 100, "min" = 15, "unique" = true, "letterSets" = ["latin"], "allowCapital" = false'
       },
     ]
   },

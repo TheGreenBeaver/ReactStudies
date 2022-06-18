@@ -11,7 +11,6 @@ const {
   Task,
   TemplateConfig
 } = require('../models');
-const { Op } = require('sequelize');
 const omit = require('lodash/omit');
 
 
@@ -26,7 +25,7 @@ const Solution_UnprocessedResults = {
   ...Any_Dummy,
   order: [[SolutionResult, 'createdAt', 'DESC']],
   include: [{
-    where: { unprocessedReportLocation: { [Op.not]: null } },
+    where: { isProcessed: false },
     model: SolutionResult,
     as: 'results',
     ...Any_Dummy,
@@ -74,7 +73,7 @@ const Task_List = {
 };
 
 const SolutionResult_List = {
-  attributes: ['id', 'summary', 'unprocessedReportLocation', 'runId', 'createdAt'],
+  attributes: ['id', 'summary', 'isProcessed', 'runId', 'createdAt'],
   include: [
     { model: LayoutSolutionResult, as: 'layoutResult', ...Any_Dummy },
     { model: ReactSolutionResult, as: 'reactResult', ...Any_Dummy },
@@ -83,7 +82,7 @@ const SolutionResult_List = {
   order: [['createdAt', 'DESC']]
 };
 const SolutionResult_Default = {
-  attributes: ['id', 'summary', 'unprocessedReportLocation', 'runId', 'createdAt'],
+  attributes: ['id', 'summary', 'isProcessed', 'runId', 'createdAt'],
   include: [
     { model: LayoutSolutionResult, as: 'layoutResult' },
     { model: ReactSolutionResult, as: 'reactResult' }
@@ -97,7 +96,7 @@ const Solution_List = {
     model: SolutionResult,
     as: 'results',
     order: [['createdAt', 'DESC']],
-    attributes: ['summary', 'createdAt', 'unprocessedReportLocation'],
+    attributes: ['summary', 'createdAt', 'isProcessed'],
     required: false,
     limit: 1
   }, {

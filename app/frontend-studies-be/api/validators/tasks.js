@@ -52,18 +52,26 @@ module.exports = {
       dumpUploadUrl: string().absoluteUrl().optional().onlyKind(Task.TASK_KINDS.react),
 
       authTemplate: object({
-        hasVerification: boolean().required()
-      }).templateConfig(
-        endpointsSchema => endpointsSchema.when('$body', {
-          is: body => body.authTemplate.hasVerification,
+        hasVerification: boolean().required(),
+      }).templateConfig({
+        adjustEndpoints: endpointsSchema => endpointsSchema.when('hasVerification', {
+          is: true,
           then: s => s.length(3),
-          otherwise: s => s.length(2)
-        }), 2, true
-      ),
+          otherwise: s => s.length(2),
+        }),
+        routesCount: 2,
+        specialIsRoute: true,
+      }),
       entityListTemplate: object({
         hasSearch: boolean().required()
       }).templateConfig(),
-      singleEntityTemplate: object().templateConfig()
+      singleEntityTemplate: object().templateConfig({
+        adjustRoute: routeSchema => routeSchema.when('$body', {
+          is: body => !!body.dump,
+          then: schema => schema.keyPattern(),
+          otherwise: schema => schema.navRoute()
+        })
+      })
     }).noUnknown(),
     files: object({
       attachments: Validators.file(
@@ -124,12 +132,26 @@ module.exports = {
       dumpUploadUrl: string().absoluteUrl().canSkip().onlyKind(Task.TASK_KINDS.react),
 
       authTemplate: object({
-        hasVerification: boolean().required()
-      }).templateConfig(),
+        hasVerification: boolean().required(),
+      }).templateConfig({
+        adjustEndpoints: endpointsSchema => endpointsSchema.when('hasVerification', {
+          is: true,
+          then: s => s.length(3),
+          otherwise: s => s.length(2),
+        }),
+        routesCount: 2,
+        specialIsRoute: true,
+      }),
       entityListTemplate: object({
         hasSearch: boolean().required()
       }).templateConfig(),
-      singleEntityTemplate: object().templateConfig()
+      singleEntityTemplate: object().templateConfig({
+        adjustRoute: routeSchema => routeSchema.when('$body', {
+          is: body => !!body.dump,
+          then: schema => schema.keyPattern(),
+          otherwise: schema => schema.navRoute()
+        })
+      })
     }).noUnknown(),
     files: object({
       attachmentsToCreate: Validators.file(

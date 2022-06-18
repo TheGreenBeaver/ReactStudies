@@ -37,7 +37,7 @@ function SmartForm({
       return {};
     }
     try {
-      await yupObject().shape(validationSchema).validate(values, { abortEarly: false, strict: true });
+      await yupObject().shape(validationSchema).validate(values, { abortEarly: false, strict: true, context: values });
       return {};
     } catch (e) {
       const errors = {};

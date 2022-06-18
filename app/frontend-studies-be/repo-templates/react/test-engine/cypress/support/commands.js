@@ -27,9 +27,15 @@
 Cypress.Commands.add('typeWithBlinkCheck', { prevSubject: true }, (subject, text) => {
   const firstLetter = text[0];
   cy.wrap(subject).type(firstLetter, { delay: 20 }).should('be.focused').type(text.substring(1));
-  return subject;
 });
 
-Cypress.Commands.add('comparePathname', (chainer, pathname) => {
-  cy.url().then(url => new URL(url)).its('pathname').should(chainer, pathname);
+Cypress.Commands.add('comparePathname', (shouldBeEqual, pathname, message) => {
+  cy.wait(4000);
+  cy.location().its('pathname').should(actualPathname => {
+    if (shouldBeEqual) {
+      expect(actualPathname, message).to.eq(pathname);
+    } else {
+      expect(actualPathname, message).to.not.eq(pathname);
+    }
+  });
 });

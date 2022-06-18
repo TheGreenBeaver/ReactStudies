@@ -171,12 +171,26 @@ function ManageTask({ initialValues, transformForApi, apiCall, canChangeKind, ac
           [fieldNames.rawSizing]: Validators.caveat(),
 
           [fieldNames.authTemplate]: object({
-            hasVerification: boolean().required()
-          }).templateConfig(true),
+            hasVerification: boolean().required(),
+          }).templateConfig({
+            adjustEndpoints: endpointsSchema => endpointsSchema.when('hasVerification', {
+              is: true,
+              then: s => s.length(3),
+              otherwise: s => s.length(2),
+            }),
+            routesCount: 2,
+            specialIsRoute: true,
+          }),
           [fieldNames.entityListTemplate]: object({
             hasSearch: boolean().required()
           }).templateConfig(),
-          [fieldNames.singleEntityTemplate]: object().templateConfig(),
+          [fieldNames.singleEntityTemplate]: object().templateConfig({
+            adjustRoute: routeSchema => routeSchema.when(`$${fieldNames.dumpIsTemplate}`, {
+              is: t => t != null,
+              then: schema => schema.keyPattern(),
+              otherwise: schema => schema.navRoute()
+            })
+          }),
           [fieldNames.fileDump]: Validators.file(fieldAccepts[fieldNames.fileDump], [1, SIZE_UNITS.MB]),
           [fieldNames.dumpUploadUrl]: string().absoluteUrl().canSkip()
         }}

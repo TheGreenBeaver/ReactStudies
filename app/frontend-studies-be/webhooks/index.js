@@ -52,7 +52,6 @@ function apply(app) {
     } else {
       wsServer.sendToUser(solution.student, wsServer.Actions.workflowCompleted, pick(solution, ['id', 'repoUrl']));
       await solution.save();
-      solutionResult.set({ unprocessedReportLocation: tempDest })
       await solutionResult.save();
     }
   });

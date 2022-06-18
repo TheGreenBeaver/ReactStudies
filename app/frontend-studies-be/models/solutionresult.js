@@ -24,12 +24,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   SolutionResult.init({
-    unprocessedReportLocation: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      get() {
-        return !!this.getDataValue('unprocessedReportLocation')
-      }
+    isProcessed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     },
     runId: {
       type: DataTypes.BIGINT,

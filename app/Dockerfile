@@ -10,7 +10,7 @@ RUN yarn build
 
 FROM node:16.13.1-alpine as be-runner
 
-COPY --from=fe-builder $APP_ROOT$APP_FRONTEND/build $NGINX_ROOT$NGINX_FRONTEND
+COPY --from=fe-builder $APP_ROOT$APP_FRONTEND/build $APP_ROOT$APP_FRONTEND
 
 WORKDIR $APP_ROOT$APP_BACKEND
 

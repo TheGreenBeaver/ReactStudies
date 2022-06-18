@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string */
 import { array, mixed, object, setLocale, string, ArraySchema, addMethod, BaseSchema, StringSchema, ObjectSchema } from 'yup';
 import startCase from 'lodash/startCase';
 import { humanizeFileSize, serializeFileSize, wAmount } from './misc';
@@ -47,8 +48,9 @@ class Validators {
   }
 
   static #requiredSchema(schema, ultra, message) {
+    const arrArgs = ultra ? [message] : [];
     return schema instanceof ArraySchema
-      ? schema.min(1)[ultra ? 'required' : 'optional']()
+      ? schema.min(1)[ultra ? 'required' : 'optional'](...arrArgs)
       : schema.required(message);
   }
 
@@ -93,9 +95,9 @@ class Validators {
         }
         try {
           const element = document.createElement(value);
-          return element instanceof HTMLUnknownElement ? createError({ params: { tag: value } }) : true;
+          return !(element instanceof HTMLUnknownElement);
         } catch {
-          return createError({ params: { tag: value } });
+          return false;
         }
       }),
       [ELEMENT_FIELDS.content]: string().required('Text blocks must not be empty').uniqList('Text block')
@@ -146,6 +148,10 @@ class Validators {
     return typeof v === 'number';
   }
 
+  static #isObj(v) {
+    return v?.constructor?.name === 'Object';
+  }
+
   static #isUniqArray(v) {
     return Array.isArray(v) && uniq(v).length === v.length;
   }
@@ -168,11 +174,12 @@ class Validators {
     allowPast: this.#isBool,
     allowFuture: this.#isBool,
     unique: this.#isBool,
-    of: v => typeof v === 'object',
-    values: this.#isUniqArray,
+    of: this.#isObj,
+    values: v => this.#isUniqArray(v) && v.length > 1,
     letterSets: v =>
       this.#isUniqArray(v) &&
-      v.every(e => ['latin', 'numbers', 'symbols', 'spaces', 'nonLatin'].includes(e)),
+      v.length > 0 &&
+      v.every(s => ['latin', 'numbers', 'symbols', 'spaces', 'nonLatin'].includes(s)),
     allowCapital: this.#isBool,
   };
 
@@ -288,10 +295,13 @@ addMethod(StringSchema, 'dump', function dump() {
 addMethod(StringSchema, 'navRoute', function navRoute() {
   return this
     .test('navRoute', 'Not a valid route', (value, { createError }) => {
+      if (!value) {
+        return true;
+      }
       if (!Validators.isUrl(value, true)) {
         return false;
       }
-      return value.startsWith('/') ? true : createError({ message: 'Route must start with /' });
+      return value.startsWith('/') || createError({ message: 'Route must start with /' });
     });
 });
 
@@ -305,11 +315,11 @@ addMethod(StringSchema, 'relativeUrl', function relativeUrl() {
       if (!['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase())) {
         return createError({ message: `${method} is not a valid HTTP method` });
       }
-      const pathname = pathnameParts.join('');
+      const pathname = pathnameParts.join(' ');
       if (!Validators.isUrl(pathname, true)) {
         return createError({ message: `${pathname} is not a valid URL pathname` });
       }
-      return /^\/.*/.test(pathname) ? true : createError({ message: 'Relative URL must start with /' });
+      return pathname.startsWith('/') || createError({ message: 'Pathname must start with /' });
     });
 });
 
@@ -317,16 +327,21 @@ addMethod(StringSchema, 'absoluteUrl', function absoluteUrl() {
   return this.test('absoluteUrl', 'Not a valid absolute URL path', value => Validators.isUrl(value));
 });
 
-addMethod(ObjectSchema, 'templateConfig', function templateConfig(specialIsRoute) {
-  return this.shape({
-    endpoints: array().of(string().relativeUrl()).canSkip(),
-    routes: array().of(string().navRoute()).canSkip(),
-    special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
-  }).noUnknown().canSkip();
-});
-
 addMethod(StringSchema, 'keyPattern', function keyPattern() {
   return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
+});
+
+addMethod(ObjectSchema, 'templateConfig', function templateConfig({
+  adjustEndpoints = endpointSchema => endpointSchema.min(1),
+  routesCount = 1,
+  specialIsRoute = false,
+  adjustRoute = routeSchema => routeSchema.navRoute()
+} = {}) {
+  return this.shape({
+    endpoints: adjustEndpoints(array().of(string().relativeUrl()).canSkip()),
+    routes: array().of(adjustRoute(string())).canSkip().length(routesCount),
+    special: string()[specialIsRoute ? 'navRoute' : 'relativeUrl']().canSkip()
+  }).noUnknown().canSkip();
 });
 
 export default Validators;

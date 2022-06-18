@@ -115,7 +115,7 @@ function getSolutionResultIndicator(result, onlyIcon) {
   if (!result?.summary) {
     tooltipTitle = 'No results yet';
     icon = <CircleOutlined color='disabled' />;
-  } else if (result?.unprocessedReportLocation) {
+  } else if (!result?.isProcessed) {
     tooltipTitle = 'Pending';
     icon = <PendingOutlined color='action' />;
   } else if (result) {
