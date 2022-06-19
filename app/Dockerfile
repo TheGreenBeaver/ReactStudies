@@ -1,6 +1,6 @@
 FROM node:16.13.1-alpine as fe-builder
 
-WORKDIR /usr/src/fe
+WORKDIR /usr/src/frontend-prep
 
 COPY ./frontend-studies-fe/ .
 
@@ -10,7 +10,7 @@ RUN yarn build
 
 FROM node:16.13.1-alpine as be-runner
 
-COPY --from=fe-builder /usr/src/fe/build/ /usr/src/fe-static
+COPY --from=fe-builder /usr/src/frontend-prep/build/ /usr/share/frontend-static
 
 WORKDIR /usr/src/frontend-studies-app
 

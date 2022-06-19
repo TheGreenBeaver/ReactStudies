@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./volumes-mnt/database-data:/var/lib/postgresql/data
+      - database-data:/var/lib/postgresql/data:rw
   frontend-studies-application:
     container_name: frontend-studies-application
     env_file:
@@ -23,9 +23,9 @@ services:
     depends_on:
       - frontend-studies-database
     volumes:
-      - ./volumes-mnt/static/media:/usr/src/frontend-studies-app/media
-      - ./volumes-mnt/static/tmp-files:/usr/src/frontend-studies-app/tmp-files
-      - ./volumes-mnt/static/frontend:/usr/src/fe-static
+      - app-media:/usr/src/frontend-studies-app/media:rw
+      - app-temp:/usr/src/frontend-studies-app/tmp-files:rw
+      - frontend-static:/usr/share/frontend-static:rw
   frontend-studies-proxy:
     container_name: frontend-studies-proxy
     image: nginx:latest
@@ -36,11 +36,11 @@ services:
     env_file:
       - .env
     volumes:
-      - ./volumes-mnt/static/media:/usr/share/nginx/media:ro
-      - ./volumes-mnt/static/frontend:/usr/share/nginx/frontend:ro
+      - app-media:/usr/share/nginx/media:ro
+      - frontend-static:/usr/share/nginx/frontend:ro
       - ./volumes-mnt/proxy/cert:/usr/share/nginx/cert:ro
-      - ./volumes-mnt/proxy/acme:/usr/share/nginx/acme
-      - ./volumes-mnt/proxy/templates:/etc/nginx/templates
+      - ./volumes-mnt/proxy/acme:/usr/share/nginx/acme:rw
+      - ./volumes-mnt/proxy/templates:/etc/nginx/templates:rw
     ports:
       - "${EXTERNAL_HTTP_PORT}:${EXTERNAL_HTTP_PORT}"
       - "${EXTERNAL_HTTPS_PORT}:${EXTERNAL_HTTPS_PORT}"
@@ -57,3 +57,9 @@ services:
       - ./volumes-mnt/proxy/cert:/etc/letsencrypt
     depends_on:
       - frontend-studies-proxy
+
+volumes:
+  database-data:
+  frontend-static:
+  app-media:
+  app-temp:
