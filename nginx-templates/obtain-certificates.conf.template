@@ -5,6 +5,6 @@ server {
 
   location /.well-known/acme-challenge {
     allow all;
-    root ${NGINX_ROOT}${NGINX_ACME};
+    root /usr/share/nginx/acme;
   }
 }

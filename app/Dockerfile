@@ -10,13 +10,9 @@ RUN yarn build
 
 FROM node:16.13.1-alpine as be-runner
 
-ARG APP_ROOT
-ARG APP_FRONTEND
-ARG APP_BACKEND
+COPY --from=fe-builder /usr/src/fe/build/ /usr/src/frontend-studies-app/frontend
 
-COPY --from=fe-builder /usr/src/fe/build/ $APP_ROOT$APP_FRONTEND
-
-WORKDIR $APP_ROOT$APP_BACKEND
+WORKDIR /usr/src/frontend-studies-app/backend
 
 COPY ./frontend-studies-be/ .
 

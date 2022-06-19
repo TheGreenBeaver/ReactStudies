@@ -12,18 +12,18 @@ server {
   server_tokens off;
   server_name ${SRV_NAME};
 
-  ssl_certificate ${NGINX_ROOT}${NGINX_CERT}/live/${SRV_NAME}/fullchain.pem;
-  ssl_certificate_key ${NGINX_ROOT}${NGINX_CERT}/live/${SRV_NAME}/privkey.pem;
+  ssl_certificate /usr/share/nginx/cert/live/${SRV_NAME}/fullchain.pem;
+  ssl_certificate_key /usr/share/nginx/cert/live/${SRV_NAME}/privkey.pem;
 
   location / {
-    root ${NGINX_ROOT}${NGINX_FRONTEND};
+    root /usr/share/nginx/frontend;
     index index.html index.htm;
     try_files $uri $uri/ /index.html;
   }
 
   location /media {
     autoindex on;
-    alias ${NGINX_ROOT}${NGINX_MEDIA};
+    alias /usr/share/nginx/media;
   }
 
   location ~ /(ws|api|webhooks) {

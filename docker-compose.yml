@@ -10,26 +10,22 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ${VOL_ROOT}${VOL_DATABASE}:/var/lib/postgresql/data
+      - ./volumes-mnt/database-data:/var/lib/postgresql/data
   frontend-studies-application:
     container_name: frontend-studies-application
     env_file:
       - .env
     build:
       context: ./app
-      args:
-        APP_ROOT: ${APP_ROOT}
-        APP_FRONTEND: ${APP_FRONTEND}
-        APP_BACKEND: ${APP_BACKEND}
     restart: unless-stopped
     links:
       - frontend-studies-database
     depends_on:
       - frontend-studies-database
     volumes:
-      - ${VOL_ROOT}${VOL_MEDIA}:${APP_ROOT}${APP_BACKEND}/media
-      - ${VOL_ROOT}${VOL_TMP}:${APP_ROOT}${APP_BACKEND}/tmp-files
-      - ${VOL_ROOT}${VOL_FRONTEND}:${APP_ROOT}${APP_FRONTEND}
+      - ./volumes-mnt/static/media:/usr/src/frontend-studies-app/backend/media
+      - ./volumes-mnt/static/tmp-files:/usr/src/frontend-studies-app/backend/tmp-files
+      - ./volumes-mnt/static/frontend:/usr/src/frontend-studies-app/frontend
   frontend-studies-proxy:
     container_name: frontend-studies-proxy
     image: nginx:latest
@@ -40,11 +36,11 @@ services:
     env_file:
       - .env
     volumes:
-      - ${VOL_ROOT}${VOL_MEDIA}:${NGINX_ROOT}${NGINX_MEDIA}:ro
-      - ${VOL_ROOT}${VOL_FRONTEND}:${NGINX_ROOT}${NGINX_FRONTEND}:ro
-      - ${VOL_ROOT}${VOL_CERT}:${NGINX_ROOT}${NGINX_CERT}:ro
-      - ${VOL_ROOT}${VOL_ACME}:${NGINX_ROOT}${NGINX_ACME}
-      - ${VOL_ROOT}${VOL_TEMPLATES}:/etc/nginx/templates
+      - ./volumes-mnt/static/media:/usr/share/nginx/media:ro
+      - ./volumes-mnt/static/frontend:/usr/share/nginx/frontend:ro
+      - ./volumes-mnt/proxy/cert:/usr/share/nginx/cert:ro
+      - ./volumes-mnt/proxy/acme:/usr/share/nginx/acme
+      - ./volumes-mnt/proxy/templates:/etc/nginx/templates
     ports:
       - "${EXTERNAL_HTTP_PORT}:${EXTERNAL_HTTP_PORT}"
       - "${EXTERNAL_HTTPS_PORT}:${EXTERNAL_HTTPS_PORT}"
@@ -55,9 +51,9 @@ services:
     image: certbot/certbot:latest
     env_file:
       - .env
-    command: certonly --webroot --webroot-path="${WEBROOT_PATH}" --email="$EMAIL_USER" --agree-tos --no-eff-email -d "$SRV_NAME"
+    command: certonly --webroot --webroot-path="/etc/webroot" --email="$EMAIL_USER" --agree-tos --no-eff-email -d "$SRV_NAME"
     volumes:
-      - ${VOL_ROOT}${VOL_ACME}:${WEBROOT_PATH}
-      - ${VOL_ROOT}${VOL_CERT}:/etc/letsencrypt
+      - ./volumes-mnt/proxy/acme:/etc/webroot
+      - ./volumes-mnt/proxy/cert:/etc/letsencrypt
     depends_on:
       - frontend-studies-proxy
