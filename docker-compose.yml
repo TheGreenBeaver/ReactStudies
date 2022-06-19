@@ -23,9 +23,9 @@ services:
     depends_on:
       - frontend-studies-database
     volumes:
-      - ./volumes-mnt/static/media:/usr/src/frontend-studies-app/backend/media
-      - ./volumes-mnt/static/tmp-files:/usr/src/frontend-studies-app/backend/tmp-files
-      - ./volumes-mnt/static/frontend:/usr/src/frontend-studies-app/frontend
+      - ./volumes-mnt/static/media:/usr/src/frontend-studies-app/media
+      - ./volumes-mnt/static/tmp-files:/usr/src/frontend-studies-app/tmp-files
+      - ./volumes-mnt/static/frontend:/usr/src/fe-static
   frontend-studies-proxy:
     container_name: frontend-studies-proxy
     image: nginx:latest
