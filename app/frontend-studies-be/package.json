@@ -2,7 +2,7 @@
   "name": "react-studies-be",
   "packageManager": "yarn@3.2.0",
   "scripts": {
-    "runserver": "node index.js",
+    "runserver": "sequelize-cli db:migrate --env production && node index.js",
     "runserver:dev": "nodemon index.js"
   },
   "nodemonConfig": {

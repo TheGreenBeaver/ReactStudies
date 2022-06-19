@@ -3,14 +3,14 @@ version: "3.8"
 services:
   frontend-studies-database:
     container_name: frontend-studies-database
-    image: postgres
-    restart: always
-    volumes:
-      - ${VOL_ROOT}${VOL_DATABASE}:/var/lib/postgresql/data
     env_file:
       - .env
+    image: postgres
+    restart: always
     ports:
       - "5432:5432"
+    volumes:
+      - ${VOL_ROOT}${VOL_DATABASE}:/var/lib/postgresql/data
   frontend-studies-application:
     container_name: frontend-studies-application
     env_file:
@@ -18,9 +18,9 @@ services:
     build:
       context: ./app
       args:
-        - APP_ROOT
-        - APP_FRONTEND
-        - APP_BACKEND
+        APP_ROOT: ${APP_ROOT}
+        APP_FRONTEND: ${APP_FRONTEND}
+        APP_BACKEND: ${APP_BACKEND}
     restart: unless-stopped
     links:
       - frontend-studies-database
