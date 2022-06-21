@@ -26,6 +26,7 @@ function AdvancedLayoutSettings() {
             : 'Allow for any tag containing one of these:',
         }}
         name={fieldNames.absPos}
+        trackName={fieldNames.trackAbsPos}
         recommended={10}
         label='absolute positioning overuse'
       />
@@ -38,6 +39,7 @@ function AdvancedLayoutSettings() {
             : 'Allow for any tag containing one of these:',
         }}
         name={fieldNames.rawSizing}
+        trackName={fieldNames.trackRawSizing}
         recommended={40}
         label='non-responsive raw pixel sizing'
       />

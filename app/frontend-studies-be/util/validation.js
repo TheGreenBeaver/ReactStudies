@@ -345,6 +345,9 @@ addMethod(StringSchema, 'dump', function dump() {
 addMethod(StringSchema, 'navRoute', function navRoute() {
   return this
     .test('navRoute', 'Not a valid route', (value, { createError }) => {
+      if (!value) {
+        return true;
+      }
       if (!Validators.isUrl(value, true)) {
         return false;
       }
@@ -375,7 +378,7 @@ addMethod(StringSchema, 'absoluteUrl', function absoluteUrl() {
 });
 
 addMethod(StringSchema, 'keyPattern', function keyPattern() {
-  return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
+  return this.navRoute().matches(/|(.*{key}.*)/, 'Must contain {key} placeholder');
 });
 
 addMethod(ObjectSchema, 'templateConfig', function templateConfig({

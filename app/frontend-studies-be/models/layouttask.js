@@ -31,7 +31,17 @@ module.exports = (sequelize, DataTypes) => {
     rawSizingMaxUsage: {
       type: DataTypes.INTEGER,
       allowNull: true
-    }
+    },
+    trackAbsPos: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    trackRawSizing: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
   }, {
     sequelize,
     tableName: 'layout_task',

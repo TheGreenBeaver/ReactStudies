@@ -148,8 +148,9 @@ class SolutionsRouter extends SmartRouter {
         if (task.reactTask.dump) {
           cypressEnv.dumpConfig = {
             dump: task.reactTask.dump,
-            dumpUploadUrl: dumpUploadUrl || ask.reactTask.dumpUploadUrl,
-            dumpUploadMethod: dumpUploadMethod || ask.reactTask.dumpUploadMethod,
+            dumpUploadUrl: dumpUploadUrl || task.reactTask.dumpUploadUrl,
+            dumpUploadMethod: dumpUploadMethod || task.reactTask.dumpUploadMethod,
+            dumpIsTemplate: task.reactTask.dumpIsTemplate
           };
         }
 

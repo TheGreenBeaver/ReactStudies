@@ -19,11 +19,12 @@ function CaveatField({
   requiredElementFields,
   prefixes,
   recommended,
+  trackName,
   ...wrapperProps
 }) {
-  const { values, setFieldValue, isSubmitting } = useEditableView();
+  const { values, setFieldValue, isSubmitting, setValues } = useEditableView();
   const value = values[name];
-  const shouldTrack = !!value;
+  const shouldTrack = values[trackName];
   const enteringAllowedFor = !!value?.[CAVEAT_FIELDS.allowedFor];
 
   function setValue(upd) {
@@ -31,7 +32,11 @@ function CaveatField({
   }
 
   function setShouldTrack(newShouldTrack) {
-    setValue(newShouldTrack ? { [CAVEAT_FIELDS.maxUsage]: null, [CAVEAT_FIELDS.allowedFor]: null } : null);
+    setValues(curr => ({
+      ...curr,
+      [trackName]: newShouldTrack,
+      [name]: { [CAVEAT_FIELDS.maxUsage]: null, [CAVEAT_FIELDS.allowedFor]: null }
+    }));
   }
 
   function setEnteringAllowedFor(newEnteringAllowedFor) {
@@ -89,6 +94,7 @@ function CaveatField({
 
 CaveatField.propTypes = {
   name: string.isRequired,
+  trackName: string.isRequired,
   label: string,
   requiredElementFields: ElementFields,
   prefixes: Prefixes.isRequired,

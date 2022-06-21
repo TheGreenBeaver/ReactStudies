@@ -5,3 +5,4 @@ runs:
   steps:
     - run: echo "No run configuration for Backend specified"
       shell: bash
+      working-directory: app-backend

@@ -27,6 +27,9 @@ module.exports = {
         'rememberToken',
         'trackUpdates',
 
+        'trackAbsPos',
+        'trackRawSizing',
+
         'hasFuzzing',
         'dumpIsTemplate'
       ].includes(fieldName)) {

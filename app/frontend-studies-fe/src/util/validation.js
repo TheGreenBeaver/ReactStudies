@@ -89,7 +89,7 @@ class Validators {
 
   static elementList(requiredElementFields = []) {
     const singleElementSpec = {
-      [ELEMENT_FIELDS.tag]: string().max(20).test('isValidTag', '${tag} is not a valid tag', (value, { createError }) => {
+      [ELEMENT_FIELDS.tag]: string().max(20).test('isValidTag', '${value} is not a valid tag', value => {
         if (!value) {
           return true;
         }
@@ -328,7 +328,7 @@ addMethod(StringSchema, 'absoluteUrl', function absoluteUrl() {
 });
 
 addMethod(StringSchema, 'keyPattern', function keyPattern() {
-  return this.navRoute().matches(/.*{key}.*/, 'Must contain {key} placeholder');
+  return this.navRoute().matches(/|(.*{key}.*)/, 'Must contain {key} placeholder');
 });
 
 addMethod(ObjectSchema, 'templateConfig', function templateConfig({

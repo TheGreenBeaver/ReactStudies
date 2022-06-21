@@ -42,6 +42,8 @@ module.exports = {
       mustUse: Validators.elementList(['tag']).optional().onlyKind(Task.TASK_KINDS.layout),
       absPos: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
       rawSizing: Validators.caveat().onlyKind(Task.TASK_KINDS.layout),
+      trackAbsPos: boolean().required().onlyKind(Task.TASK_KINDS.layout),
+      trackRawSizing: boolean().required().onlyKind(Task.TASK_KINDS.layout),
 
       // React
       hasFuzzing: boolean().required().onlyKind(Task.TASK_KINDS.react),

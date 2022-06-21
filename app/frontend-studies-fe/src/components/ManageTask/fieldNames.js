@@ -13,6 +13,8 @@ export default {
   mustUse: 'mustUse',
   absPos: 'absPos',
   rawSizing: 'rawSizing',
+  trackAbsPos: 'trackAbsPos',
+  trackRawSizing: 'trackRawSizing',
 
   // react - main
   authTemplate: 'authTemplate',

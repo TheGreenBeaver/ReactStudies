@@ -26,7 +26,9 @@
 
 Cypress.Commands.add('typeWithBlinkCheck', { prevSubject: true }, (subject, text) => {
   const firstLetter = text[0];
-  cy.wrap(subject).type(firstLetter, { delay: 20 }).should('be.focused').type(text.substring(1));
+  cy.wrap(subject).type(firstLetter, { delay: 20 }).should(inp => {
+    expect(inp, '__PURE__Expected the inputs to retain focus, instead they are blinking__PURE__').to.be.focused;
+  }).type(text.substring(1));
 });
 
 Cypress.Commands.add('comparePathname', (shouldBeEqual, pathname, message) => {

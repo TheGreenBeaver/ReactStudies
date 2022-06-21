@@ -34,6 +34,7 @@ import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 import LayoutResultDetails from './LayoutResultDetails';
 import Stack from '@mui/material/Stack';
+import ReactResultDetails from './ReactResultDetails';
 
 
 const retrieveResult = withCache(api.solutionResults.retrieve);
@@ -67,7 +68,7 @@ const INSTRUCTIONS = {
 
 const RESULT_DETAILS = {
   [TASK_KINDS.layout]: LayoutResultDetails,
-  [TASK_KINDS.react]: () => 'results'
+  [TASK_KINDS.react]: ReactResultDetails
 };
 
 function SingleSolution({ resultsPage, pageSize }) {
@@ -161,7 +162,8 @@ function SingleSolution({ resultsPage, pageSize }) {
         keepMounted={false}
         open={currentExploredResultId != null}
         onClose={() => setCurrentExploredResultId(null)}
-        maxWidth='lg'
+        maxWidth='md'
+        fullWidth
       >
         <DialogTitle>
           Result details

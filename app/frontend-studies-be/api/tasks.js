@@ -148,13 +148,15 @@ class TasksRouter extends SmartRouter {
 
     switch (kind) {
       case Task.TASK_KINDS.layout:
-        const { mustUse, absPos, rawSizing } = body;
+        const { mustUse, absPos, rawSizing, trackRawSizing, trackAbsPos } = body;
         const sampleImage = files.sampleImage[0].path;
         const mustUseRules = mustUse?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.mustUse })) || [];
         const absPosRules = absPos?.allowedFor?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.absPos })) || [];
         const rawSizingRules = rawSizing?.allowedFor?.map(r => ({ ...r, kind: ElementRule.RULE_KINDS.rawSizing })) || [];
         await basicTask.createLayoutTask({
           sampleImage,
+          trackRawSizing,
+          trackAbsPos,
           absPosMaxUsage: absPos?.maxUsage,
           rawSizingMaxUsage: rawSizing?.maxUsage,
           elementRules: [...mustUseRules, ...absPosRules, ...rawSizingRules],
@@ -221,8 +223,12 @@ class TasksRouter extends SmartRouter {
         uploadFiles(octokit, repo.name, {
           dirs: [{
             dir: path.join(REPO_TEMPLATES_DIR, 'react'),
-            ignore: filePath => /(app-backend|app-frontend)\/.*$/.test(filePath),
-            keep: filePath => filePath.endsWith('app-backend/.github/actions/run-backend/action.yml')
+            ignore: filePath => /(app-backend|app-frontend\/src)\/.*$/.test(filePath),
+            keep: filePath => [
+              'app-backend/.github/actions/run-backend/action.yml',
+              'app-frontend/src/index.js',
+              'app-frontend/src/App.js'
+            ].some(ending => filePath.endsWith(ending))
           }]
         }).then(() => wsServer.sendToUser(
           user,

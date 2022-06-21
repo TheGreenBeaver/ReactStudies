@@ -1,0 +1,9 @@
+{
+  "short_name": "App Frontend",
+  "name": "App Frontend Template",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

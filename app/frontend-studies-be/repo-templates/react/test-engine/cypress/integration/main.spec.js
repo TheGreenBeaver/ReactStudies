@@ -230,12 +230,24 @@ function generateShape(shape, parentIdxForShape = null, path = []) {
   }), {});
 }
 
-function uploadDump({ dump, dumpIsTemplate, upload: { url, method } }) {
+function uploadDump({ dump, dumpIsTemplate, dumpUploadUrl, dumpUploadMethod }) {
   const data = dumpIsTemplate
-    ? [...Array(generateRandomNum(100, 800))].map((_, idx) => generateShape(dump, idx))
+    ? [...Array(generateRandomNum(100, 800))].map((_, idx) => generateShape(JSON.parse(dump), idx))
     : dump;
-  cy.request(method, url, data).its('body').as('dumpKeys');
+  cy.request(dumpUploadMethod, dumpUploadUrl, data).its('body').as('dumpKeys');
   return data;
+}
+
+const spaces = [' ', '\n', '\t'];
+function stringIsIncluded(parentText, str) {
+  for (let i = 0; i < spaces.length; i++) {
+    for (let j = 0; j < spaces.length; j++) {
+      if (parentText.includes(`${spaces[i]}${str}${spaces[j]}`)) {
+        return true;
+      }
+    }
+  }
+  return spaces.some(space => parentText.startsWith(`${str}${space}`) || parentText.endsWith(`${space}${str}`));
 }
 
 function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
@@ -257,7 +269,6 @@ function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
   const getMark = inspectedData => value => {
     report[inspectedData].summary.totalFields++;
 
-    const pattern = new RegExp(`(\\s|^)${value}(\\s|$)`);
     const momentValue = moment(value);
     for (const { textContent } of allElements) {
       if (textContent === value) {
@@ -266,7 +277,7 @@ function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
       }
       const momentTextContent = moment(textContent);
       if (
-        pattern.test(textContent) ||
+        stringIsIncluded(textContent, value) ||
         (
           momentValue.isValid() &&
           momentTextContent.isValid() &&
@@ -298,16 +309,17 @@ function collectDataCoverage(interceptions, dumpChunk, fileName, body) {
   cy.writeFile(`reports/${fileName}.json`, JSON.stringify(report, null, '  '));
 }
 
-const MESSAGES = {
+const PURE = '__PURE__';
+const MESSAGES = mapValues({
   authOnlyAllowed: 'Expected auth-only route to be accessible for an authorized user',
   authOnlyForbidden: 'Expected auth-only route not to be accessible for a non-authorized user',
   clientError: endpoint => `Expected a client error status code when requesting ${endpoint} with invalid data`,
   success: endpoint => `Expected a success status code when requesting ${endpoint} with valid data`,
   credentialsSaved: 'Expected credentials to be saved in browser (sessionStorage, localStorage or cookies)',
-  endpointCalls: exception => `Expected each of the endpoints to be called once${exception 
+  endpointCalls: exception => `Expected each of the endpoints to be called once${exception
     ? `(${exception.count} at most for ${exception.name})` : ''}`,
   tooOften: name => `Expected ${name} endpoint not to be called too often`
-};
+}, msg => typeof msg  === 'function'? (...args) => `${PURE}${msg(...args)}${PURE}` : `${PURE}${msg}${PURE}`);
 
 it('task', () => {
   // Sign Up + Log In behaviour
@@ -328,8 +340,9 @@ it('task', () => {
     cy.visit(signUpRoute);
 
     // Prepare for persistent authentication check
-    const initialLocalStorageSize = localStorage.length;
-    const initialSessionStorageSize = sessionStorage.length;
+
+    cy.window().its('localStorage').its('length').as('initialLocalStorage');
+    cy.window().its('sessionStorage').its('length').as('initialSessionStorage');
     cy.getCookies().as('initialCookies');
 
     // Ensure it does not allow visiting auth-only pages
@@ -427,18 +440,23 @@ it('task', () => {
     cy.comparePathname(true, authOnlyRoute, MESSAGES.authOnlyAllowed);
 
     // Check persistent authentication
-    const newLocalStorageSize = localStorage.length;
-    const newSessionStorageSize = sessionStorage.length;
-    cy.getCookies().then(newCookies => {
+    cy.window().then(win => cy.getCookies().then(newCookies => {
       cy.get('@initialCookies').then(initialCookies => {
         const cookiesChanged = newCookies.length !== initialCookies.length;
-        const localStorageChanged = newLocalStorageSize !== initialLocalStorageSize;
-        const sessionStorageChanged = newSessionStorageSize !== initialSessionStorageSize;
-        cy.wrap(cookiesChanged || localStorageChanged || sessionStorageChanged).should(credentialsSaved => {
-          expect(credentialsSaved, MESSAGES.credentialsSaved).to.be.true;
-        });
+        const newLocalStorageSize = win.localStorage.length;
+        const newSessionStorageSize = win.sessionStorage.length;
+
+        cy.get('@initialLocalStorage').then(initialLocalStorage =>
+          cy.get('@initialSessionStorage').then(initialSessionStorage => {
+            const localStorageChanged = newLocalStorageSize !== initialLocalStorage;
+            const sessionStorageChanged = newSessionStorageSize !== initialSessionStorage;
+            cy.wrap(cookiesChanged || localStorageChanged || sessionStorageChanged).should(credentialsSaved => {
+              expect(credentialsSaved, MESSAGES.credentialsSaved).to.be.true;
+            });
+          })
+        );
       });
-    });
+    }))
 
     // Ensure that persistent authentication is actually used
     cy.reload();
@@ -516,7 +534,7 @@ it('task', () => {
     if (dumpConfig) {
       cy.get('@dumpKeys').then(dumpKeys => {
         const idx = generateRandomNum(0, dumpKeys.length);
-        const key = dumpKeys(idx);
+        const key = dumpKeys[idx];
         const singleEntityRoute = rawSingleEntityRoute.replace('{key}', key.toString());
 
         cy.visit(singleEntityRoute);

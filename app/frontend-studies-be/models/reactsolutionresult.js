@@ -21,7 +21,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: true
     },
+    listDumpPercentage: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
     singleDataPercentage: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    singleDumpPercentage: {
       type: DataTypes.FLOAT,
       allowNull: true
     },

@@ -51,7 +51,13 @@ const sections = [
       const taskDefinition = TASK_KIND_DEFINITIONS[values[fieldNames.kind]];
       return `Main settings for ${taskDefinition} task`;
     },
-    coveredFields: [fieldNames.sampleImage]
+    coveredFields: [
+      fieldNames.sampleImage,
+
+      fieldNames.authTemplate,
+      fieldNames.singleEntityTemplate,
+      fieldNames.entityListTemplate,
+    ]
   },
   {
     name: SECTION_NAMES.advanced,
@@ -60,12 +66,30 @@ const sections = [
       const taskDefinition = TASK_KIND_DEFINITIONS[values[fieldNames.kind]];
       return `Advanced settings for ${taskDefinition} task`;
     },
-    coveredFields: [fieldNames.mustUse, fieldNames.absPos, fieldNames.rawSizing]
+    coveredFields: [
+      fieldNames.mustUse,
+      fieldNames.absPos,
+      fieldNames.rawSizing,
+      fieldNames.trackAbsPos,
+      fieldNames.trackRawSizing,
+
+      fieldNames.hasFuzzing,
+      fieldNames.fileDump,
+      fieldNames.dumpUploadUrl,
+      fieldNames.dumpUploadMethod
+    ]
   }
 ];
 
 const fieldsForKinds = {
-  [TASK_KINDS.layout]: [fieldNames.sampleImage, fieldNames.mustUse, fieldNames.absPos, fieldNames.rawSizing],
+  [TASK_KINDS.layout]: [
+    fieldNames.sampleImage,
+    fieldNames.mustUse,
+    fieldNames.absPos,
+    fieldNames.rawSizing,
+    fieldNames.trackAbsPos,
+    fieldNames.trackRawSizing
+  ],
   [TASK_KINDS.react]: [
     fieldNames.authTemplate,
     fieldNames.entityListTemplate,
@@ -133,11 +157,13 @@ function ManageTask({ initialValues, transformForApi, apiCall, canChangeKind, ac
           [fieldNames.mustUse]: [],
           [fieldNames.absPos]: null,
           [fieldNames.rawSizing]: null,
+          [fieldNames.trackAbsPos]: false,
+          [fieldNames.trackRawSizing]: false,
 
           [fieldNames.authTemplate]: null,
           [fieldNames.entityListTemplate]: null,
           [fieldNames.singleEntityTemplate]: null,
-          [fieldNames.hasFuzzing]: true,
+          [fieldNames.hasFuzzing]: false,
           [fieldNames.fileDump]: null,
           [fieldNames.dumpIsTemplate]: null,
           [fieldNames.dumpUploadUrl]: null,

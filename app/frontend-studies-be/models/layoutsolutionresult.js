@@ -29,6 +29,14 @@ module.exports = (sequelize, DataTypes) => {
         const rawValue = this.getDataValue('reportLocation');
         return composeMediaPath(rawValue);
       }
+    },
+    absPosUsage: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    rawSizingUsage: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
     }
   }, {
     sequelize,

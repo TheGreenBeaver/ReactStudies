@@ -8,7 +8,13 @@ const now = require('lodash/now');
 const unzip = require('./unzip');
 const { SolutionResult, Task } = require('../models');
 const pick = require('lodash/pick');
+const isEmpty = require('lodash/isEmpty');
+const capitalize = require('lodash/capitalize');
 
+
+function cleanFloat(f) {
+  return parseFloat(f.toFixed(2));
+}
 
 function getRegexFromRule(rule) {
   const ruleBody = rule
@@ -93,6 +99,35 @@ async function uploadFiles(octokit, repo, {
   }
 }
 
+const PURE = '__PURE__';
+const REQ = '. No request ever occurred';
+const OWN = 'The following error originated from your application code, not from Cypress';
+function extractReactErrorMessage({ err }) {
+  if (isEmpty(err)) {
+    return null;
+  }
+
+  const { message } = err;
+  if (message.includes(PURE)) {
+    return message.split(PURE)[1];
+  }
+
+  if (message.includes(REQ)) {
+    const reqNameEnd = message.indexOf(REQ);
+    const reqNameStart = message.lastIndexOf(':', reqNameEnd);
+    const reqName = message.substring(reqNameStart + 2, reqNameEnd).replaceAll('`', '');
+    return `Expected ${reqName} to be called`;
+  }
+
+  if (message.includes(OWN)) {
+    const errorClass = message.split(':')[0];
+    const errorMessage = message.split('\n\n')[1];
+    return `Expected the app to not throw exceptions. Got ${errorClass} ${errorMessage}`;
+  }
+
+  return message.substring(0, 100);
+}
+
 async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, solutionResult, solution) {
   const octokit = new Octokit({ userAgent: GITHUB_USER_AGENT, auth: gitHubToken });
   const taskKind = solution.task.kind;
@@ -111,10 +146,12 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
   await new Promise((resolve, reject) => unzip(tempDest, dest, e => e ? reject(e) : resolve()));
   await fs.promises.rm(tempDest);
 
+  let points = 0;
+  const values = {};
+
   switch (taskKind) {
     case Task.TASK_KINDS.layout: {
-      let points = 0;
-      const values = { reportLocation: path.join(dest, 'report.json') };
+      values.reportLocation = path.join(dest, 'report.json');
 
       const report = await fs.promises.readFile(values.reportLocation, 'utf8');
       const {
@@ -133,11 +170,19 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
           path.join(dest, 'cypress', 'snapshots', 'main.spec.js', '__diff_output__', 'task.diff.png')
       }
 
-      const { absPosMaxUsage, rawSizingMaxUsage } = solution.task.layoutTask;
-      const trackAbsPos = absPosMaxUsage != null;
-      const trackRawSizing = rawSizingMaxUsage != null;
+      const { absPosMaxUsage, rawSizingMaxUsage, trackAbsPos, trackRawSizing } = solution.task.layoutTask;
 
-      const nonUsageMax = 100 - (trackAbsPos ? 15 : 0) - (trackRawSizing ? 15 : 0);
+      if (trackAbsPos) {
+        values.absPosUsage = cleanFloat(absPosUsage);
+      }
+      if (trackRawSizing) {
+        values.rawSizingUsage = cleanFloat(rawSizingUsage);
+      }
+
+      const countAbsPos = absPosMaxUsage != null;
+      const countRawSizing = rawSizingMaxUsage != null;
+
+      const nonUsageMax = 100 - (countAbsPos ? 15 : 0) - (countRawSizing ? 15 : 0);
       const snapMax = 4 * nonUsageMax / 7;
       const usedMax = 3 * nonUsageMax / 7;
 
@@ -152,37 +197,65 @@ async function downloadArtifacts(gitHubToken, owner, repo, run_id, wsServer, sol
       ) / 2 * (usedMax / 100);
       points += mustUsePoints;
 
-      if (trackAbsPos) {
+      if (countAbsPos) {
         const fixedUsage = Math.max(absPosUsage, absPosMaxUsage);
         points += 15 - fixedUsage / 15 * absPosMaxUsage;
       }
 
-      if (trackRawSizing) {
+      if (countRawSizing) {
         const fixedUsage = Math.max(rawSizingUsage, rawSizingMaxUsage);
         points += 15 - fixedUsage / 15 * rawSizingMaxUsage;
       }
 
-      if (points < 34) {
-        solutionResult.summary = SolutionResult.SUMMARY.bad;
-      } else if (points < 67) {
-        solutionResult.summary = SolutionResult.SUMMARY.medium;
-      } else {
-        solutionResult.summary = SolutionResult.SUMMARY.good;
-      }
-
-      solutionResult.isProcessed = true;
-      await solutionResult.save();
-      await solutionResult.createLayoutResult(values);
       break;
     }
     case Task.TASK_KINDS.react: {
+      const mainReportRaw = await fs.promises.readFile(path.join(dest, 'main.json'), 'utf8');
+      const mainReport = JSON.parse(mainReportRaw);
+      const errorMessage = extractReactErrorMessage(mainReport.results[0].tests[0]);
+      if (errorMessage) {
+        points = 0;
+        values.failedAt = errorMessage;
+      } else {
+        points = 50;
 
+        for (const { file, field } of [{ file: 'entityList', field: 'list' }, { file: 'singleEntity', field: 'single' }]) {
+          try {
+            const reportRaw = await fs.promises.readFile(path.join(dest, `${file}.json`), 'utf8');
+            const { endpoints, dump } = JSON.parse(reportRaw);
+            const max = dump ? 12.5 : 25;
+            const coveredEndpoints = endpoints.summary.roughMatch * 0.5 + endpoints.summary.foundExactly;
+            points += coveredEndpoints / endpoints.summary.totalFields * max;
+            values[`${field}DataPercentage`] = cleanFloat(coveredEndpoints / endpoints.summary.totalFields * 100);
+            if (dump) {
+              const coveredDump = dump.summary.roughMatch * 0.5 + dump.summary.foundExactly;
+              points += coveredDump / dump.summary.totalFields * max;
+              values[`${field}DumpPercentage`] = cleanFloat(coveredDump / dump.summary.totalFields * 100);
+            }
+          } catch {
+            points += 25;
+          }
+        }
+      }
     }
   }
 
+  if (points < 34) {
+    solutionResult.summary = SolutionResult.SUMMARY.bad;
+  } else if (points < 67) {
+    solutionResult.summary = SolutionResult.SUMMARY.medium;
+  } else {
+    solutionResult.summary = SolutionResult.SUMMARY.good;
+  }
+
+  solutionResult.isProcessed = true;
+  await solutionResult.save();
+  const func = `create${capitalize(taskKind)}Result`;
+  await solutionResult[func](values);
+
   return wsServer.sendToUser(solution.student, wsServer.Actions.workflowResultsReady, {
     solution: pick(solution, ['id', 'task_id']),
-    result: pick(solutionResult, ['summary', 'createdAt', 'runId', 'id']),
+    result: pick(solutionResult, ['summary', 'createdAt', 'runId', 'id', 'isProcessed']),
   });
 }
 

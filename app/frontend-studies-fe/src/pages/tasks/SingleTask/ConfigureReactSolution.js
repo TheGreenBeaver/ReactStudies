@@ -76,7 +76,7 @@ function ConfigureReactSolution({ task: { id, reactTask }, missingFields }) {
     } else if (fieldName.endsWith('Endpoints')) {
       fieldSchema = array().of(yupString().relativeUrl().required('Endpoints must not be empty')).min(1);
     } else if (fieldName.endsWith('Special')) {
-      fieldSchema = yupString()[fieldName.startsWith('auth') ? 'relativeUrl' : 'navRoute']().required();
+      fieldSchema = yupString()[fieldName.startsWith('auth') ? 'navRoute' : 'relativeUrl']().required();
     }
     return fieldSchema ? { ...schema, [fieldName]: fieldSchema } : schema;
   }, {}), [missingFields]);

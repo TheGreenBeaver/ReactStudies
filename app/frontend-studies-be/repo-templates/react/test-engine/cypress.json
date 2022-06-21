@@ -3,6 +3,7 @@
   "video": false,
   "baseUrl": "http://localhost:3000",
   "experimentalSessionAndOrigin": true,
+  "chromeWebSecurity": false,
   "reporter": "mochawesome",
   "reporterOptions": {
     "reportDir": "reports",

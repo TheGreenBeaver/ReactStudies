@@ -6,6 +6,10 @@ repo-templates/layout/tech/sample.*
 repo-templates/layout/src/*
 !repo-templates/layout/src/index.html
 
-repo-templates/react/app-frontend
 repo-templates/react/app-backend/*
 !repo-templates/react/app-backend/.github
+!repo-templates/react/app-backend/run_backend.sh
+
+repo-templates/react/app-frontend/src/*
+!repo-templates/react/app-frontend/src/index.js
+!repo-templates/react/app-frontend/src/App.js
